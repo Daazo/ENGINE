@@ -31,12 +31,6 @@ else:
     mongo_client = None
     db = None
 
-# Bot setup
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
-bot.remove_command('help')
-bot.start_time = time.time()
-
 # Cache for server settings
 server_cache = {}
 
@@ -58,6 +52,12 @@ async def get_prefix(bot, message):
             return server_data['prefix']
     
     return '!'
+
+# Bot setup
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
+bot.remove_command('help')
+bot.start_time = time.time()
 
 async def get_server_data(guild_id):
     """Get server configuration from database"""
