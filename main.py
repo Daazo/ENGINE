@@ -257,33 +257,63 @@ async def on_message(message):
     if message.author.bot:
         return
     
+    # Handle DM mentions
+    if not message.guild:  # This is a DM
+        if bot.user in message.mentions or message.content.strip() == f"<@{bot.user.id}>":
+            embed = discord.Embed(
+                title="🌿 Enne vilicho?",
+                description="Njan *ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ* aanu 😎\nEnte Dev aanu ente thala! 💻\nEnthelum help venamo? Just type /help 😄\nvaazha ila pidichu nadakkam 🌴",
+                color=0x43b581
+            )
+            embed.set_thumbnail(url=bot.user.display_avatar.url)
+            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
+            
+            view = discord.ui.View()
+            help_button = discord.ui.Button(label="📜 Commands", style=discord.ButtonStyle.primary, emoji="📜")
+            help_button.callback = lambda i: help_command_callback(i)
+            invite_button = discord.ui.Button(label="🤖 Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🤖")
+            view.add_item(help_button)
+            view.add_item(invite_button)
+            
+            await message.channel.send(embed=embed, view=view)
+        
+        # Check for bot owner mention in DMs
+        owner_id = os.getenv('BOT_OWNER_ID')
+        if owner_id and f"<@{owner_id}>" in message.content:
+            embed = discord.Embed(
+                title="👑 My Dev!",
+                description="*Daazo | Rio* aanu ente Developer 😎\n\nVaazha ila pidich nadakan paripichavan 🌿",
+                color=0x3498db
+            )
+            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
+            embed.set_thumbnail(url=bot.user.display_avatar.url)
+            await message.channel.send(embed=embed)
+        
+        return  # Don't process commands or XP in DMs
+    
     # Process automod first (from automod.py) but don't let it interfere with mentions
     
     # Check for bot owner mention
     owner_id = os.getenv('BOT_OWNER_ID')
     if owner_id and f"<@{owner_id}>" in message.content:
         embed = discord.Embed(
-            title="😎 **That's my Dev!** ✨",
-            description=f"**This awesome bot was crafted by <@{owner_id}>** 🛠️\n\n*Treat him well – without him, I wouldn't even exist!* 🤖💙\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            title="👑 My Dev!",
+            description="*Daazo | Rio* aanu ente Developer 😎\n\nVaazha ila pidich nadakan paripichavan 🌿",
             color=0x3498db
         )
-        embed.add_field(name="👨‍💻 **Developer**", value=f"```{BOT_OWNER_NAME}```", inline=True)
-        embed.add_field(name="🌟 **Specialty**", value="```Full-Stack Developer```", inline=True)
-        embed.add_field(name="🏠 **Location**", value="```Kerala, India 🇮🇳```", inline=True)
-        embed.add_field(name="📝 **About Dev**", value=f"*{BOT_OWNER_DESCRIPTION}*", inline=False)
-        embed.set_footer(text=f"🌴 Created with ❤️ from God's Own Country", icon_url=bot.user.display_avatar.url)
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         await message.channel.send(embed=embed)
     
     # Bot mention reply
     if bot.user in message.mentions and not message.content.startswith('/'):
         embed = discord.Embed(
-            title="👋 **Namaskaram! I'm ᴠᴀᴀᴢʜᴀ** 🌴",
-            description=f"**ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ undu. Chill aanu!** 😎\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n**🤖 Need help?** Try using `/help` to explore my features!\n**⚙️ Moderators** can use setup commands too!\n\n**Let's make this server awesome together!** 💫\n\n*{BOT_TAGLINE}*",
+            title="🌿 Enne vilicho?",
+            description="Njan *ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ* aanu 😎\nEnte Dev aanu ente thala! 💻\nEnthelum help venamo? Just type /help 😄\nvaazha ila pidichu nadakkam 🌴",
             color=0x43b581
         )
         embed.set_thumbnail(url=bot.user.display_avatar.url)
-        embed.set_footer(text="🌴 Your friendly Kerala assistant", icon_url=bot.user.display_avatar.url)
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
         
         view = discord.ui.View()
         help_button = discord.ui.Button(label="📜 Commands", style=discord.ButtonStyle.primary, emoji="📜")
