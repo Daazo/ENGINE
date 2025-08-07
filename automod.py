@@ -8,8 +8,8 @@ from main import bot, has_permission, get_server_data, update_server_data, log_a
 
 # Bad words list (can be expanded)
 BAD_WORDS = [
-    'spam', 'scam', 'hack', 'idiot', 'stupid', 'noob', 'trash', 'toxic', 
-    'hate', 'kill', 'die', 'kys', 'cancer', 'aids', 'retard', 'gay', 'fag'
+    'fuck', 'thayoli', 'poori', 'thandha', 'stupid', 'bitch', 'dick', 'andi', 
+    'pussy', 'whore', 'vedi', 'vedichi', 'slut', 'punda', 'nayinta mon', 'gay'
 ]
 
 # URL regex pattern
