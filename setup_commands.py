@@ -15,7 +15,6 @@ from main import bot, has_permission, get_server_data, update_server_data, log_a
     app_commands.Choice(name="main_moderator", value="main_moderator"),
     app_commands.Choice(name="junior_moderator", value="junior_moderator"),
     app_commands.Choice(name="welcome", value="welcome"),
-    app_commands.Choice(name="prefix", value="prefix"),
     app_commands.Choice(name="logs", value="logs"),
     app_commands.Choice(name="xp", value="xp"),
     app_commands.Choice(name="ticket_support_role", value="ticket_support_role")

@@ -35,32 +35,9 @@ else:
 # Cache for server settings
 server_cache = {}
 
-async def get_prefix(bot, message):
-    """Get custom prefix for server"""
-    if not message.guild:
-        return '!'
-    
-    guild_id = str(message.guild.id)
-    
-    # Always check database first for most up-to-date prefix
-    if db is not None:
-        server_data = await db.servers.find_one({'guild_id': guild_id})
-        if server_data and 'prefix' in server_data:
-            # Update cache
-            if guild_id not in server_cache:
-                server_cache[guild_id] = {}
-            server_cache[guild_id]['prefix'] = server_data['prefix']
-            return server_data['prefix']
-    
-    # Fallback to cache if database unavailable
-    if guild_id in server_cache and 'prefix' in server_cache[guild_id]:
-        return server_cache[guild_id]['prefix']
-    
-    return '!'
-
 # Bot setup
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
+bot = commands.Bot(command_prefix='!', intents=intents, case_insensitive=True)
 bot.remove_command('help')
 bot.start_time = time.time()
 
@@ -259,7 +236,10 @@ async def on_message(message):
     
     # Handle DM mentions
     if not message.guild:  # This is a DM
-        if bot.user in message.mentions or message.content.strip() == f"<@{bot.user.id}>" or message.content.strip() == f"<@!{bot.user.id}>":
+        # Check for bot mention in DMs
+        if (bot.user in message.mentions or 
+            f"<@{bot.user.id}>" in message.content or 
+            f"<@!{bot.user.id}>" in message.content):
             embed = discord.Embed(
                 title="🌱 Enne vilicho?",
                 description="Njan *ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ* aanu 😄\nEnte Dev aanu ente thala! 💻\nEnthelum help venamo? Just type /help ✨\nvaazha ila pidichu nadakkam 🌴",
@@ -276,10 +256,13 @@ async def on_message(message):
             view.add_item(invite_button)
             
             await message.channel.send(embed=embed, view=view)
+            return
         
-        # Check for bot owner mention in DMs - improved detection
+        # Check for owner mention in DMs
         owner_id = os.getenv('BOT_OWNER_ID')
-        if owner_id and (f"<@{owner_id}>" in message.content or f"<@!{owner_id}>" in message.content or "daazo" in message.content.lower()):
+        if owner_id and (f"<@{owner_id}>" in message.content or 
+                        f"<@!{owner_id}>" in message.content or 
+                        "daazo" in message.content.lower()):
             embed = discord.Embed(
                 title="👨‍💻 My Dev!",
                 description="*Daazo | Rio* aanu ente Developer 😎\n\nVaazha ila pidich nadakan paripichavan 🌱",
@@ -288,12 +271,63 @@ async def on_message(message):
             embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
             embed.set_thumbnail(url=bot.user.display_avatar.url)
             await message.channel.send(embed=embed)
+            return
         
-        return  # Don't process commands or XP in DMs
+        return  # Don't process other DM messages
     
-    # Check for bot owner mention - improved detection
+    # Check server data for automod settings
+    server_data = await get_server_data(message.guild.id)
+    automod_settings = server_data.get('automod', {})
+    disabled_channels = automod_settings.get('disabled_channels', [])
+    
+    # Skip automod for moderators
+    should_skip_automod = (
+        str(message.channel.id) in disabled_channels or 
+        await has_permission_user(message.author, message.guild, "junior_moderator")
+    )
+    
+    # Process automod if not skipped
+    if not should_skip_automod:
+        # Check for bad words
+        if automod_settings.get('bad_words', False):
+            content_lower = message.content.lower()
+            for bad_word in ['fuck', 'thayoli', 'poori', 'thandha', 'stupid', 'bitch', 'dick', 'andi', 
+                           'pussy', 'whore', 'vedi', 'vedichi', 'slut', 'punda', 'nayinta mon', 'gay']:
+                if bad_word in content_lower:
+                    await message.delete()
+                    embed = discord.Embed(
+                        title="🚫 Message Deleted",
+                        description=f"**{message.author.mention}**, your message contained inappropriate language!",
+                        color=0xe74c3c
+                    )
+                    warning_msg = await message.channel.send(embed=embed)
+                    await asyncio.sleep(5)
+                    await warning_msg.delete()
+                    await log_action(message.guild.id, "moderation", f"🚫 [AUTOMOD] Bad word detected from {message.author} in {message.channel}")
+                    return
+        
+        # Check for links
+        if automod_settings.get('links', False):
+            import re
+            URL_PATTERN = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+            if URL_PATTERN.search(message.content):
+                await message.delete()
+                embed = discord.Embed(
+                    title="🔗 Link Blocked",
+                    description=f"**{message.author.mention}**, links are not allowed in this channel!",
+                    color=0xe74c3c
+                )
+                warning_msg = await message.channel.send(embed=embed)
+                await asyncio.sleep(5)
+                await warning_msg.delete()
+                await log_action(message.guild.id, "moderation", f"🔗 [AUTOMOD] Link blocked from {message.author} in {message.channel}")
+                return
+    
+    # Check for owner mention - PRIORITY CHECK
     owner_id = os.getenv('BOT_OWNER_ID')
-    if owner_id and (f"<@{owner_id}>" in message.content or f"<@!{owner_id}>" in message.content or "daazo" in message.content.lower()):
+    if owner_id and (f"<@{owner_id}>" in message.content or 
+                    f"<@!{owner_id}>" in message.content or 
+                    "daazo" in message.content.lower()):
         embed = discord.Embed(
             title="👨‍💻 My Dev!",
             description="*Daazo | Rio* aanu ente Developer 😎\n\nVaazha ila pidich nadakan paripichavan 🌱",
@@ -302,9 +336,12 @@ async def on_message(message):
         embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         await message.channel.send(embed=embed)
+        return
     
-    # Bot mention reply - improved detection
-    if (bot.user in message.mentions or f"<@{bot.user.id}>" in message.content or f"<@!{bot.user.id}>" in message.content) and not message.content.startswith('/'):
+    # Check for bot mention - PRIORITY CHECK  
+    if (bot.user in message.mentions or 
+        f"<@{bot.user.id}>" in message.content or 
+        f"<@!{bot.user.id}>" in message.content) and not message.content.startswith('/'):
         embed = discord.Embed(
             title="🌱 Enne vilicho?",
             description="Njan *ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ* aanu 😄\nEnte Dev aanu ente thala! 💻\nEnthelum help venamo? Just type /help ✨\nvaazha ila pidichu nadakkam 🌴",
@@ -321,14 +358,14 @@ async def on_message(message):
         view.add_item(invite_button)
         
         await message.channel.send(embed=embed, view=view)
+        return
     
     # XP System - Give XP for ALL messages in guilds
-    if message.guild and not message.author.bot:
+    if not message.author.bot:
         xp_gain = random.randint(5, 15)
         level_up = await add_xp(message.author.id, message.guild.id, xp_gain)
         
-        if level_up:
-            server_data = await get_server_data(message.guild.id)
+        if level_up and db:
             xp_channel_id = server_data.get('xp_channel')
             
             if xp_channel_id:
@@ -344,25 +381,38 @@ async def on_message(message):
                     )
                     embed.set_thumbnail(url=message.author.display_avatar.url)
                     embed.set_footer(text="🌴 ᴠᴀᴀᴢʜᴀ XP System", icon_url=bot.user.display_avatar.url)
-                    
-                    # Try to create rank image
-                    rank_image = await create_rank_image(message.author, user_data.get('xp', 0), level)
-                    if rank_image:
-                        file = discord.File(rank_image, filename="levelup.png")
-                        embed.set_image(url="attachment://levelup.png")
-                        await xp_channel.send(embed=embed, file=file)
-                    else:
-                        await xp_channel.send(embed=embed)
-            else:
-                # Send level up message in current channel if no XP channel is set
-                embed = discord.Embed(
-                    title="🎉 **Level Up!** ✨",
-                    description=f"**{message.author.mention} reached Level {level}!** 🚀",
-                    color=0xf39c12
-                )
-                await message.channel.send(embed=embed)
+                    await xp_channel.send(embed=embed)
     
     await bot.process_commands(message)
+
+async def has_permission_user(member, guild, permission_level):
+    """Check if user has required permission level (for message events)"""
+    if member.id == guild.owner_id:
+        return True
+    
+    server_data = await get_server_data(guild.id)
+    
+    if permission_level == "main_moderator":
+        main_mod_role_id = server_data.get('main_moderator_role')
+        if main_mod_role_id:
+            main_mod_role = guild.get_role(int(main_mod_role_id))
+            return main_mod_role in member.roles
+    
+    elif permission_level == "junior_moderator":
+        junior_mod_role_id = server_data.get('junior_moderator_role')
+        main_mod_role_id = server_data.get('main_moderator_role')
+        
+        if junior_mod_role_id:
+            junior_mod_role = guild.get_role(int(junior_mod_role_id))
+            if junior_mod_role in member.roles:
+                return True
+        
+        if main_mod_role_id:
+            main_mod_role = guild.get_role(int(main_mod_role_id))
+            if main_mod_role in member.roles:
+                return True
+    
+    return False
 
 # Command error handler for automatic help
 @bot.event
