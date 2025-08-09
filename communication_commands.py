@@ -267,51 +267,7 @@ async def dm_command(interaction: discord.Interaction, user: discord.Member, mes
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
-@bot.tree.command(name="help", description="Show bot commands")
-async def help_command(interaction: discord.Interaction):
-    if not await has_permission(interaction, "everyone"):
-        await interaction.response.send_message("❌ You do not have permission to use this command!", ephemeral=True)
-        return
-
-    embed = discord.Embed(
-        title="🤖 Bot Help Menu",
-        description="Here is a list of all commands you can use:",
-        color=0x7289da
-    )
-
-    # Commands list
-    embed.add_field(name="/say", value="Make the bot say something.", inline=False)
-    embed.add_field(name="/embed", value="Send a rich embed message.", inline=False)
-    embed.add_field(name="/announce", value="Send an announcement.", inline=False)
-    embed.add_field(name="/poll", value="Create a poll.", inline=False)
-    embed.add_field(name="/reminder", value="Set a reminder.", inline=False)
-    embed.add_field(name="/dm", value="Send a DM to a user.", inline=False)
-    embed.add_field(name="/contact", value="Get bot contact information.", inline=False)
-
-    embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-@bot.tree.command(name="contact", description="Get bot contact information")
-async def contact_command(interaction: discord.Interaction):
-    if not await has_permission(interaction, "everyone"):
-        await interaction.response.send_message("❌ You do not have permission to use this command!", ephemeral=True)
-        return
-
-    owner_id = 987509760791220224 # Replace with your actual owner ID
-    owner = bot.get_user(owner_id)
-
-    embed = discord.Embed(
-        title="ℹ️ Bot Contact Information",
-        description="Here's how you can get in touch or get support for our bot:",
-        color=0x3498db
-    )
-
-    embed.add_field(name="Owner", value=f"{owner.mention if owner else 'Owner not found'}", inline=True)
-    embed.add_field(name="Contact Email", value="[your_email@example.com](mailto:your_email@example.com)", inline=False) # Replace with your email
-    embed.add_field(name="Support Server", value="[Join our Support Server](https://discord.gg/your_server_invite)", inline=False) # Replace with your invite
-
-    embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+# Help and contact commands are handled in main.py to avoid duplicates
 
 @bot.event
 async def on_message(message):
