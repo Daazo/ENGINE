@@ -10,7 +10,7 @@ async def rank(interaction: discord.Interaction, user: discord.Member = None):
     from main import get_server_data
     server_data = await get_server_data(interaction.guild.id)
     xp_commands_channel_id = server_data.get('xp_commands_channel')
-    
+
     if xp_commands_channel_id and str(interaction.channel.id) != xp_commands_channel_id:
         xp_channel = bot.get_channel(int(xp_commands_channel_id))
         embed = discord.Embed(
@@ -71,7 +71,7 @@ async def leaderboard(interaction: discord.Interaction):
     from main import get_server_data
     server_data = await get_server_data(interaction.guild.id)
     xp_commands_channel_id = server_data.get('xp_commands_channel')
-    
+
     if xp_commands_channel_id and str(interaction.channel.id) != xp_commands_channel_id:
         xp_channel = bot.get_channel(int(xp_commands_channel_id))
         embed = discord.Embed(
@@ -99,24 +99,9 @@ async def leaderboard(interaction: discord.Interaction):
         return
 
     embed = discord.Embed(
-        title="🏆 XP Leaderboard",
-        description="Top 10 users by XP",
+        title="📊 **Server Leaderboard** 🏆",
+        description=leaderboard_text,
         color=0xf39c12
     )
-
-    leaderboard_text = ""
-    for i, user_data in enumerate(users_sorted, 1):
-        try:
-            user = bot.get_user(int(user_data['user_id']))
-            if user:
-                xp = user_data.get('xp', 0)
-                level = user_data.get('level', 1)
-
-                medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-                leaderboard_text += f"{medal} **{user.display_name}** - Level {level} ({xp:,} XP)\n"
-        except:
-            continue
-
-    embed.description = leaderboard_text or "No users found"
     embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
     await interaction.response.send_message(embed=embed)

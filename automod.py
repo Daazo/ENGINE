@@ -76,6 +76,7 @@ async def automod_setup(
             description=f"**Channel:** {channel.mention}\n**Status:** {action.title()}",
             color=0x43b581 if action == "enabled" else 0xf39c12
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         
     else:
@@ -97,6 +98,7 @@ async def automod_setup(
             description=f"**Feature:** {feature_names[feature]}\n**Status:** {'Enabled' if enabled else 'Disabled'}",
             color=0x43b581 if enabled else 0xe74c3c
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
     
     await log_action(interaction.guild.id, "setup", f"🛡️ [AUTOMOD] {feature} configured by {interaction.user}")

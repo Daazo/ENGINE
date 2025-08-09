@@ -50,6 +50,7 @@ async def setup(
             description=f"**Role:** {role.mention}\n**Set by:** {interaction.user.mention}",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Main moderator role set to {role.name} by {interaction.user}")
 
@@ -65,6 +66,7 @@ async def setup(
             description=f"**Role:** {role.mention}\n**Set by:** {interaction.user.mention}",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Junior moderator role set to {role.name} by {interaction.user}")
 
@@ -83,6 +85,7 @@ async def setup(
             description=f"**Channel:** {channel.mention}\n**Message:** {value}\n**Set by:** {interaction.user.mention}",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Welcome channel set to {channel.name} by {interaction.user}")
 
@@ -125,6 +128,7 @@ async def setup(
             description=f"**Log Type:** {value}\n**Channel:** {channel.mention}\n**Set by:** {interaction.user.mention}",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] {value} log channel set to {channel.name} by {interaction.user}")
 
@@ -140,6 +144,7 @@ async def setup(
             description=f"**Channel:** {channel.mention}\n**Set by:** {interaction.user.mention}",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] XP channel set to {channel.name} by {interaction.user}")
         
@@ -155,6 +160,7 @@ async def setup(
             description=f"**Channel:** {channel.mention}\n**Set by:** {interaction.user.mention}\n\n*XP rank and leaderboard commands will only work in this channel.*",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] XP commands channel set to {channel.name} by {interaction.user}")
 
@@ -170,5 +176,6 @@ async def setup(
             description=f"**Role:** {role.mention}\n**Set by:** {interaction.user.mention}\n\n*This role will be mentioned when tickets are created.*",
             color=0x43b581
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Ticket support role set to {role.name} by {interaction.user}")

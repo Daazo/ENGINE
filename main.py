@@ -237,26 +237,34 @@ async def on_message(message):
     
     # Handle DM mentions
     if not message.guild:  # This is a DM
-        # Check for bot mention in DMs
+        # Check for bot mention in DMs - Send contact info
         if (bot.user in message.mentions or 
             f"<@{bot.user.id}>" in message.content or 
             f"<@!{bot.user.id}>" in message.content):
-            owner_id = os.getenv('BOT_OWNER_ID')
-            owner_mention = f"<@{owner_id}>" if owner_id else "Contact via server"
+            
+            # Send contact info in DMs
+            bot_owner_id = os.getenv('BOT_OWNER_ID')
+            contact_email = os.getenv('CONTACT_EMAIL')
+            support_server = os.getenv('SUPPORT_SERVER_LINK')
+            
+            owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
+            email_text = contact_email if contact_email else "Not available"
+            support_text = support_server if support_server else "Contact owner for invite"
             
             embed = discord.Embed(
-                title="👋🏼 Hello, I'm Vaazha Bot",
-                description=f"🍁Vaazha Bot anne – your server's assistant.\n🌴 Enthenkilum help venel, type /help.\nNeed assistance? Contact: {owner_mention}",
-                color=0x43b581
+                title="📞 **Contact Information & Support**",
+                description=f"*Hello! Here's how to get help or get in touch:*\n\n**👨‍💻 Developer:** {owner_mention}\n**📧 Email:** `{email_text}`\n**🏠 Support Server:** {support_text}\n\n*Need quick help? Use `/help` in any server!*",
+                color=0x3498db
             )
             embed.set_thumbnail(url=bot.user.display_avatar.url)
-            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
+            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ", icon_url=bot.user.display_avatar.url)
             
             view = discord.ui.View()
-            help_button = discord.ui.Button(label="📋 Commands", style=discord.ButtonStyle.primary, emoji="📋")
-            help_button.callback = lambda i: help_command_callback(i)
+            if support_server:
+                support_button = discord.ui.Button(label="🏠 Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
+                view.add_item(support_button)
+            
             invite_button = discord.ui.Button(label="🔗 Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🔗")
-            view.add_item(help_button)
             view.add_item(invite_button)
             
             sent_message = await message.channel.send(embed=embed, view=view)
@@ -920,6 +928,10 @@ class HelpView(discord.ui.View):
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         await interaction.response.edit_message(embed=embed, view=self)
     
+    @discord.ui.button(label="Contact & Support", style=discord.ButtonStyle.secondary, emoji="📞", row=2)
+    async def contact_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await contact_info(interaction)
+    
     @discord.ui.button(label="Recent Updates", style=discord.ButtonStyle.success, emoji="🌴", row=2)
     async def recent_updates_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
@@ -1070,6 +1082,66 @@ async def serverinfo(interaction: discord.Interaction):
     
     embed.set_footer(text=f"🌴 Requested by {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
+
+# Contact info command
+@bot.tree.command(name="contact", description="📞 Get bot contact information and support details")
+async def contact_info(interaction: discord.Interaction):
+    bot_owner_id = os.getenv('BOT_OWNER_ID')
+    contact_email = os.getenv('CONTACT_EMAIL')
+    support_server = os.getenv('SUPPORT_SERVER_LINK')
+    
+    owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
+    email_text = contact_email if contact_email else "Not available"
+    support_text = support_server if support_server else "Contact owner for invite"
+    
+    embed = discord.Embed(
+        title="📞 **Contact Information & Support**",
+        description=f"*Need help or want to get in touch? Here's how to reach us!*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        color=0x3498db
+    )
+    
+    embed.add_field(
+        name="👨‍💻 **Bot Developer**",
+        value=f"**Name:** {BOT_OWNER_NAME}\n**Discord:** {owner_mention}\n**About:** {BOT_OWNER_DESCRIPTION}",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="📧 **Email Support**",
+        value=f"**Email:** `{email_text}`\n*For business inquiries, partnerships, or detailed support*",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🏠 **Support Server**",
+        value=f"**Join:** {support_text}\n*Get instant help, report bugs, suggest features, and chat with the community*",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🤖 **Bot Information**",
+        value=f"**Servers:** {len(bot.guilds)}\n**Invite Bot:** [Click Here](https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands)\n**Version:** Latest",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="⚡ **Quick Support**",
+        value="🔸 **Mention the owner** in any server with the bot\n🔸 **Use `/help`** for command assistance\n🔸 **Check recent updates** with help menu",
+        inline=False
+    )
+    
+    embed.set_thumbnail(url=bot.user.display_avatar.url)
+    embed.set_footer(text="ᴠᴀᴀᴢʜᴀ", icon_url=bot.user.display_avatar.url)
+    
+    view = discord.ui.View()
+    if support_server:
+        support_button = discord.ui.Button(label="🏠 Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
+        view.add_item(support_button)
+    
+    invite_button = discord.ui.Button(label="🤖 Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🤖")
+    view.add_item(invite_button)
+    
+    await interaction.response.send_message(embed=embed, view=view)
 
 # Import command modules
 from setup_commands import *
