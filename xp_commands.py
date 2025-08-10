@@ -178,7 +178,39 @@ async def check_karma(interaction: discord.Interaction, user: discord.Member = N
 
 @bot.tree.command(name="mykarma", description="Check your own karma points quickly")
 async def my_karma(interaction: discord.Interaction):
-    await check_karma(interaction, interaction.user)
+    target_user = interaction.user
+
+    if db is None:
+        await interaction.response.send_message("❌ Database not connected!", ephemeral=True)
+        return
+
+    user_data = await db.karma.find_one({'user_id': str(target_user.id), 'guild_id': str(interaction.guild.id)})
+
+    if not user_data:
+        karma = 0
+    else:
+        karma = user_data.get('karma', 0)
+
+    # Get user rank
+    users_sorted = await db.karma.find({'guild_id': str(interaction.guild.id)}).sort('karma', -1).to_list(None)
+    rank = next((i + 1 for i, u in enumerate(users_sorted) if u['user_id'] == str(target_user.id)), len(users_sorted) + 1)
+
+    # Calculate progress to next milestone
+    next_milestone = ((karma // 5) + 1) * 5
+    progress = karma % 5
+    progress_bar = "█" * progress + "░" * (5 - progress)
+
+    embed = discord.Embed(
+        title=f"✨ {target_user.display_name}'s Karma",
+        color=0x3498db
+    )
+    embed.set_thumbnail(url=target_user.display_avatar.url)
+    embed.add_field(name="🌟 Karma Points", value=f"**{karma}** points", inline=True)
+    embed.add_field(name="🏆 Server Rank", value=f"#{rank}", inline=True)
+    embed.add_field(name="📊 Progress to Next Milestone", value=f"`{progress_bar}` {progress}/5\n*Next milestone: {next_milestone} karma*", inline=False)
+    embed.set_footer(text="🌟 Karma reflects positive contributions!", icon_url=bot.user.display_avatar.url)
+
+    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="karmaboard", description="Show server karma leaderboard with top 10 contributors")
 async def karma_leaderboard(interaction: discord.Interaction):
