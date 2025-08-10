@@ -1,3 +1,4 @@
+
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -36,6 +37,7 @@ async def rank(interaction: discord.Interaction, user: discord.Member = None):
             description=f"{target_user.display_name} has not gained any XP yet!",
             color=0xe74c3c
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -95,8 +97,29 @@ async def leaderboard(interaction: discord.Interaction):
             description="No users have gained XP yet!",
             color=0xe74c3c
         )
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         return
+
+    # Build leaderboard text
+    leaderboard_text = ""
+    for i, user_data in enumerate(users_sorted):
+        user = bot.get_user(int(user_data['user_id']))
+        if user:
+            level = user_data.get('level', 1)
+            xp = user_data.get('xp', 0)
+            
+            # Medal emojis for top 3
+            if i == 0:
+                medal = "🥇"
+            elif i == 1:
+                medal = "🥈"
+            elif i == 2:
+                medal = "🥉"
+            else:
+                medal = f"**{i+1}.**"
+            
+            leaderboard_text += f"{medal} **{user.display_name}** - Level {level} ({xp:,} XP)\n"
 
     embed = discord.Embed(
         title="📊 **Server Leaderboard** 🏆",
@@ -105,3 +128,56 @@ async def leaderboard(interaction: discord.Interaction):
     )
     embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
     await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="resetxp", description="Reset XP data for user or server")
+@app_commands.describe(
+    scope="Reset scope",
+    user="User to reset (if scope is user)"
+)
+@app_commands.choices(scope=[
+    app_commands.Choice(name="user", value="user"),
+    app_commands.Choice(name="server", value="server")
+])
+async def reset_xp(interaction: discord.Interaction, scope: str, user: discord.Member = None):
+    if not await has_permission(interaction, "main_moderator"):
+        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        return
+
+    if db is None:
+        await interaction.response.send_message("❌ Database not connected!", ephemeral=True)
+        return
+
+    if scope == "user":
+        if not user:
+            await interaction.response.send_message("❌ Please specify a user to reset!", ephemeral=True)
+            return
+        
+        result = await db.users.delete_one({'user_id': str(user.id), 'guild_id': str(interaction.guild.id)})
+        
+        if result.deleted_count > 0:
+            embed = discord.Embed(
+                title="✅ User XP Reset",
+                description=f"**User:** {user.mention}\n**Action:** XP data has been reset\n**Reset by:** {interaction.user.mention}",
+                color=0x43b581
+            )
+        else:
+            embed = discord.Embed(
+                title="❌ User Not Found",
+                description=f"{user.mention} has no XP data to reset.",
+                color=0xe74c3c
+            )
+        
+    elif scope == "server":
+        result = await db.users.delete_many({'guild_id': str(interaction.guild.id)})
+        
+        embed = discord.Embed(
+            title="✅ Server XP Reset",
+            description=f"**Action:** All XP data has been reset\n**Users affected:** {result.deleted_count}\n**Reset by:** {interaction.user.mention}",
+            color=0x43b581
+        )
+    
+    embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
+    await interaction.response.send_message(embed=embed)
+    
+    from main import log_action
+    await log_action(interaction.guild.id, "moderation", f"🔄 [XP RESET] {scope} reset by {interaction.user}")

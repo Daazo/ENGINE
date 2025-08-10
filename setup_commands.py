@@ -14,6 +14,7 @@ from main import bot, has_permission, get_server_data, update_server_data, log_a
     app_commands.Choice(name="main_moderator", value="main_moderator"),
     app_commands.Choice(name="junior_moderator", value="junior_moderator"),
     app_commands.Choice(name="welcome", value="welcome"),
+    app_commands.Choice(name="welcome_image", value="welcome_image"),
     app_commands.Choice(name="logs", value="logs"),
     app_commands.Choice(name="xp", value="xp"),
     app_commands.Choice(name="ticket_support_role", value="ticket_support_role"),
@@ -88,6 +89,28 @@ async def setup(
         embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Welcome channel set to {channel.name} by {interaction.user}")
+
+    elif action == "welcome_image":
+        if not value:
+            await interaction.response.send_message("❌ Please specify an image URL for welcome messages!", ephemeral=True)
+            return
+
+        # Basic URL validation
+        if not (value.startswith('http://') or value.startswith('https://')):
+            await interaction.response.send_message("❌ Please provide a valid image URL (starting with http:// or https://)", ephemeral=True)
+            return
+
+        await update_server_data(interaction.guild.id, {'welcome_image': value})
+
+        embed = discord.Embed(
+            title="✅ Welcome Image Set",
+            description=f"**Image URL:** {value}\n**Set by:** {interaction.user.mention}",
+            color=0x43b581
+        )
+        embed.set_image(url=value)
+        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ")
+        await interaction.response.send_message(embed=embed)
+        await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Welcome image set by {interaction.user}")
 
     elif action == "prefix":
         if not value:

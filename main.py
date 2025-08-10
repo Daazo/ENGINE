@@ -209,6 +209,10 @@ async def on_ready():
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         print(f"Failed to sync commands: {e}")
+    
+    # Start MongoDB ping task
+    if mongo_client:
+        bot.loop.create_task(ping_mongodb())
 
 @bot.event
 async def on_guild_join(guild):
@@ -570,12 +574,26 @@ async def send_command_help(interaction: discord.Interaction, command_name: str)
 
 @bot.event
 async def on_member_join(member):
-    """Send welcome message and DM"""
+    """Send welcome message, DM, and assign auto role"""
     server_data = await get_server_data(member.guild.id)
+    
+    # Auto role assignment
+    auto_role_id = server_data.get('auto_role')
+    if auto_role_id:
+        auto_role = member.guild.get_role(int(auto_role_id))
+        if auto_role:
+            try:
+                await member.add_roles(auto_role, reason="Auto role assignment")
+                await log_action(member.guild.id, "moderation", f"🎭 [AUTO ROLE] {auto_role.name} assigned to {member}")
+            except discord.Forbidden:
+                print(f"Missing permissions to assign auto role to {member}")
+            except Exception as e:
+                print(f"Failed to assign auto role: {e}")
     
     # Send welcome message to channel
     welcome_channel_id = server_data.get('welcome_channel')
     welcome_message = server_data.get('welcome_message', f"Welcome {member.mention} to {member.guild.name}!")
+    welcome_image = server_data.get('welcome_image')
     
     if welcome_channel_id:
         welcome_channel = bot.get_channel(int(welcome_channel_id))
@@ -589,6 +607,11 @@ async def on_member_join(member):
                 color=0x43b581
             )
             embed.set_thumbnail(url=member.display_avatar.url)
+            
+            # Add welcome image/gif if set
+            if welcome_image:
+                embed.set_image(url=welcome_image)
+            
             embed.set_footer(text=f"🌴 Member #{member.guild.member_count}", icon_url=member.guild.icon.url if member.guild.icon else None)
             await welcome_channel.send(embed=embed)
     
@@ -1143,6 +1166,18 @@ async def contact_info(interaction: discord.Interaction):
     
     await interaction.response.send_message(embed=embed, view=view)
 
+# MongoDB keep-alive function
+async def ping_mongodb():
+    """Ping MongoDB to keep connection alive"""
+    while True:
+        try:
+            if mongo_client:
+                await mongo_client.admin.command('ping')
+                print("🔄 MongoDB ping successful")
+        except Exception as e:
+            print(f"❌ MongoDB ping failed: {e}")
+        await asyncio.sleep(300)  # Ping every 5 minutes
+
 # Import command modules
 from setup_commands import *
 from moderation_commands import *
@@ -1151,12 +1186,19 @@ from xp_commands import *
 from reaction_roles import *
 from ticket_system import *
 from automod import *
+from autorole import *
 
 # Try to import voice commands
 try:
     from voice_commands import *
 except ImportError:
     print("Voice commands module not found, skipping...")
+
+# Try to import music system
+try:
+    from music_system import *
+except ImportError:
+    print("Music system module not found, skipping...")
 
 # Run the bot with error handling
 if __name__ == "__main__":
