@@ -16,7 +16,7 @@ from main import bot, has_permission, get_server_data, update_server_data, log_a
     app_commands.Choice(name="welcome", value="welcome"),
     app_commands.Choice(name="welcome_image", value="welcome_image"),
     app_commands.Choice(name="logs", value="logs"),
-    app_commands.Choice(name="karma", value="karma"),
+    app_commands.Choice(name="karma_channel", value="karma_channel"),
     app_commands.Choice(name="ticket_support_role", value="ticket_support_role"),
     app_commands.Choice(name="auto_role", value="auto_role")
 ])
@@ -155,7 +155,7 @@ async def setup(
         await interaction.response.send_message(embed=embed)
         await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] {value} log channel set to {channel.name} by {interaction.user}")
 
-    elif action == "karma":
+    elif action == "karma_channel":
         if not channel:
             await interaction.response.send_message("❌ Please specify a channel for karma announcements!", ephemeral=True)
             return
