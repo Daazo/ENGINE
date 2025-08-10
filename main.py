@@ -764,7 +764,7 @@ class HelpView(discord.ui.View):
     async def advanced_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🎭 **Advanced Features & Tools**",
-            description="*Powerful features like reaction roles and automated systems.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            description="*Powerful features like reaction roles, timed roles, pets, and profile cards.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
             color=0xe67e22
         )
         embed.add_field(
@@ -774,20 +774,29 @@ class HelpView(discord.ui.View):
         )
         
         embed.add_field(
-            name="📊 **Comprehensive Logging System**", 
-            value="**All Logs:** Combined logging channel for everything\n**Moderation:** Kicks, bans, mutes, voice actions\n**XP System:** Level ups and ranking changes\n**Tickets:** Creation, closing, reopening events\n**Setup:** All configuration changes\n**Communication:** Announcements, polls, messages", 
+            name="⏰ **Timed Role System** (NEW!)", 
+            value="**🟡 `/giverole @user <role> <duration>`** - Assign role that expires automatically\n**🟡 `/removerole @user <role>`** - Manually remove roles\n**🟡 `/timedroles`** - View all active timed roles\n**Auto-removal:** Roles expire automatically with DM notifications\n**Examples:** `/giverole @user @TrialMod 7d` (7 days)", 
             inline=False
         )
+        
+        embed.add_field(
+            name="🐾 **Virtual Pet System** (NEW!)", 
+            value="**🟢 `/adoptpet <name>`** - Adopt your virtual companion\n**🟢 `/petinfo [@user]`** - Check pet stats and status\n**🟢 `/feedpet`** - Feed pet to improve mood (1h cooldown)\n**🟢 `/playpet`** - Play with pet for XP (1h cooldown)\n**🟢 `/dailypet`** - Daily login bonus (24h cooldown)\n**Auto-Growth:** Pets gain XP from your messages and level up!", 
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🎨 **Profile Cards** (NEW!)", 
+            value="**🟢 `/profile [@user]`** - Generate beautiful visual profile cards\n**🟢 `/profilesetup background:<style> color:<hex>`** - Customize card appearance\n**Features:** Shows karma, pet info, roles, join date, and rank with stunning graphics", 
+            inline=False
+        )
+        
         embed.add_field(
             name="🌐 **Multi-Server Intelligence**", 
-            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated XP tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
+            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
             inline=False
         )
-        embed.add_field(
-            name="🤖 **Automatic Background Features**", 
-            value="👋 **Welcome DMs** - Professional messages to new members\n💔 **Goodbye DMs** - Farewell messages when members leave\n🎉 **Level Up Cards** - Beautiful rank card generation\n📊 **Live Server Count** - Bot status shows current servers\n⚡ **Real-time Logs** - Instant logging with timestamps", 
-            inline=False
-        )
+        
         embed.set_footer(text="🟢 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -837,26 +846,31 @@ class HelpView(discord.ui.View):
             color=0x43b581
         )
         embed.add_field(
-            name="🆕 **Enhanced Reaction Karma System** (Latest!)", 
-            value="**NEW:** Added negative reactions (👎 💀 😴 🤮 🗿) that remove karma!\n**UPDATED:** Reduced cooldown from 5 minutes to 3 minutes\n**IMPROVED:** More positive reactions added (🔥 💯 ✨)", 
+            name="🆕 **THREE MAJOR NEW FEATURES!** (Latest!)", 
+            value="⏰ **Timed Roles** - Assign roles that expire automatically!\n🐾 **Virtual Pet System** - Adopt and level up cute companions!\n🎨 **Profile Cards** - Beautiful visual profile cards with PIL graphics!\n\n*These are HUGE additions with full MongoDB integration!*", 
             inline=False
         )
         embed.add_field(
-            name="🆕 **Regular Members Can Now Give Karma** (Latest!)", 
-            value="**CHANGED:** All members can now give karma using `/givekarma`!\n**FAIR:** 3-minute cooldown for everyone (1 minute for main mods)\n**DEMOCRATIC:** Community-driven karma system for all!", 
+            name="⏰ **Timed Role System Details**", 
+            value="**NEW Commands:** `/giverole`, `/removerole`, `/timedroles`\n**Smart Features:** Auto-removal with DM notifications\n**Duration Support:** 5m, 2h, 3d, 1w formats\n**Perfect for:** Trial staff, event roles, temporary access", 
             inline=False
         )
         embed.add_field(
-            name="🆕 **Welcome System Enhanced** (Latest!)", 
-            value="**FIXED:** Welcome images/GIFs now display properly in announcements\n**PROFESSIONAL:** Beautiful welcome embeds with member count\n**PERSONAL:** Welcome DMs sent to new members with bot info", 
+            name="🐾 **Virtual Pet System Details**", 
+            value="**Pet Commands:** `/adoptpet`, `/petinfo`, `/feedpet`, `/playpet`, `/dailypet`\n**Growth System:** Pets level up from messages and interactions\n**Karma Rewards:** Pet level-ups give bonus karma points!\n**Mood System:** Happy pets give better XP bonuses", 
             inline=False
         )
         embed.add_field(
-            name="✅ **Previous Updates**", 
-            value="🔧 **Mention Replies Fixed** - Bot and owner mentions work perfectly\n🧹 **Slash Commands Only** - Cleaner command system\n🤖 **Smoother Automod** - Better integration without conflicts", 
+            name="🎨 **Profile Card System Details**", 
+            value="**Visual Profiles:** Beautiful generated cards with PIL\n**Custom Backgrounds:** Multiple styles and custom hex colors\n**Complete Stats:** Shows karma, pet, roles, join date, progress bars\n**High Quality:** 800x600 PNG images with gradients and decorations", 
             inline=False
         )
-        embed.set_footer(text="🌴 Made with ❤️ by Daazo from God's Own Country • Last updated today!", icon_url=bot.user.display_avatar.url)
+        embed.add_field(
+            name="🔄 **Previous Updates**", 
+            value="✨ **Enhanced Karma System** - Negative reactions, reduced cooldowns\n👋 **Better Welcome System** - Images, embeds, DMs\n🔧 **Fixed Mentions** - Bot and owner mentions work perfectly", 
+            inline=False
+        )
+        embed.set_footer(text="🌴 Made with ❤️ by Daazo from God's Own Country • MAJOR UPDATE TODAY!", icon_url=bot.user.display_avatar.url)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -1060,6 +1074,9 @@ from xp_commands import *  # Karma system only
 from reaction_roles import *
 from ticket_system import *
 from timeout_system import *
+from timed_roles import *
+from pet_system import *
+from profile_cards import *
 
 from autorole import *
 
