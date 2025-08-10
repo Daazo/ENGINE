@@ -127,7 +127,9 @@ async def has_permission(interaction, permission_level):
 # Bot Events
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has landed in Kerala! 🌴')
+    print(f'🌴 {bot.user} has landed in Kerala! 🌴')
+    print(f"🌐 Connected to {len(bot.guilds)} servers")
+    
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching,
@@ -143,18 +145,30 @@ async def on_ready():
         
         # List all synced commands for debugging
         command_names = [cmd.name for cmd in synced]
-        print(f"📋 Synced commands: {', '.join(command_names)}")
+        print(f"📋 All synced commands: {', '.join(sorted(command_names))}")
         
         # Check if new commands are included
         new_commands = ['adoptpet', 'petinfo', 'feedpet', 'playpet', 'dailypet', 'giverole', 'removerole', 'timedroles', 'profile', 'profilesetup']
+        missing_commands = []
+        present_commands = []
+        
         for cmd in new_commands:
             if cmd in command_names:
-                print(f"✅ {cmd} command registered")
+                present_commands.append(cmd)
             else:
-                print(f"❌ {cmd} command NOT registered")
+                missing_commands.append(cmd)
+        
+        if present_commands:
+            print(f"✅ NEW COMMANDS REGISTERED: {', '.join(present_commands)}")
+        if missing_commands:
+            print(f"❌ MISSING COMMANDS: {', '.join(missing_commands)}")
+        
+        print(f"🎯 COMMAND SYNC STATUS: {len(present_commands)}/{len(new_commands)} new commands registered")
                 
     except Exception as e:
         print(f"❌ Failed to sync commands: {e}")
+        import traceback
+        traceback.print_exc()
     
     # Add persistent views for ticket system
     try:
@@ -165,13 +179,24 @@ async def on_ready():
         print("✅ Persistent views added for ticket system")
     except Exception as e:
         print(f"❌ Failed to add persistent views: {e}")
+        import traceback
+        traceback.print_exc()
     
     # Start MongoDB ping task
     if mongo_client:
-        bot.loop.create_task(ping_mongodb())
-        print("✅ MongoDB ping task started")
+        try:
+            bot.loop.create_task(ping_mongodb())
+            print("✅ MongoDB ping task started")
+            # Test MongoDB connection
+            await mongo_client.admin.command('ping')
+            print("✅ MongoDB connection verified")
+        except Exception as e:
+            print(f"❌ MongoDB connection failed: {e}")
+    else:
+        print("⚠️ No MongoDB URI found - database features disabled")
     
-    print("🎉 Bot startup complete! All systems ready.")
+    print("🎉 VAAZHA Bot startup complete! All systems ready.")
+    print(f"🚀 Bot is now online and serving {len(bot.guilds)} servers!")
 
 @bot.event
 async def on_guild_join(guild):
@@ -1124,22 +1149,58 @@ async def ping_mongodb():
         await asyncio.sleep(300)  # Ping every 5 minutes
 
 # Import command modules
-from setup_commands import *
-from moderation_commands import *
-from communication_commands import *
-from xp_commands import *  # Karma system only
-from reaction_roles import *
-from ticket_system import *
-from timeout_system import *
+print("🔄 Loading core command modules...")
+
+try:
+    from setup_commands import *
+    print("✅ Setup commands loaded")
+except Exception as e:
+    print(f"❌ Setup commands failed: {e}")
+
+try:
+    from moderation_commands import *
+    print("✅ Moderation commands loaded")
+except Exception as e:
+    print(f"❌ Moderation commands failed: {e}")
+
+try:
+    from communication_commands import *
+    print("✅ Communication commands loaded")
+except Exception as e:
+    print(f"❌ Communication commands failed: {e}")
+
+try:
+    from xp_commands import *  # Karma system only
+    print("✅ Karma system loaded")
+except Exception as e:
+    print(f"❌ Karma system failed: {e}")
+
+try:
+    from reaction_roles import *
+    print("✅ Reaction roles loaded")
+except Exception as e:
+    print(f"❌ Reaction roles failed: {e}")
+
+try:
+    from ticket_system import *
+    print("✅ Ticket system loaded")
+except Exception as e:
+    print(f"❌ Ticket system failed: {e}")
+
+try:
+    from timeout_system import *
+    print("✅ Timeout system loaded")
+except Exception as e:
+    print(f"❌ Timeout system failed: {e}")
 
 # Import new features - ensure they load properly
-print("🔄 Loading new features...")
+print("🔄 Loading NEW FEATURES...")
 
 try:
     from timed_roles import *
     print("✅ Timed roles system loaded (commands: giverole, removerole, timedroles)")
 except Exception as e:
-    print(f"❌ Failed to load timed roles: {e}")
+    print(f"❌ CRITICAL: Timed roles failed to load: {e}")
     import traceback
     traceback.print_exc()
 
@@ -1147,7 +1208,7 @@ try:
     from pet_system import *
     print("✅ Pet system loaded (commands: adoptpet, petinfo, feedpet, playpet, dailypet)")
 except Exception as e:
-    print(f"❌ Failed to load pet system: {e}")
+    print(f"❌ CRITICAL: Pet system failed to load: {e}")
     import traceback
     traceback.print_exc()
 
@@ -1155,13 +1216,17 @@ try:
     from profile_cards import *
     print("✅ Profile cards system loaded (commands: profile, profilesetup)")
 except Exception as e:
-    print(f"❌ Failed to load profile cards: {e}")
+    print(f"❌ CRITICAL: Profile cards failed to load: {e}")
     import traceback
     traceback.print_exc()
 
-print("✅ All new features import complete!")
+try:
+    from autorole import *
+    print("✅ Auto role system loaded")
+except Exception as e:
+    print(f"❌ Auto role system failed: {e}")
 
-from autorole import *
+print("✅ All command modules loading complete!")
 
 # Try to import voice commands
 try:
