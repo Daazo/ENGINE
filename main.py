@@ -242,53 +242,7 @@ async def on_message(message):
         
         return  # Don't process other DM messages
     
-    # Check server data for automod settings
-    server_data = await get_server_data(message.guild.id)
-    automod_settings = server_data.get('automod', {})
-    disabled_channels = automod_settings.get('disabled_channels', [])
     
-    # Skip automod for moderators
-    should_skip_automod = (
-        str(message.channel.id) in disabled_channels or 
-        await has_permission_user(message.author, message.guild, "junior_moderator")
-    )
-    
-    # Process automod if not skipped
-    if not should_skip_automod:
-        # Check for bad words
-        if automod_settings.get('bad_words', False):
-            content_lower = message.content.lower()
-            for bad_word in ['fuck', 'thayoli', 'poori', 'thandha', 'stupid', 'bitch', 'dick', 'andi', 
-                           'pussy', 'whore', 'vedi', 'vedichi', 'slut', 'punda', 'nayinta mon', 'gay']:
-                if bad_word in content_lower:
-                    await message.delete()
-                    embed = discord.Embed(
-                        title="🚫 Message Deleted",
-                        description=f"**{message.author.mention}**, your message contained inappropriate language!",
-                        color=0xe74c3c
-                    )
-                    warning_msg = await message.channel.send(embed=embed)
-                    await asyncio.sleep(5)
-                    await warning_msg.delete()
-                    await log_action(message.guild.id, "moderation", f"🚫 [AUTOMOD] Bad word detected from {message.author} in {message.channel}")
-                    return
-        
-        # Check for links
-        if automod_settings.get('links', False):
-            import re
-            URL_PATTERN = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-            if URL_PATTERN.search(message.content):
-                await message.delete()
-                embed = discord.Embed(
-                    title="🔗 Link Blocked",
-                    description=f"**{message.author.mention}**, links are not allowed in this channel!",
-                    color=0xe74c3c
-                )
-                warning_msg = await message.channel.send(embed=embed)
-                await asyncio.sleep(5)
-                await warning_msg.delete()
-                await log_action(message.guild.id, "moderation", f"🔗 [AUTOMOD] Link blocked from {message.author} in {message.channel}")
-                return
     
     # Check for owner mention - PRIORITY CHECK
     owner_id = os.getenv('BOT_OWNER_ID')
@@ -447,11 +401,7 @@ async def send_command_help(interaction: discord.Interaction, command_name: str)
             "description": "**Usage:** `/reactionrole message:\"text\" emoji:😀 role:@role channel:#channel`\n\n**What it does:** Sets up reaction roles for users\n**Permission:** 🔴 Main Moderator only\n\n**Example:** `/reactionrole message:\"React for roles!\" emoji:😀 role:@Member channel:#roles`",
             "color": 0x9b59b6
         },
-        "automod": {
-            "title": "🛡️ **AUTOMOD Command Help**",
-            "description": "**Usage:** `/automod feature:bad_words enabled:True`\n\n**What it does:** Configure auto moderation features\n**Features:** bad_words, links, spam, disable_channel\n**Permission:** 🔴 Main Moderator only\n\n**Example:** `/automod feature:bad_words enabled:True`",
-            "color": 0xe74c3c
-        },
+        
         "ticketsetup": {
             "title": "🎫 **TICKET SETUP Command Help**",
             "description": "**Usage:** `/ticketsetup action:open category:#tickets channel:#support description:\"Need help?\"`\n\n**What it does:** Sets up support ticket system\n**Actions:** open, close\n**Permission:** 🔴 Main Moderator only\n\n**Example:** `/ticketsetup action:open category:#tickets channel:#support`",
@@ -651,11 +601,7 @@ class HelpView(discord.ui.View):
             value="**`/mute @user`** - Mute user in voice channel\n**`/unmute @user`** - Unmute user in voice channel\n**`/movevc @user #channel`** - Move user to different voice channel\n**`/vckick @user`** - Kick user from voice channel\n**`/vclock`** - Lock current voice channel\n**`/vcunlock`** - Unlock voice channel\n**`/vclimit <0-99>`** - Set voice channel user limit", 
             inline=False
         )
-        embed.add_field(
-            name="🔴 `/automod feature enabled`", 
-            value="**Usage:** `/automod feature:bad_words enabled:True`\n**Features:** bad_words, links, spam, disable_channel\n**Description:** Configure automatic moderation system to keep server safe", 
-            inline=False
-        )
+        
         embed.set_footer(text="🟢 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -813,7 +759,7 @@ class HelpView(discord.ui.View):
     async def advanced_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🎭 **Advanced Features & Tools**",
-            description="*Powerful features like reaction roles and the automated automod system.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            description="*Powerful features like reaction roles and automated systems.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
             color=0xe67e22
         )
         embed.add_field(
@@ -821,11 +767,7 @@ class HelpView(discord.ui.View):
             value="**Usage:** `/reactionrole message:\"React for roles!\" emoji:😀 role:@Member channel:#roles`\n**Description:** Setup reaction roles for automatic self-assignment\n**Features:** Users get/lose roles by reacting to messages", 
             inline=False
         )
-        embed.add_field(
-            name="🔴 **Smart Auto Moderation**", 
-            value="**`/automod feature:bad_words enabled:True`** - Filter inappropriate language automatically\n**`/automod feature:links enabled:True`** - Block unwanted links\n**`/automod feature:spam enabled:True`** - Anti-spam protection\n**`/automod feature:disable_channel channel:#staff`** - Disable automod in specific channels", 
-            inline=False
-        )
+        
         embed.add_field(
             name="📊 **Comprehensive Logging System**", 
             value="**All Logs:** Combined logging channel for everything\n**Moderation:** Kicks, bans, mutes, voice actions\n**XP System:** Level ups and ranking changes\n**Tickets:** Creation, closing, reopening events\n**Setup:** All configuration changes\n**Communication:** Announcements, polls, messages", 
@@ -833,7 +775,7 @@ class HelpView(discord.ui.View):
         )
         embed.add_field(
             name="🌐 **Multi-Server Intelligence**", 
-            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated XP tracking** - Each server independent\n✅ **Individual automod settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
+            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated XP tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
             inline=False
         )
         embed.add_field(
@@ -1112,7 +1054,7 @@ from communication_commands import *
 from xp_commands import *  # Karma system only
 from reaction_roles import *
 from ticket_system import *
-from automod import *
+
 from autorole import *
 
 # Try to import voice commands
