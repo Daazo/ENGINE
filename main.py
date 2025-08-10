@@ -127,104 +127,30 @@ async def has_permission(interaction, permission_level):
 # Bot Events
 @bot.event
 async def on_ready():
-    print(f'🌴 {bot.user} has landed in Kerala! 🌴')
-    print(f"🌐 Connected to {len(bot.guilds)} servers")
-    
-    # Set bot status
+    print(f'{bot.user} has landed in Kerala! 🌴')
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching,
             name=f"{len(bot.guilds)} servers"
         )
     )
-    print("✅ Bot status updated")
     
-    # AGGRESSIVE COMMAND SYNC - Clear cache and force global sync
     try:
-        print("🔄 AGGRESSIVE COMMAND SYNC STARTING...")
-        
-        # Wait a moment for all modules to fully load
-        await asyncio.sleep(2)
-        
-        # Clear all commands first
-        bot.tree.clear_commands(guild=None)
-        print("🗑️ Cleared all existing commands")
-        
-        # Force global sync - this can take up to 1 hour to propagate
         synced = await bot.tree.sync()
-        print(f"✅ GLOBAL SYNC COMPLETE: {len(synced)} commands registered")
-        
-        # Also try guild-specific sync for faster testing (if in development)
-        if len(bot.guilds) <= 5:  # Only for small bot deployments
-            for guild in bot.guilds:
-                try:
-                    guild_synced = await bot.tree.sync(guild=guild)
-                    print(f"✅ Guild sync for {guild.name}: {len(guild_synced)} commands")
-                except Exception as e:
-                    print(f"❌ Guild sync failed for {guild.name}: {e}")
-        
-        # List all synced commands for debugging
-        command_names = [cmd.name for cmd in synced]
-        print(f"\n📋 ALL REGISTERED COMMANDS ({len(command_names)}):")
-        for i, cmd in enumerate(sorted(command_names)):
-            print(f"   {i+1:2d}. /{cmd}")
-        
-        # Check specifically for new commands
-        critical_commands = ['adoptpet', 'petinfo', 'feedpet', 'playpet', 'dailypet', 'giverole', 'removerole', 'timedroles', 'profile', 'profilesetup', 'autorole']
-        print(f"\n🔍 CHECKING CRITICAL NEW COMMANDS:")
-        
-        missing_commands = []
-        for cmd in critical_commands:
-            if cmd in command_names:
-                print(f"   ✅ /{cmd} - REGISTERED")
-            else:
-                print(f"   ❌ /{cmd} - MISSING!")
-                missing_commands.append(cmd)
-        
-        success_count = len(critical_commands) - len(missing_commands)
-        print(f"\n🎯 COMMAND REGISTRATION STATUS: {success_count}/{len(critical_commands)} critical commands registered")
-        
-        if len(missing_commands) == 0:
-            print("🎉 ALL CRITICAL COMMANDS SUCCESSFULLY REGISTERED!")
-            print("📱 Commands should appear in Discord within 1 hour (global) or immediately (if guild-synced)")
-        else:
-            print(f"⚠️ MISSING COMMANDS: {', '.join(missing_commands)}")
-            print("🔧 Check module imports and restart bot if needed")
-                
+        print(f"Synced {len(synced)} command(s)")
     except Exception as e:
-        print(f"❌ CRITICAL: Command sync failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Failed to sync commands: {e}")
     
     # Add persistent views for ticket system
-    try:
-        from ticket_system import TicketOpenView, TicketControlView, ReopenTicketView
-        bot.add_view(TicketOpenView("persistent"))
-        bot.add_view(TicketControlView())
-        bot.add_view(ReopenTicketView())
-        print("✅ Persistent views added for ticket system")
-    except Exception as e:
-        print(f"❌ Failed to add persistent views: {e}")
+    from ticket_system import TicketOpenView, TicketControlView, ReopenTicketView
+    bot.add_view(TicketOpenView("persistent"))
+    bot.add_view(TicketControlView())
+    bot.add_view(ReopenTicketView())
+    print("✅ Persistent views added for ticket system")
     
     # Start MongoDB ping task
     if mongo_client:
-        try:
-            bot.loop.create_task(ping_mongodb())
-            print("✅ MongoDB ping task started")
-            # Test MongoDB connection
-            await mongo_client.admin.command('ping')
-            print("✅ MongoDB connection verified")
-        except Exception as e:
-            print(f"❌ MongoDB connection failed: {e}")
-    else:
-        print("⚠️ No MongoDB URI found - database features disabled")
-    
-    print("\n" + "="*60)
-    print("🎉 VAAZHA BOT STARTUP COMPLETE!")
-    print(f"🚀 Bot is ONLINE and serving {len(bot.guilds)} servers!")
-    print("📱 Commands should now be available in Discord!")
-    print("🐾 Try: /adoptpet, /giverole, /profile")
-    print("="*60)
+        bot.loop.create_task(ping_mongodb())
 
 @bot.event
 async def on_guild_join(guild):
@@ -368,13 +294,6 @@ async def on_message(message):
         except:
             pass
         return
-    
-    # Handle pet XP from messages
-    try:
-        from pet_system import handle_pet_message_xp
-        await handle_pet_message_xp(message)
-    except Exception as e:
-        print(f"Pet XP error: {e}")
     
     # Karma system is handled via reactions and commands
     
@@ -845,7 +764,7 @@ class HelpView(discord.ui.View):
     async def advanced_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🎭 **Advanced Features & Tools**",
-            description="*Powerful features like reaction roles, timed roles, pets, and profile cards.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            description="*Powerful features like reaction roles and automated systems.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
             color=0xe67e22
         )
         embed.add_field(
@@ -855,29 +774,20 @@ class HelpView(discord.ui.View):
         )
         
         embed.add_field(
-            name="⏰ **Timed Role System** (NEW!)", 
-            value="**🟡 `/giverole @user <role> <duration>`** - Assign role that expires automatically\n**🟡 `/removerole @user <role>`** - Manually remove roles\n**🟡 `/timedroles`** - View all active timed roles\n**Auto-removal:** Roles expire automatically with DM notifications\n**Examples:** `/giverole @user @TrialMod 7d` (7 days)", 
+            name="📊 **Comprehensive Logging System**", 
+            value="**All Logs:** Combined logging channel for everything\n**Moderation:** Kicks, bans, mutes, voice actions\n**XP System:** Level ups and ranking changes\n**Tickets:** Creation, closing, reopening events\n**Setup:** All configuration changes\n**Communication:** Announcements, polls, messages", 
             inline=False
         )
-        
-        embed.add_field(
-            name="🐾 **Virtual Pet System** (NEW!)", 
-            value="**🟢 `/adoptpet <name>`** - Adopt your virtual companion\n**🟢 `/petinfo [@user]`** - Check pet stats and status\n**🟢 `/feedpet`** - Feed pet to improve mood (1h cooldown)\n**🟢 `/playpet`** - Play with pet for XP (1h cooldown)\n**🟢 `/dailypet`** - Daily login bonus (24h cooldown)\n**Auto-Growth:** Pets gain XP from your messages and level up!", 
-            inline=False
-        )
-        
-        embed.add_field(
-            name="🎨 **Profile Cards** (NEW!)", 
-            value="**🟢 `/profile [@user]`** - Generate beautiful visual profile cards\n**🟢 `/profilesetup background:<style> color:<hex>`** - Customize card appearance\n**Features:** Shows karma, pet info, roles, join date, and rank with stunning graphics", 
-            inline=False
-        )
-        
         embed.add_field(
             name="🌐 **Multi-Server Intelligence**", 
-            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
+            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated XP tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
             inline=False
         )
-        
+        embed.add_field(
+            name="🤖 **Automatic Background Features**", 
+            value="👋 **Welcome DMs** - Professional messages to new members\n💔 **Goodbye DMs** - Farewell messages when members leave\n🎉 **Level Up Cards** - Beautiful rank card generation\n📊 **Live Server Count** - Bot status shows current servers\n⚡ **Real-time Logs** - Instant logging with timestamps", 
+            inline=False
+        )
         embed.set_footer(text="🟢 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -927,31 +837,26 @@ class HelpView(discord.ui.View):
             color=0x43b581
         )
         embed.add_field(
-            name="🆕 **THREE MAJOR NEW FEATURES!** (Latest!)", 
-            value="⏰ **Timed Roles** - Assign roles that expire automatically!\n🐾 **Virtual Pet System** - Adopt and level up cute companions!\n🎨 **Profile Cards** - Beautiful visual profile cards with PIL graphics!\n\n*These are HUGE additions with full MongoDB integration!*", 
+            name="🆕 **Enhanced Reaction Karma System** (Latest!)", 
+            value="**NEW:** Added negative reactions (👎 💀 😴 🤮 🗿) that remove karma!\n**UPDATED:** Reduced cooldown from 5 minutes to 3 minutes\n**IMPROVED:** More positive reactions added (🔥 💯 ✨)", 
             inline=False
         )
         embed.add_field(
-            name="⏰ **Timed Role System Details**", 
-            value="**NEW Commands:** `/giverole`, `/removerole`, `/timedroles`\n**Smart Features:** Auto-removal with DM notifications\n**Duration Support:** 5m, 2h, 3d, 1w formats\n**Perfect for:** Trial staff, event roles, temporary access", 
+            name="🆕 **Regular Members Can Now Give Karma** (Latest!)", 
+            value="**CHANGED:** All members can now give karma using `/givekarma`!\n**FAIR:** 3-minute cooldown for everyone (1 minute for main mods)\n**DEMOCRATIC:** Community-driven karma system for all!", 
             inline=False
         )
         embed.add_field(
-            name="🐾 **Virtual Pet System Details**", 
-            value="**Pet Commands:** `/adoptpet`, `/petinfo`, `/feedpet`, `/playpet`, `/dailypet`\n**Growth System:** Pets level up from messages and interactions\n**Karma Rewards:** Pet level-ups give bonus karma points!\n**Mood System:** Happy pets give better XP bonuses", 
+            name="🆕 **Welcome System Enhanced** (Latest!)", 
+            value="**FIXED:** Welcome images/GIFs now display properly in announcements\n**PROFESSIONAL:** Beautiful welcome embeds with member count\n**PERSONAL:** Welcome DMs sent to new members with bot info", 
             inline=False
         )
         embed.add_field(
-            name="🎨 **Profile Card System Details**", 
-            value="**Visual Profiles:** Beautiful generated cards with PIL\n**Custom Backgrounds:** Multiple styles and custom hex colors\n**Complete Stats:** Shows karma, pet, roles, join date, progress bars\n**High Quality:** 800x600 PNG images with gradients and decorations", 
+            name="✅ **Previous Updates**", 
+            value="🔧 **Mention Replies Fixed** - Bot and owner mentions work perfectly\n🧹 **Slash Commands Only** - Cleaner command system\n🤖 **Smoother Automod** - Better integration without conflicts", 
             inline=False
         )
-        embed.add_field(
-            name="🔄 **Previous Updates**", 
-            value="✨ **Enhanced Karma System** - Negative reactions, reduced cooldowns\n👋 **Better Welcome System** - Images, embeds, DMs\n🔧 **Fixed Mentions** - Bot and owner mentions work perfectly", 
-            inline=False
-        )
-        embed.set_footer(text="🌴 Made with ❤️ by Daazo from God's Own Country • MAJOR UPDATE TODAY!", icon_url=bot.user.display_avatar.url)
+        embed.set_footer(text="🌴 Made with ❤️ by Daazo from God's Own Country • Last updated today!", icon_url=bot.user.display_avatar.url)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -1076,35 +981,6 @@ async def serverinfo(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # Contact info command
-@bot.tree.command(name="synccommands", description="🔄 Manually sync slash commands (Owner only)")
-async def sync_commands(interaction: discord.Interaction):
-    # Check if user is the bot owner
-    bot_owner_id = os.getenv('BOT_OWNER_ID')
-    if bot_owner_id and str(interaction.user.id) != bot_owner_id:
-        await interaction.response.send_message("❌ Only the bot owner can use this command!", ephemeral=True)
-        return
-    
-    await interaction.response.defer()
-    
-    try:
-        synced = await bot.tree.sync()
-        embed = discord.Embed(
-            title="🔄 **Commands Synced Successfully!**",
-            description=f"✅ **Synced {len(synced)} slash commands**\n\nAll commands should now be available! Try using:\n🐾 `/adoptpet`\n⏰ `/giverole`\n🎨 `/profile`",
-            color=0x43b581
-        )
-        embed.set_footer(text="🌴 Commands updated!")
-        await interaction.followup.send(embed=embed)
-        print(f"✅ Manual sync successful: {len(synced)} commands")
-    except Exception as e:
-        embed = discord.Embed(
-            title="❌ **Sync Failed**",
-            description=f"Error syncing commands: {str(e)}",
-            color=0xe74c3c
-        )
-        await interaction.followup.send(embed=embed)
-        print(f"❌ Manual sync failed: {e}")
-
 @bot.tree.command(name="contact", description="📞 Get bot contact information and support details")
 async def contact_info(interaction: discord.Interaction):
     bot_owner_id = os.getenv('BOT_OWNER_ID')
@@ -1176,100 +1052,16 @@ async def ping_mongodb():
             print(f"❌ MongoDB ping failed: {e}")
         await asyncio.sleep(300)  # Ping every 5 minutes
 
-# Import command modules - SINGLE LOAD ONLY
-print("🔄 Loading all command modules...")
+# Import command modules
+from setup_commands import *
+from moderation_commands import *
+from communication_commands import *
+from xp_commands import *  # Karma system only
+from reaction_roles import *
+from ticket_system import *
+from timeout_system import *
 
-# Core modules
-try:
-    from setup_commands import *
-    print("✅ Setup commands loaded")
-except Exception as e:
-    print(f"❌ Setup commands failed: {e}")
-
-try:
-    from moderation_commands import *
-    print("✅ Moderation commands loaded")
-except Exception as e:
-    print(f"❌ Moderation commands failed: {e}")
-
-try:
-    from communication_commands import *
-    print("✅ Communication commands loaded")
-except Exception as e:
-    print(f"❌ Communication commands failed: {e}")
-
-try:
-    from xp_commands import *  # Karma system only
-    print("✅ Karma system loaded")
-except Exception as e:
-    print(f"❌ Karma system failed: {e}")
-
-try:
-    from reaction_roles import *
-    print("✅ Reaction roles loaded")
-except Exception as e:
-    print(f"❌ Reaction roles failed: {e}")
-
-try:
-    from ticket_system import *
-    print("✅ Ticket system loaded")
-except Exception as e:
-    print(f"❌ Ticket system failed: {e}")
-
-try:
-    from timeout_system import *
-    print("✅ Timeout system loaded")
-except Exception as e:
-    print(f"❌ Timeout system failed: {e}")
-
-# NEW CRITICAL FEATURES - Load these first
-try:
-    from timed_roles import *
-    print("✅ Timed roles system loaded (commands: giverole, removerole, timedroles)")
-except Exception as e:
-    print(f"❌ CRITICAL: Timed roles failed to load: {e}")
-    import traceback
-    traceback.print_exc()
-
-try:
-    from pet_system import *
-    print("✅ Pet system loaded (commands: adoptpet, petinfo, feedpet, playpet, dailypet)")
-except Exception as e:
-    print(f"❌ CRITICAL: Pet system failed to load: {e}")
-    import traceback
-    traceback.print_exc()
-
-try:
-    from profile_cards import *
-    print("✅ Profile cards system loaded (commands: profile, profilesetup)")
-except Exception as e:
-    print(f"❌ CRITICAL: Profile cards failed to load: {e}")
-    import traceback
-    traceback.print_exc()
-
-try:
-    from autorole import *
-    print("✅ Auto role system loaded (commands: autorole)")
-except Exception as e:
-    print(f"❌ Auto role system failed to load: {e}")
-    import traceback
-    traceback.print_exc()
-
-print("🚀 ALL MODULES LOADED SUCCESSFULLY!")
-print("🔍 Commands loaded. If they don't appear, Discord may need up to 1 hour for global sync.")
-
-# Verify commands are actually registered
-try:
-    all_commands = [cmd.name for cmd in bot.tree.get_commands()]
-    print(f"📝 Total commands ready for sync: {len(all_commands)}")
-    if 'adoptpet' in all_commands:
-        print("✅ Pet commands confirmed in bot tree")
-    if 'giverole' in all_commands:
-        print("✅ Timed role commands confirmed in bot tree")
-    if 'profile' in all_commands:
-        print("✅ Profile commands confirmed in bot tree")
-except Exception as e:
-    print(f"❌ Command verification failed: {e}")
+from autorole import *
 
 # Try to import voice commands
 try:
