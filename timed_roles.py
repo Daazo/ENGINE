@@ -337,9 +337,8 @@ async def view_timed_roles(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
-# Start the background task when the bot is ready
-@bot.event
-async def on_ready():
+# Function to start timed roles task (called from main.py)
+def start_timed_roles_task():
     if not check_expired_roles.is_running():
         check_expired_roles.start()
         print("✅ Timed roles background task started")

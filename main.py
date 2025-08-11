@@ -160,6 +160,10 @@ async def on_ready():
     bot.add_view(ReopenTicketView())
     print("✅ Persistent views added for ticket system")
     
+    # Start timed roles background task
+    from timed_roles import start_timed_roles_task
+    start_timed_roles_task()
+    
     # Start MongoDB ping task
     if mongo_client:
         bot.loop.create_task(ping_mongodb())
