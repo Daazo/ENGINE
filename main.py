@@ -1100,7 +1100,7 @@ from timeout_system import *
 from autorole import *
 
 # Import timed roles system - ensure commands are loaded
-import timed_roles
+from timed_roles import *
 
 # Try to import voice commands
 try:
