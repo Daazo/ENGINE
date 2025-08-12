@@ -751,7 +751,7 @@ class HelpView(discord.ui.View):
         embed.set_footer(text="🟢 = Everyone • 🔴 = Main Moderator • ⚠️ Old XP system completely removed!")
         await interaction.response.edit_message(embed=embed, view=self)
     
-    @discord.ui.button(label="Tickets & Support", style=discord.ButtonStyle.secondary, emoji="🎫", row=1)
+    @discord.ui.button(label="Tickets & Support", style=discord.ButtonStyle.secondary, emoji="🎫", row=2)
     async def ticket_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🎫 **Tickets & Support System**",
@@ -781,7 +781,47 @@ class HelpView(discord.ui.View):
         embed.set_footer(text="🟢 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
         await interaction.response.edit_message(embed=embed, view=self)
     
-    @discord.ui.button(label="Advanced Features", style=discord.ButtonStyle.danger, emoji="🎭", row=1)
+    @discord.ui.button(label="Economy System", style=discord.ButtonStyle.success, emoji="🪙", row=1)
+    async def economy_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="🪙 **Vaazha Coins Economy System** 🍌",
+            description="*Earn, spend, and trade Vaazha Coins in our Kerala-themed economy! Fully integrated with karma system.*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            color=0xf1c40f
+        )
+        embed.add_field(
+            name="💰 **Basic Economy Commands**", 
+            value="**🟢 `/balance [user]`** - Check coin wallet and bank balance\n**🟢 `/daily`** - Claim daily reward (50+ coins, streak bonus)\n**🟢 `/weekly`** - Claim weekly jackpot (300+ coins)\n**🟢 `/work`** - Work Kerala-themed jobs for coins (1h cooldown)", 
+            inline=False
+        )
+        embed.add_field(
+            name="🎮 **Mini-Games & Fun**", 
+            value="**🟢 `/slots <bet>`** - Play banana-themed slot machine (10-500 coins)\n**🟢 `/trivia`** - Answer Kerala trivia questions for rewards\n**🟢 `/richest`** - View top coin holders leaderboard", 
+            inline=False
+        )
+        embed.add_field(
+            name="🏦 **Banking & Trading**", 
+            value="**🟢 `/deposit <amount>`** - Store coins safely in bank\n**🟢 `/withdraw <amount>`** - Take coins from bank to wallet\n**🟢 `/trade @user <amount>`** - Send coins to other users (2% tax)", 
+            inline=False
+        )
+        embed.add_field(
+            name="✨ **Karma Integration**", 
+            value="**🟢 `/buykarma <amount>`** - Buy karma with coins (1 karma = 10 coins)\n**Perfect synergy:** Earn coins, buy karma, boost your server rank!\n**Strategic:** Balance economy progression with karma advancement", 
+            inline=False
+        )
+        embed.add_field(
+            name="🔧 **Admin Commands**", 
+            value="**🔴 `/addcoins @user <amount>`** - Give coins to users (1-10,000)\n**🔴 `/removecoins @user <amount>`** - Remove coins from users\n**Full logging:** All economy actions logged automatically", 
+            inline=False
+        )
+        embed.add_field(
+            name="🍌 **Special Features**", 
+            value="**Daily Streaks:** Consecutive daily claims = bonus coins\n**Kerala Theme:** Banana harvesting, coconut selling, backwater tours\n**Smart Economics:** Interest, taxes, anti-inflation measures\n**Random Events:** Bonus rewards, special messages, monkey mischief!", 
+            inline=False
+        )
+        embed.set_footer(text="🟢 = Everyone • 🔴 = Main Moderator • 🌴 Welcome to God's Own Economy!")
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    @discord.ui.button(label="Advanced Features", style=discord.ButtonStyle.danger, emoji="🎭", row=2)
     async def advanced_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🎭 **Advanced Features & Tools**",
@@ -796,12 +836,12 @@ class HelpView(discord.ui.View):
         
         embed.add_field(
             name="📊 **Comprehensive Logging System**", 
-            value="**All Logs:** Combined logging channel for everything\n**Moderation:** Kicks, bans, mutes, voice actions\n**XP System:** Level ups and ranking changes\n**Tickets:** Creation, closing, reopening events\n**Setup:** All configuration changes\n**Communication:** Announcements, polls, messages", 
+            value="**All Logs:** Combined logging channel for everything\n**Moderation:** Kicks, bans, mutes, voice actions\n**Economy:** Coin transactions, karma purchases, admin actions\n**Tickets:** Creation, closing, reopening events\n**Setup:** All configuration changes\n**Communication:** Announcements, polls, messages", 
             inline=False
         )
         embed.add_field(
             name="🌐 **Multi-Server Intelligence**", 
-            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated XP tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
+            value="✅ **MongoDB integration** - Persistent data storage\n✅ **Per-server configuration** - Roles, channels, settings\n✅ **Separated tracking** - Each server independent\n✅ **Individual server settings** - Customize per server\n✅ **Database-backed** - Never lose your data", 
             inline=False
         )
         embed.add_field(
@@ -812,7 +852,7 @@ class HelpView(discord.ui.View):
         embed.set_footer(text="🟢 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
         await interaction.response.edit_message(embed=embed, view=self)
     
-    @discord.ui.button(label="Bot Info", style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
+    @discord.ui.button(label="Bot Info", style=discord.ButtonStyle.secondary, emoji="🤖", row=2)
     async def bot_info_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         bot_owner_id = os.getenv('BOT_OWNER_ID')
         owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
@@ -846,11 +886,11 @@ class HelpView(discord.ui.View):
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         await interaction.response.edit_message(embed=embed, view=self)
     
-    @discord.ui.button(label="Contact & Support", style=discord.ButtonStyle.secondary, emoji="📞", row=2)
+    @discord.ui.button(label="Contact & Support", style=discord.ButtonStyle.secondary, emoji="📞", row=3)
     async def contact_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         await contact_info(interaction)
     
-    @discord.ui.button(label="Recent Updates", style=discord.ButtonStyle.success, emoji="🌴", row=2)
+    @discord.ui.button(label="Recent Updates", style=discord.ButtonStyle.success, emoji="🌴", row=3)
     async def recent_updates_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🌴 **Recent Updates & Poli Fixes** ✨",
@@ -1153,6 +1193,7 @@ from reaction_roles import *
 from ticket_system import *
 from timeout_system import *
 from autorole import *
+from economy_system import *  # Vaazha Coins economy
 
 # Import timed roles system - ensure commands are loaded
 from timed_roles import *
