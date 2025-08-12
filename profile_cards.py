@@ -188,6 +188,7 @@ async def create_profile_card(user, guild, karma_data, economy_data):
 async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_str, server_count):
     """Create a profile card for the bot with information"""
     from main import BOT_NAME, BOT_TAGLINE, BOT_OWNER_NAME
+    import time
 
     # Create base image with gradient background
     card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), BACKGROUND_COLOR)
@@ -195,7 +196,7 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
 
     # Load fonts
     title_font = get_default_font(28)
-    subtitle_font = get_default_font(20)
+    subtitle_font = get_default_font(18)
     text_font = get_default_font(16)
     small_font = get_default_font(14)
 
@@ -220,13 +221,10 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
     # Bot name and tag
     draw.text((info_x, info_y), BOT_NAME, fill=TEXT_COLOR, font=title_font)
     draw.text((info_x, info_y + 35), f"@{bot.user.name}", fill=(150, 150, 150), font=subtitle_font)
-    draw.text((info_x, info_y + 65), "🤖 Discord Bot", fill=ACCENT_COLOR, font=text_font)
+    draw.text((info_x, info_y + 60), "🤖 Discord Bot", fill=ACCENT_COLOR, font=text_font)
 
-    # Tagline (truncated if too long)
-    tagline = BOT_TAGLINE
-    if len(tagline) > 45:
-        tagline = tagline[:42] + "..."
-    draw.text((info_x, info_y + 90), tagline, fill=(200, 200, 200), font=small_font)
+    # Tagline (properly formatted for display)
+    draw.text((info_x, info_y + 85), BOT_TAGLINE, fill=(200, 200, 200), font=small_font)
 
     # Stats section
     stats_y = 180
@@ -240,7 +238,20 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
     # Owner information
     draw.text((400, stats_y), "👨‍💻 BOT DEVELOPER", fill=KARMA_COLOR, font=subtitle_font)
     draw.text((400, stats_y + 30), BOT_OWNER_NAME, fill=TEXT_COLOR, font=text_font)
-    draw.text((400, stats_y + 55), f"{owner_status_emoji} {owner_status}", fill=(200, 200, 200), font=text_font)
+    
+    # Better status display
+    if owner_status == "Offline":
+        status_color = (128, 128, 128)
+    elif owner_status == "Online":
+        status_color = (46, 204, 113)
+    elif owner_status == "Idle":
+        status_color = (255, 193, 7)
+    elif owner_status == "Do Not Disturb":
+        status_color = (220, 53, 69)
+    else:
+        status_color = (200, 200, 200)
+    
+    draw.text((400, stats_y + 55), f"{owner_status_emoji} {owner_status}", fill=status_color, font=text_font)
     draw.text((400, stats_y + 80), "🇮🇳 From God's Own Country", fill=ACCENT_COLOR, font=text_font)
 
     # Features section
