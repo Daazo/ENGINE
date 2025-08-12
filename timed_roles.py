@@ -108,27 +108,29 @@ def format_duration(seconds):
 
     return "".join(parts) if parts else "0s"
 
-@bot.tree.command(name="giverole", description="🎭 Give a role to a user for a specific duration")
+@bot.tree.command(name="giverole", description="🎭 Give a role to a user (optionally for a specific duration)")
 @app_commands.describe(
     user="User to give the role to",
     role="Role to assign",
-    duration="Duration (e.g., 1h30m, 2d, 45m) - Max 30 days"
+    duration="Duration (e.g., 1h30m, 2d, 45m) - Max 30 days. Leave empty for permanent role"
 )
 async def give_timed_role(
     interaction: discord.Interaction,
     user: discord.Member,
     role: discord.Role,
-    duration: str
+    duration: str = None
 ):
     if not await has_permission(interaction, "main_moderator"):
         await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
         return
 
-    # Parse duration
-    duration_seconds = parse_duration(duration)
-    if not duration_seconds:
-        await interaction.response.send_message("❌ Invalid duration format! Use format like: `1h30m`, `2d`, `45m` (Min: 1m, Max: 30d)", ephemeral=True)
-        return
+    # Parse duration (optional for permanent roles)
+    is_permanent = duration is None
+    if not is_permanent:
+        duration_seconds = parse_duration(duration)
+        if not duration_seconds:
+            await interaction.response.send_message("❌ Invalid duration format! Use format like: `1h30m`, `2d`, `45m` (Min: 1m, Max: 30d)", ephemeral=True)
+            return
 
     # Check if bot can assign this role
     if role >= interaction.guild.me.top_role:
@@ -146,46 +148,74 @@ async def give_timed_role(
         return
 
     try:
-        # Calculate expiry time
-        expires_at = datetime.utcnow() + timedelta(seconds=duration_seconds)
-
-        # Assign the role
-        await user.add_roles(role, reason=f"Timed role assigned by {interaction.user} for {format_duration(duration_seconds)}")
-
-        # Store in database
-        if db is not None:
-            await db.timed_roles.insert_one({
-                'guild_id': str(interaction.guild.id),
-                'user_id': str(user.id),
-                'role_id': str(role.id),
-                'assigned_by': str(interaction.user.id),
-                'assigned_at': datetime.utcnow(),
-                'expires_at': expires_at,
-                'duration_seconds': duration_seconds
-            })
-
-        # Send confirmation
-        embed = discord.Embed(
-            title="✅ **Timed Role Assigned**",
-            description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Duration:** `{format_duration(duration_seconds)}`\n**Expires:** {discord.utils.format_dt(expires_at, style='R')}\n**Assigned by:** {interaction.user.mention}",
-            color=0x43b581
-        )
-        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ Timed Roles", icon_url=bot.user.display_avatar.url)
-        await interaction.response.send_message(embed=embed)
-
-        # Send DM to user
-        try:
-            dm_embed = discord.Embed(
-                title="🎭 **You've been given a timed role!**",
-                description=f"**Server:** {interaction.guild.name}\n**Role:** {role.name}\n**Duration:** `{format_duration(duration_seconds)}`\n**Expires:** {discord.utils.format_dt(expires_at, style='F')}\n\n*This role will be automatically removed when it expires.*",
+        if is_permanent:
+            # Assign permanent role
+            await user.add_roles(role, reason=f"Permanent role assigned by {interaction.user}")
+            
+            # Send confirmation for permanent role
+            embed = discord.Embed(
+                title="✅ **Permanent Role Assigned**",
+                description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Type:** `Permanent`\n**Assigned by:** {interaction.user.mention}\n\n*This role will remain until manually removed.*",
                 color=0x43b581
             )
-            dm_embed.set_footer(text="ᴠᴀᴀᴢʜᴀ Timed Roles", icon_url=bot.user.display_avatar.url)
-            await user.send(embed=dm_embed)
-        except:
-            pass  # User has DMs disabled
+            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ Role Management", icon_url=bot.user.display_avatar.url)
+            await interaction.response.send_message(embed=embed)
 
-        await log_action(interaction.guild.id, "moderation", f"🎭 [TIMED ROLE] {role.name} assigned to {user} by {interaction.user} for {format_duration(duration_seconds)}")
+            # Send DM to user for permanent role
+            try:
+                dm_embed = discord.Embed(
+                    title="🎭 **You've been given a permanent role!**",
+                    description=f"**Server:** {interaction.guild.name}\n**Role:** {role.name}\n**Type:** Permanent\n\n*This role will remain until a moderator removes it.*",
+                    color=0x43b581
+                )
+                dm_embed.set_footer(text="ᴠᴀᴀᴢʜᴀ Role Management", icon_url=bot.user.display_avatar.url)
+                await user.send(embed=dm_embed)
+            except:
+                pass  # User has DMs disabled
+
+            await log_action(interaction.guild.id, "moderation", f"🎭 [PERMANENT ROLE] {role.name} assigned to {user} by {interaction.user}")
+        
+        else:
+            # Calculate expiry time for timed role
+            expires_at = datetime.utcnow() + timedelta(seconds=duration_seconds)
+
+            # Assign the timed role
+            await user.add_roles(role, reason=f"Timed role assigned by {interaction.user} for {format_duration(duration_seconds)}")
+
+            # Store in database for timed roles only
+            if db is not None:
+                await db.timed_roles.insert_one({
+                    'guild_id': str(interaction.guild.id),
+                    'user_id': str(user.id),
+                    'role_id': str(role.id),
+                    'assigned_by': str(interaction.user.id),
+                    'assigned_at': datetime.utcnow(),
+                    'expires_at': expires_at,
+                    'duration_seconds': duration_seconds
+                })
+
+            # Send confirmation for timed role
+            embed = discord.Embed(
+                title="✅ **Timed Role Assigned**",
+                description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Duration:** `{format_duration(duration_seconds)}`\n**Expires:** {discord.utils.format_dt(expires_at, style='R')}\n**Assigned by:** {interaction.user.mention}",
+                color=0x43b581
+            )
+            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ Timed Roles", icon_url=bot.user.display_avatar.url)
+            await interaction.response.send_message(embed=embed)
+
+            # Send DM to user for timed role
+            try:
+                dm_embed = discord.Embed(
+                    title="🎭 **You've been given a timed role!**",
+                    description=f"**Server:** {interaction.guild.name}\n**Role:** {role.name}\n**Duration:** `{format_duration(duration_seconds)}`\n**Expires:** {discord.utils.format_dt(expires_at, style='F')}\n\n*This role will be automatically removed when it expires.*",
+                    color=0x43b581
+                )
+                dm_embed.set_footer(text="ᴠᴀᴀᴢʜᴀ Timed Roles", icon_url=bot.user.display_avatar.url)
+                await user.send(embed=dm_embed)
+            except:
+                pass  # User has DMs disabled
+
+            await log_action(interaction.guild.id, "moderation", f"🎭 [TIMED ROLE] {role.name} assigned to {user} by {interaction.user} for {format_duration(duration_seconds)}")
 
     except discord.Forbidden:
         await interaction.response.send_message("❌ I don't have permission to assign this role!", ephemeral=True)
