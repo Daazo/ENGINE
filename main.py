@@ -195,119 +195,23 @@ async def on_message(message):
     
     # Handle DM mentions
     if not message.guild:  # This is a DM
-        # Check for bot mention in DMs - Send contact info
-        if (bot.user in message.mentions or 
-            f"<@{bot.user.id}>" in message.content or 
-            f"<@!{bot.user.id}>" in message.content):
-            
-            # Send contact info in DMs
-            bot_owner_id = os.getenv('BOT_OWNER_ID')
-            contact_email = os.getenv('CONTACT_EMAIL')
-            support_server = os.getenv('SUPPORT_SERVER_LINK')
-            
-            owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
-            email_text = contact_email if contact_email else "Not available"
-            support_text = support_server if support_server else "Contact owner for invite"
-            
-            embed = discord.Embed(
-                title="📞 **Contact Information & Support**",
-                description=f"*Hello! Here's how to get help or get in touch:*\n\n**👨‍💻 Developer:** {owner_mention}\n**📧 Email:** `{email_text}`\n**🏠 Support Server:** {support_text}\n\n*Need quick help? Use `/help` in any server!*",
-                color=0x3498db
-            )
-            embed.set_thumbnail(url=bot.user.display_avatar.url)
-            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ", icon_url=bot.user.display_avatar.url)
-            
-            view = discord.ui.View()
-            if support_server:
-                support_button = discord.ui.Button(label="🏠 Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
-                view.add_item(support_button)
-            
-            invite_button = discord.ui.Button(label="🔗 Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🔗")
-            view.add_item(invite_button)
-            
-            sent_message = await message.channel.send(embed=embed, view=view)
-            # Auto delete after 1 minute
-            await asyncio.sleep(60)
-            try:
-                await sent_message.delete()
-            except:
-                pass
-            return
-        
-        # Check for owner mention in DMs
-        owner_id = os.getenv('BOT_OWNER_ID')
-        if owner_id and (f"<@{owner_id}>" in message.content or 
-                        f"<@!{owner_id}>" in message.content or 
-                        "daazo" in message.content.lower()):
-            owner_mention = f"<@{owner_id}>" if owner_id else "Contact via server"
-            embed = discord.Embed(
-                title="📢 DEVELOPER MENTION",
-                description=f"✨DAAZO ne vilicho: {owner_mention} aanu Vaazha Bot inte Developer🚀.\n🛠 For support, `/help` use cheyyu allenkil 💬 ee bot-ne DM cheyyu.",
-                color=0x3498db
-            )
-            embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
-            embed.set_thumbnail(url=bot.user.display_avatar.url)
-            sent_message = await message.channel.send(embed=embed)
-            # Auto delete after 1 minute
-            await asyncio.sleep(60)
-            try:
-                await sent_message.delete()
-            except:
-                pass
-            return
-        
-        return  # Don't process other DM messages
+        return  # Don't process DM messages
     
-    
-    
-    # Check for owner mention - PRIORITY CHECK
+    # Check for owner mention - Add animated emoji reactions
     owner_id = os.getenv('BOT_OWNER_ID')
     if owner_id and (f"<@{owner_id}>" in message.content or 
                     f"<@!{owner_id}>" in message.content or 
                     "daazo" in message.content.lower()):
-        owner_mention = f"<@{owner_id}>" if owner_id else "Contact via server"
-        embed = discord.Embed(
-            title="📢 DEVELOPER MENTION",
-                description=f"✨DAAZO ne vilicho: {owner_mention} aanu Vaazha Bot inte Developer🚀.\n🛠 For support, `/help` use cheyyu allenkil 💬 ee bot-ne DM cheyyu.",
-            color=0x3498db
-        )
-        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
-        embed.set_thumbnail(url=bot.user.display_avatar.url)
-        sent_message = await message.channel.send(embed=embed)
-        # Auto delete after 1 minute
-        await asyncio.sleep(60)
         try:
-            await sent_message.delete()
-        except:
-            pass
-        return
-    
-    # Check for bot mention - PRIORITY CHECK  
-    if (bot.user in message.mentions or 
-        f"<@{bot.user.id}>" in message.content or 
-        f"<@!{bot.user.id}>" in message.content) and not message.content.startswith('/'):
-        owner_id = os.getenv('BOT_OWNER_ID')
-        owner_mention = f"<@{owner_id}>" if owner_id else "Contact via server"
-        
-        embed = discord.Embed(
-            title="👋🏼 Hello, I'm Vaazha Bot",
-                description=f"🍁Vaazha Bot anne – your server's assistant.\n🌴 Enthenkilum help venel, type /help.\nNeed assistance? Contact: {owner_mention}",
-            color=0x43b581
-        )
-        embed.set_thumbnail(url=bot.user.display_avatar.url)
-        embed.set_footer(text="ᴠᴀᴀᴢʜᴀ-ʙᴏᴛ", icon_url=bot.user.display_avatar.url)
-        
-        view = discord.ui.View()
-        help_button = discord.ui.Button(label="📋 Commands", style=discord.ButtonStyle.primary, emoji="📋")
-        help_button.callback = lambda i: help_command_callback(i)
-        view.add_item(help_button)
-        
-        sent_message = await message.channel.send(embed=embed, view=view)
-        # Auto delete after 1 minute
-        await asyncio.sleep(60)
-        try:
-            await sent_message.delete()
-        except:
+            # Add two animated emoji reactions
+            emoji_1 = "<a:emoji_2:1404843587048575150>"
+            emoji_2 = "<a:emoji_1:1404843564835536997>"
+            
+            await message.add_reaction(emoji_1)
+            await asyncio.sleep(0.5)  # Small delay between reactions
+            await message.add_reaction(emoji_2)
+        except discord.HTTPException:
+            # If emoji reactions fail, silently pass
             pass
         return
     
