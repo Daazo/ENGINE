@@ -94,17 +94,18 @@ async def update_user_economy(user_id, guild_id, data):
     )
 
 @bot.tree.command(name="balance", description="🪙 Check your Vaazha Coins balance")
+@app_commands.describe(user="User to check balance for (optional)")
 async def balance(interaction: discord.Interaction, user: discord.Member = None):
-    # Check if command is used in designated channel
+    # Check if command is used in correct channel
     server_data = await get_server_data(interaction.guild.id)
     economy_channels = server_data.get('economy_channels', {})
     balance_channel_id = economy_channels.get('balance_channel')
 
     if balance_channel_id and str(interaction.channel.id) != balance_channel_id:
         balance_channel = bot.get_channel(int(balance_channel_id))
-        if balance_channel:
-            await interaction.response.send_message(f"💰 Please use {balance_channel.mention} for balance commands!", ephemeral=True)
-            return
+        channel_mention = balance_channel.mention if balance_channel else "#coin-vault"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
 
     target_user = user or interaction.user
     user_data = await get_user_economy(target_user.id, interaction.guild.id)
@@ -136,7 +137,18 @@ async def balance(interaction: discord.Interaction, user: discord.Member = None)
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="daily", description="🌅 Claim your daily Vaazha Coins reward")
-async def daily_reward(interaction: discord.Interaction):
+async def daily(interaction: discord.Interaction):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    economy_channels = server_data.get('economy_channels', {})
+    balance_channel_id = economy_channels.get('balance_channel')
+
+    if balance_channel_id and str(interaction.channel.id) != balance_channel_id:
+        balance_channel = bot.get_channel(int(balance_channel_id))
+        channel_mention = balance_channel.mention if balance_channel else "#coin-vault"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     user_data = await get_user_economy(interaction.user.id, interaction.guild.id)
     current_time = time.time()
     last_daily = user_data.get('last_daily', 0)
@@ -196,7 +208,18 @@ async def daily_reward(interaction: discord.Interaction):
     await log_action(interaction.guild.id, "economy", f"🪙 [DAILY] {interaction.user} claimed {total_reward} coins")
 
 @bot.tree.command(name="weekly", description="🗓️ Claim your weekly Vaazha Coins jackpot")
-async def weekly_reward(interaction: discord.Interaction):
+async def weekly(interaction: discord.Interaction):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    economy_channels = server_data.get('economy_channels', {})
+    balance_channel_id = economy_channels.get('balance_channel')
+
+    if balance_channel_id and str(interaction.channel.id) != balance_channel_id:
+        balance_channel = bot.get_channel(int(balance_channel_id))
+        channel_mention = balance_channel.mention if balance_channel else "#coin-vault"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     user_data = await get_user_economy(interaction.user.id, interaction.guild.id)
     current_time = time.time()
     last_weekly = user_data.get('last_weekly', 0)
@@ -247,18 +270,18 @@ async def weekly_reward(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
     await log_action(interaction.guild.id, "economy", f"🪙 [WEEKLY] {interaction.user} claimed {total_reward} coins")
 
-@bot.tree.command(name="work", description="💼 Work a job to earn Vaazha Coins")
+@bot.tree.command(name="work", description="💼 Work a Kerala-themed job for Vaazha Coins")
 async def work(interaction: discord.Interaction):
-    # Check if command is used in designated channel
+    # Check if command is used in correct channel
     server_data = await get_server_data(interaction.guild.id)
     economy_channels = server_data.get('economy_channels', {})
     work_channel_id = economy_channels.get('work_channel')
 
     if work_channel_id and str(interaction.channel.id) != work_channel_id:
         work_channel = bot.get_channel(int(work_channel_id))
-        if work_channel:
-            await interaction.response.send_message(f"🍌 Please use {work_channel.mention} for work commands!", ephemeral=True)
-            return
+        channel_mention = work_channel.mention if work_channel else "#banana-jobs"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
 
     user_data = await get_user_economy(interaction.user.id, interaction.guild.id)
     current_time = time.time()
@@ -299,8 +322,19 @@ async def work(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="buykarma", description="✨ Buy karma points with Vaazha Coins")
-@app_commands.describe(amount="Amount of karma points to buy (1 karma = 10 coins)")
+@app_commands.describe(amount="Amount of karma to buy (1 karma = 10 coins)")
 async def buy_karma(interaction: discord.Interaction, amount: int):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    economy_channels = server_data.get('economy_channels', {})
+    store_channel_id = economy_channels.get('store_channel')
+
+    if store_channel_id and str(interaction.channel.id) != store_channel_id:
+        store_channel = bot.get_channel(int(store_channel_id))
+        channel_mention = store_channel.mention if store_channel else "#vaazha-store"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     if amount <= 0 or amount > 100:
         await interaction.response.send_message("❌ You can buy 1-100 karma points at a time!", ephemeral=True)
         return
@@ -355,19 +389,19 @@ async def buy_karma(interaction: discord.Interaction, amount: int):
     await interaction.response.send_message(embed=embed)
     await log_action(interaction.guild.id, "economy", f"🪙 [KARMA BUY] {interaction.user} bought {amount} karma for {cost} coins")
 
-@bot.tree.command(name="slots", description="🎰 Play Vaazha Slots and try your luck!")
-@app_commands.describe(bet="Amount of coins to bet (10-500)")
+@bot.tree.command(name="slots", description="🎰 Play the banana-themed slot machine")
+@app_commands.describe(bet="Amount to bet (10-500 coins)")
 async def slots(interaction: discord.Interaction, bet: int):
-    # Check if command is used in designated channel
+    # Check if command is used in correct channel
     server_data = await get_server_data(interaction.guild.id)
     game_channels = server_data.get('game_channels', {})
     slots_channel_id = game_channels.get('slots_channel')
 
     if slots_channel_id and str(interaction.channel.id) != slots_channel_id:
         slots_channel = bot.get_channel(int(slots_channel_id))
-        if slots_channel:
-            await interaction.response.send_message(f"🎰 Please use {slots_channel.mention} for slot games!", ephemeral=True)
-            return
+        channel_mention = slots_channel.mention if slots_channel else "#banana-slots"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
 
     if bet < 10 or bet > 500:
         await interaction.response.send_message("❌ You can bet between 10-500 🪙!", ephemeral=True)
@@ -439,8 +473,19 @@ async def slots(interaction: discord.Interaction, bet: int):
 
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="trivia", description="🧠 Answer Kerala trivia for Vaazha Coins")
+@bot.tree.command(name="trivia", description="🧠 Answer Kerala trivia questions for rewards")
 async def trivia(interaction: discord.Interaction):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    game_channels = server_data.get('game_channels', {})
+    trivia_channel_id = game_channels.get('trivia_channel')
+
+    if trivia_channel_id and str(interaction.channel.id) != trivia_channel_id:
+        trivia_channel = bot.get_channel(int(trivia_channel_id))
+        channel_mention = trivia_channel.mention if trivia_channel else "#kerala-trivia"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     question_data = random.choice(TRIVIA_QUESTIONS)
 
     embed = discord.Embed(
@@ -453,7 +498,7 @@ async def trivia(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
     def check(message):
-        return (message.author == interaction.user and 
+        return (message.author == interaction.user and
                 message.channel == interaction.channel and
                 message.content.lower().strip() == question_data['answer'])
 
@@ -483,8 +528,19 @@ async def trivia(interaction: discord.Interaction):
         )
         await interaction.followup.send(embed=embed)
 
-@bot.tree.command(name="richest", description="🏆 View the richest Vaazha Coin holders")
-async def richest_leaderboard(interaction: discord.Interaction):
+@bot.tree.command(name="richest", description="🏆 Show the richest members leaderboard")
+async def richest(interaction: discord.Interaction):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    economy_channels = server_data.get('economy_channels', {})
+    richest_channel_id = economy_channels.get('richest_channel')
+
+    if richest_channel_id and str(interaction.channel.id) != richest_channel_id:
+        richest_channel = bot.get_channel(int(richest_channel_id))
+        channel_mention = richest_channel.mention if richest_channel else "#rich-leaderboard"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     if db is None:
         await interaction.response.send_message("❌ Database not connected!", ephemeral=True)
         return
@@ -526,9 +582,20 @@ async def richest_leaderboard(interaction: discord.Interaction):
     embed.set_footer(text="🍌 These members rule the Vaazha economy!", icon_url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="deposit", description="🏦 Deposit coins to your bank for safekeeping")
-@app_commands.describe(amount="Amount to deposit (or 'all' for everything)")
+@bot.tree.command(name="deposit", description="🏦 Deposit coins into your bank account")
+@app_commands.describe(amount="Amount to deposit")
 async def deposit(interaction: discord.Interaction, amount: str):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    bank_channels = server_data.get('bank_channels', {})
+    deposit_channel_id = bank_channels.get('deposit_channel')
+
+    if deposit_channel_id and str(interaction.channel.id) != deposit_channel_id:
+        deposit_channel = bot.get_channel(int(deposit_channel_id))
+        channel_mention = deposit_channel.mention if deposit_channel else "#coin-deposits"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     user_data = await get_user_economy(interaction.user.id, interaction.guild.id)
     current_coins = user_data.get('coins', 0)
 
@@ -566,9 +633,20 @@ async def deposit(interaction: discord.Interaction, amount: str):
     embed.set_footer(text="🌴 Your coins are safe in the Kerala Central Bank!", icon_url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="withdraw", description="🏦 Withdraw coins from your bank")
-@app_commands.describe(amount="Amount to withdraw (or 'all' for everything)")
+@bot.tree.command(name="withdraw", description="💸 Withdraw coins from your bank account")
+@app_commands.describe(amount="Amount to withdraw")
 async def withdraw(interaction: discord.Interaction, amount: str):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    bank_channels = server_data.get('bank_channels', {})
+    withdraw_channel_id = bank_channels.get('withdraw_channel')
+
+    if withdraw_channel_id and str(interaction.channel.id) != withdraw_channel_id:
+        withdraw_channel = bot.get_channel(int(withdraw_channel_id))
+        channel_mention = withdraw_channel.mention if withdraw_channel else "#coin-withdrawals"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     user_data = await get_user_economy(interaction.user.id, interaction.guild.id)
     current_bank = user_data.get('bank', 0)
 
@@ -606,12 +684,20 @@ async def withdraw(interaction: discord.Interaction, amount: str):
     embed.set_footer(text="🌴 Enjoy spending your Kerala coins!", icon_url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="trade", description="💸 Send Vaazha Coins to another user")
-@app_commands.describe(
-    user="User to send coins to",
-    amount="Amount of coins to send"
-)
-async def trade_coins(interaction: discord.Interaction, user: discord.Member, amount: int):
+@bot.tree.command(name="trade", description="🤝 Send coins to another user")
+@app_commands.describe(user="User to send coins to", amount="Amount to send")
+async def trade(interaction: discord.Interaction, user: discord.Member, amount: int):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    bank_channels = server_data.get('bank_channels', {})
+    trade_channel_id = bank_channels.get('trade_channel')
+
+    if trade_channel_id and str(interaction.channel.id) != trade_channel_id:
+        trade_channel = bot.get_channel(int(trade_channel_id))
+        channel_mention = trade_channel.mention if trade_channel else "#coin-trading"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+
     if user.bot:
         await interaction.response.send_message("❌ You can't send coins to bots!", ephemeral=True)
         return
@@ -790,27 +876,29 @@ async def create_economy_channels(interaction: discord.Interaction):
     channel_names = {
         "balance_channel": "📊・balance",
         "work_channel": "💼・work",
-        "store_channel": "🛍️・vaazha-store"
+        "store_channel": "🛍️・vaazha-store",
+        "richest_channel": "🏆・rich-leaderboard"
     }
     created_channels = []
 
     for key, name in channel_names.items():
-        existing_channel = discord.utils.get(economy_category.text_channels, name=name.split('・')[1])
+        channel_base_name = name.split('・')[1]
+        existing_channel = discord.utils.get(economy_category.text_channels, name=channel_base_name)
         if not existing_channel:
             try:
                 new_channel = await interaction.guild.create_text_channel(
-                    name=name.split('・')[1],
+                    name=channel_base_name,
                     category=economy_category,
                     topic="Economy related commands",
                     position=len(economy_category.text_channels) # Add to the end
                 )
                 # Set channel permissions to follow category
-                await new_channel.set_permissions(interaction.guild.default_role, connect=None, speak=None, send_messages=False, read_messages=True) # Default to read only
+                await new_channel.set_permissions(interaction.guild.default_role, send_messages=False, read_messages=True) # Default to read only
                 # Give bot and admins permissions to send messages
-                bot_role = interaction.guild.get_role(bot.user.id) # This is incorrect, need role not user id
+                bot_role = discord.utils.get(interaction.guild.roles, name="VaazhaBot") # Assuming a role named VaazhaBot
                 admin_role = discord.utils.get(interaction.guild.roles, name="Admin") # Example admin role name, adjust if needed
-                
-                if bot_role: # Placeholder for bot role
+
+                if bot_role:
                     await new_channel.set_permissions(bot_role, send_messages=True)
                 if admin_role:
                     await new_channel.set_permissions(admin_role, send_messages=True)
@@ -848,21 +936,28 @@ async def create_game_channels(interaction: discord.Interaction):
 
     channel_names = {
         "slots_channel": "🎰・slots",
-        "trivia_channel": "🧠・trivia"
+        "trivia_channel": "🧠・kerala-trivia"
     }
     created_channels = []
 
     for key, name in channel_names.items():
-        existing_channel = discord.utils.get(game_category.text_channels, name=name.split('・')[1])
+        channel_base_name = name.split('・')[1]
+        existing_channel = discord.utils.get(game_category.text_channels, name=channel_base_name)
         if not existing_channel:
             try:
                 new_channel = await interaction.guild.create_text_channel(
-                    name=name.split('・')[1],
+                    name=channel_base_name,
                     category=game_category,
                     topic="Game related commands",
                     position=len(game_category.text_channels)
                 )
-                await new_channel.set_permissions(interaction.guild.default_role, connect=None, speak=None, send_messages=False, read_messages=True)
+                await new_channel.set_permissions(interaction.guild.default_role, send_messages=False, read_messages=True)
+                bot_role = discord.utils.get(interaction.guild.roles, name="VaazhaBot")
+                admin_role = discord.utils.get(interaction.guild.roles, name="Admin")
+                if bot_role:
+                    await new_channel.set_permissions(bot_role, send_messages=True)
+                if admin_role:
+                    await new_channel.set_permissions(admin_role, send_messages=True)
                 server_data['game_channels'][key] = new_channel.id
                 created_channels.append(new_channel.mention)
             except Exception as e:
@@ -894,23 +989,30 @@ async def create_bank_channels(interaction: discord.Interaction):
         return
 
     channel_names = {
-        "deposit_channel": "🏦・deposit",
-        "withdraw_channel": "💸・withdraw",
-        "trade_channel": "🤝・trade"
+        "deposit_channel": "🏦・coin-deposits",
+        "withdraw_channel": "💸・coin-withdrawals",
+        "trade_channel": "🤝・coin-trading"
     }
     created_channels = []
 
     for key, name in channel_names.items():
-        existing_channel = discord.utils.get(bank_category.text_channels, name=name.split('・')[1])
+        channel_base_name = name.split('・')[1]
+        existing_channel = discord.utils.get(bank_category.text_channels, name=channel_base_name)
         if not existing_channel:
             try:
                 new_channel = await interaction.guild.create_text_channel(
-                    name=name.split('・')[1],
+                    name=channel_base_name,
                     category=bank_category,
                     topic="Bank related commands",
                     position=len(bank_category.text_channels)
                 )
-                await new_channel.set_permissions(interaction.guild.default_role, connect=None, speak=None, send_messages=False, read_messages=True)
+                await new_channel.set_permissions(interaction.guild.default_role, send_messages=False, read_messages=True)
+                bot_role = discord.utils.get(interaction.guild.roles, name="VaazhaBot")
+                admin_role = discord.utils.get(interaction.guild.roles, name="Admin")
+                if bot_role:
+                    await new_channel.set_permissions(bot_role, send_messages=True)
+                if admin_role:
+                    await new_channel.set_permissions(admin_role, send_messages=True)
                 server_data['bank_channels'][key] = new_channel.id
                 created_channels.append(new_channel.mention)
             except Exception as e:

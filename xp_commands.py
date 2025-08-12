@@ -188,6 +188,17 @@ async def give_karma(interaction: discord.Interaction, user: discord.Member, amo
 @bot.tree.command(name="karma", description="Check someone's karma points and server rank")
 @app_commands.describe(user="User to check karma for (optional)")
 async def check_karma(interaction: discord.Interaction, user: discord.Member = None):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    karma_channels = server_data.get('karma_channels', {})
+    karma_zone_channel_id = karma_channels.get('karma_zone_channel')
+    
+    if karma_zone_channel_id and str(interaction.channel.id) != karma_zone_channel_id:
+        karma_zone_channel = bot.get_channel(int(karma_zone_channel_id))
+        channel_mention = karma_zone_channel.mention if karma_zone_channel else "#karma-zone"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+    
     target_user = user or interaction.user
 
     if db is None:
@@ -249,6 +260,17 @@ async def check_karma(interaction: discord.Interaction, user: discord.Member = N
 
 @bot.tree.command(name="mykarma", description="Check your own karma points quickly")
 async def my_karma(interaction: discord.Interaction):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    karma_channels = server_data.get('karma_channels', {})
+    karma_zone_channel_id = karma_channels.get('karma_zone_channel')
+    
+    if karma_zone_channel_id and str(interaction.channel.id) != karma_zone_channel_id:
+        karma_zone_channel = bot.get_channel(int(karma_zone_channel_id))
+        channel_mention = karma_zone_channel.mention if karma_zone_channel else "#karma-zone"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+    
     target_user = interaction.user
 
     if db is None:
@@ -310,6 +332,17 @@ async def my_karma(interaction: discord.Interaction):
 
 @bot.tree.command(name="karmaboard", description="Show server karma leaderboard with top 10 contributors")
 async def karma_leaderboard(interaction: discord.Interaction):
+    # Check if command is used in correct channel
+    server_data = await get_server_data(interaction.guild.id)
+    karma_channels = server_data.get('karma_channels', {})
+    karma_zone_channel_id = karma_channels.get('karma_zone_channel')
+    
+    if karma_zone_channel_id and str(interaction.channel.id) != karma_zone_channel_id:
+        karma_zone_channel = bot.get_channel(int(karma_zone_channel_id))
+        channel_mention = karma_zone_channel.mention if karma_zone_channel else "#karma-zone"
+        await interaction.response.send_message(f"❌ This command can only be used in {channel_mention}!", ephemeral=True)
+        return
+    
     if db is None:
         await interaction.response.send_message("❌ Database not connected!", ephemeral=True)
         return
