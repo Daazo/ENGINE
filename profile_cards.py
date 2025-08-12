@@ -185,9 +185,89 @@ async def create_profile_card(user, guild, karma_data, economy_data):
     
     return card
 
+async def create_bot_profile_card(bot_user, owner_status, owner_status_emoji, uptime_str):
+    """Create a profile card for the bot itself"""
+    from main import BOT_NAME, BOT_TAGLINE, BOT_OWNER_NAME
+    
+    # Create base image with gradient background
+    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), BACKGROUND_COLOR)
+    draw = ImageDraw.Draw(card)
+    
+    # Load fonts
+    title_font = get_default_font(28)
+    subtitle_font = get_default_font(20)
+    text_font = get_default_font(16)
+    small_font = get_default_font(14)
+    
+    # Download and process bot avatar
+    avatar_url = str(bot_user.display_avatar.url)
+    avatar_image = await download_avatar(avatar_url)
+    circular_avatar = create_circular_avatar(avatar_image, 120)
+    
+    # Paste avatar with special border for bot
+    avatar_x = 50
+    avatar_y = 40
+    card.paste(circular_avatar, (avatar_x, avatar_y), circular_avatar)
+    
+    # Draw special bot border (gradient-like with multiple colors)
+    draw.ellipse([avatar_x-3, avatar_y-3, avatar_x+123, avatar_y+123], outline=ACCENT_COLOR, width=2)
+    draw.ellipse([avatar_x-5, avatar_y-5, avatar_x+125, avatar_y+125], outline=KARMA_COLOR, width=1)
+    
+    # Bot information section
+    info_x = 200
+    info_y = 50
+    
+    # Bot name and tag
+    draw.text((info_x, info_y), BOT_NAME, fill=TEXT_COLOR, font=title_font)
+    draw.text((info_x, info_y + 35), f"@{bot_user.name}", fill=(150, 150, 150), font=subtitle_font)
+    draw.text((info_x, info_y + 65), "🤖 Discord Bot", fill=ACCENT_COLOR, font=text_font)
+    
+    # Tagline (truncated if too long)
+    tagline = BOT_TAGLINE
+    if len(tagline) > 45:
+        tagline = tagline[:42] + "..."
+    draw.text((info_x, info_y + 90), tagline, fill=(200, 200, 200), font=small_font)
+    
+    # Stats section
+    stats_y = 180
+    
+    # Server count and uptime
+    server_count = len(bot_user.guilds) if hasattr(bot_user, 'guilds') else 0
+    draw.text((50, stats_y), "🏰 SERVER STATISTICS", fill=ACCENT_COLOR, font=subtitle_font)
+    draw.text((50, stats_y + 30), f"{server_count} servers", fill=TEXT_COLOR, font=text_font)
+    draw.text((50, stats_y + 55), f"⏰ Uptime: {uptime_str}", fill=(200, 200, 200), font=text_font)
+    draw.text((50, stats_y + 80), "🟢 Status: Online & Ready", fill=(46, 204, 113), font=text_font)
+    
+    # Owner information
+    draw.text((400, stats_y), "👨‍💻 BOT DEVELOPER", fill=KARMA_COLOR, font=subtitle_font)
+    draw.text((400, stats_y + 30), BOT_OWNER_NAME, fill=TEXT_COLOR, font=text_font)
+    draw.text((400, stats_y + 55), f"{owner_status_emoji} {owner_status}", fill=(200, 200, 200), font=text_font)
+    draw.text((400, stats_y + 80), "🇮🇳 From God's Own Country", fill=ACCENT_COLOR, font=text_font)
+    
+    # Features section
+    features_y = 280
+    draw.text((50, features_y), "⚡ KEY FEATURES", fill=COIN_COLOR, font=subtitle_font)
+    features_text = "✨ Karma System • 🪙 Economy • 🎫 Tickets • 🛡️ Moderation • 🎮 Games"
+    draw.text((50, features_y + 25), features_text, fill=(200, 200, 200), font=small_font)
+    
+    # Version and build info
+    draw.text((400, features_y), "🔧 BUILD INFO", fill=(155, 89, 182), font=subtitle_font)
+    draw.text((400, features_y + 25), "Version: Latest Stable", fill=(200, 200, 200), font=small_font)
+    draw.text((400, features_y + 45), "Framework: discord.py", fill=(200, 200, 200), font=small_font)
+    
+    # Footer with special message
+    footer_y = CARD_HEIGHT - 35
+    draw.text((50, footer_y), "🌴 VAAZHA-BOT Profile Card • Your friendly Kerala assistant! • Made with ❤️", fill=(100, 100, 100), font=small_font)
+    
+    return card
+
 @bot.tree.command(name="profile", description="🎨 Show a beautiful profile card with user stats and avatar")
 @app_commands.describe(user="User to show profile for (optional)")
 async def profile_card(interaction: discord.Interaction, user: discord.Member = None):
+    if not interaction.guild:
+        await interaction.response.send_message("❌ This command can only be used in servers!", ephemeral=True)
+        return
+        
     target_user = user or interaction.user
     
     # Defer response as image generation takes time
@@ -230,9 +310,13 @@ async def profile_card(interaction: discord.Interaction, user: discord.Member = 
         print(f"Error creating profile card: {e}")
         
         # Fallback embed if image generation fails
-        karma_data = await db.karma.find_one({'user_id': str(target_user.id), 'guild_id': str(interaction.guild.id)}) if db is not None else None
+        karma_data = None
+        economy_data = None
+        if db is not None and interaction.guild:
+            karma_data = await db.karma.find_one({'user_id': str(target_user.id), 'guild_id': str(interaction.guild.id)})
+            economy_data = await get_user_economy(target_user.id, interaction.guild.id)
+        
         karma = karma_data.get('karma', 0) if karma_data else 0
-        economy_data = await get_user_economy(target_user.id, interaction.guild.id) if db is not None else None
         coins = economy_data.get('coins', 0) + economy_data.get('bank', 0) if economy_data else 0
         
         embed = discord.Embed(

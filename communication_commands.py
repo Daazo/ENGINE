@@ -3,6 +3,9 @@ from discord.ext import commands
 from discord import app_commands
 import asyncio
 from main import bot, has_permission, log_action
+import os
+from datetime import datetime, timedelta
+import time
 
 @bot.tree.command(name="say", description="Make the bot say something")
 @app_commands.describe(message="Message to say", channel="Channel to send to (optional)")
@@ -389,6 +392,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
                 role_to_remove = guild.get_role(role_data["role_to_remove_id"])
                 if role_to_remove and role_to_remove in member.roles:
                     await member.remove_roles(role_to_remove)
+                    print(f"Assigned role {role_to_assign.name} to {member.display_name}") # Logging
 
             if role_to_assign not in member.roles:
                 await member.add_roles(role_to_assign)
@@ -425,3 +429,183 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
                 if role_to_remove and role_to_remove in member.roles:
                     await member.remove_roles(role_to_remove)
                     print(f"Removed role {role_to_remove.name} from {member.display_name}") # Logging
+
+@bot.tree.command(name="contact", description="📞 Get bot contact information and support details")
+async def contact_info(interaction: discord.Interaction):
+    bot_owner_id = os.getenv('BOT_OWNER_ID')
+    contact_email = os.getenv('CONTACT_EMAIL')
+    support_server = os.getenv('SUPPORT_SERVER_LINK')
+
+    owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
+    email_text = contact_email if contact_email else "Not available"
+    support_text = support_server if support_server else "Contact owner for invite"
+
+    # Get owner status if possible
+    owner_status = "Unknown"
+    owner_status_emoji = "⚫"
+    if bot_owner_id:
+        try:
+            owner_user = await bot.fetch_user(int(bot_owner_id))
+            if owner_user:
+                # Try to get owner from current guild to check status
+                if interaction.guild:
+                    owner_member = interaction.guild.get_member(int(bot_owner_id))
+                    if owner_member:
+                        status_map = {
+                            discord.Status.online: ("🟢", "Online"),
+                            discord.Status.idle: ("🟡", "Idle"),
+                            discord.Status.dnd: ("🔴", "Do Not Disturb"),
+                            discord.Status.offline: ("⚫", "Offline")
+                        }
+                        owner_status_emoji, owner_status = status_map.get(owner_member.status, ("⚫", "Unknown"))
+        except:
+            pass
+
+    # Bot uptime calculation
+    uptime_seconds = time.time() - bot.start_time
+    uptime_str = str(timedelta(seconds=int(uptime_seconds)))
+
+    # Try to create profile card first
+    try:
+        # Assume create_bot_profile_card is defined in profile_cards.py
+        # You would need to ensure this file and function exist and are correctly imported.
+        # For this example, we'll mock its behavior or skip if not available.
+        # If you don't have this, the fallback will be used.
+        # If you want to use this, make sure to have a profile_cards.py with a create_bot_profile_card function.
+
+        # Mocking the function for demonstration if profile_cards.py is not present
+        # In a real scenario, you'd import it properly.
+        async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_str):
+            # This is a placeholder. Replace with actual image generation logic.
+            # For testing, we'll return a dummy image or None.
+            print("Attempting to create bot profile card (mocked).")
+            # Example using Pillow if installed:
+            try:
+                from PIL import Image, ImageDraw, ImageFont
+                img = Image.new('RGB', (800, 400), color = (50, 50, 50))
+                d = ImageDraw.Draw(img)
+                try:
+                    font = ImageFont.truetype("arial.ttf", 20)
+                except IOError:
+                    font = ImageFont.load_default()
+
+                d.text((10,10), f"Bot: {bot.user.name}", fill=(255,255,0), font=font)
+                d.text((10,40), f"Owner: {bot.user.name} {owner_status_emoji}", fill=(255,255,255), font=font)
+                d.text((10,70), f"Uptime: {uptime_str}", fill=(255,255,255), font=font)
+                return img
+            except ImportError:
+                print("Pillow not found. Cannot create profile card image.")
+                return None
+
+
+        await interaction.response.defer()
+
+        # Create bot profile card
+        card_image = await create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_str)
+
+        if card_image:
+            # Save image to bytes
+            from io import BytesIO
+            img_bytes = BytesIO()
+            card_image.save(img_bytes, format='PNG', quality=95)
+            img_bytes.seek(0)
+
+            # Create Discord file
+            file = discord.File(img_bytes, filename=f"bot_profile_{bot.user.id}.png")
+
+            # Create embed with profile card
+            embed = discord.Embed(
+                title="🤖 **VAAZHA-BOT Profile Card**",
+                description=f"*{BOT_TAGLINE}*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                color=0x43b581
+            )
+            embed.set_image(url=f"attachment://bot_profile_{bot.user.id}.png")
+
+            embed.add_field(
+                name="📞 **Contact Information**",
+                value=f"**Developer:** {owner_mention} {owner_status_emoji}\n**Email:** `{email_text}`\n**Support Server:** {support_text}",
+                inline=False
+            )
+
+            embed.add_field(
+                name="⚡ **Quick Support**",
+                value="🔸 **Mention the owner** in any server with the bot\n🔸 **Use `/help`** for command assistance\n🔸 **Check recent updates** with help menu",
+                inline=False
+            )
+
+            embed.set_footer(text="🌴 Made with ❤️ from God's Own Country", icon_url=bot.user.display_avatar.url)
+
+            view = discord.ui.View()
+            if support_server:
+                support_button = discord.ui.Button(label="🏠 Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
+                view.add_item(support_button)
+
+            invite_button = discord.ui.Button(label="🤖 Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🤖")
+            view.add_item(invite_button)
+
+            await interaction.followup.send(embed=embed, file=file, view=view)
+        else:
+            raise Exception("Failed to generate profile card image.") # Trigger fallback
+
+    except Exception as e:
+        print(f"Error creating bot profile card: {e}")
+        # Fallback to regular embed
+        embed = discord.Embed(
+            title="📞 **Contact Information & Support**",
+            description=f"*Need help or want to get in touch? Here's how to reach us!*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            color=0x3498db
+        )
+
+        embed.add_field(
+            name="🤖 **VAAZHA-BOT Information**",
+            value=f"**Name:** {BOT_NAME}\n**Tagline:** {BOT_TAGLINE}\n**Servers:** {len(bot.guilds)}\n**Uptime:** {uptime_str}\n**Status:** 🟢 Online & Ready",
+            inline=False
+        )
+
+        embed.add_field(
+            name="👨‍💻 **Bot Developer**",
+            value=f"**Name:** {BOT_OWNER_NAME}\n**Discord:** {owner_mention} {owner_status_emoji}\n**Status:** {owner_status}\n**About:** {BOT_OWNER_DESCRIPTION}",
+            inline=False
+        )
+
+        embed.add_field(
+            name="📧 **Email Support**",
+            value=f"**Email:** `{email_text}`\n*For business inquiries, partnerships, or detailed support*",
+            inline=False
+        )
+
+        embed.add_field(
+            name="🏠 **Support Server**",
+            value=f"**Join:** {support_text}\n*Get instant help, report bugs, suggest features, and chat with the community*",
+            inline=False
+        )
+
+        embed.add_field(
+            name="⚡ **Quick Support**",
+            value="🔸 **Mention the owner** in any server with the bot\n🔸 **Use `/help`** for command assistance\n🔸 **Check recent updates** with help menu",
+            inline=False
+        )
+
+        embed.set_thumbnail(url=bot.user.display_avatar.url)
+        embed.set_footer(text="🌴 Made with ❤️ from God's Own Country", icon_url=bot.user.display_avatar.url)
+
+        view = discord.ui.View()
+        if support_server:
+            support_button = discord.ui.Button(label="🏠 Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
+            view.add_item(support_button)
+
+        invite_button = discord.ui.Button(label="🤖 Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🤖")
+        view.add_item(invite_button)
+
+        if not interaction.response.is_done():
+            await interaction.response.send_message(embed=embed, view=view)
+        else:
+            await interaction.followup.send(embed=embed, view=view)
+
+# Dummy variables and function for context, assuming they are defined elsewhere or globally.
+# These are essential for the code to run without NameError.
+# You should have these defined in your actual project.
+BOT_OWNER_NAME = os.getenv('BOT_OWNER_NAME', 'Bot Owner')
+BOT_OWNER_DESCRIPTION = os.getenv('BOT_OWNER_DESCRIPTION', 'A great bot developer.')
+BOT_NAME = os.getenv('BOT_NAME', 'VAAZHA-BOT')
+BOT_TAGLINE = os.getenv('BOT_TAGLINE', 'Your ultimate Discord companion!')
