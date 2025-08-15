@@ -82,6 +82,7 @@ async def log_action(guild_id, log_type, message):
             "voice": "voice",
             "timed_roles": "timed",
             "timeout": "timeout",
+            "security": "security",  # Add security logs mapping
             "profile": "general",  # Route profile logs to general
             "utility": "general"   # Route utility logs to general
         }
@@ -103,7 +104,8 @@ async def log_action(guild_id, log_type, message):
                     "welcome": 0x43b581,
                     "voice": 0x9b59b6,
                     "timed_roles": 0xf39c12,
-                    "timeout": 0xe74c3c
+                    "timeout": 0xe74c3c,
+                    "security": 0xff0000  # Red color for security alerts
                 }
 
                 embed = discord.Embed(
@@ -210,6 +212,11 @@ async def on_ready():
     bot.add_view(ReopenTicketView())
     bot.add_view(CloseReopenedTicketView())
     print("✅ Persistent views added for ticket system")
+
+    # Add persistent views for security system
+    from security_system import VerificationView
+    bot.add_view(VerificationView(0))  # Dummy role ID, will be updated when used
+    print("✅ Persistent views added for security system")
 
     # Start timed roles background task
     from timed_roles import start_timed_roles_task
@@ -966,7 +973,7 @@ class HelpView(discord.ui.View):
         )
         embed.add_field(
             name="⚠️ **Auto-Timeout System** (Already Active)",
-            value="**🔴 `/timeout-settings feature enabled`** - Configure auto-timeouts\n**Bad Words:** Auto-timeout for inappropriate language (10m+)\n**Spam Detection:** Auto-timeout for message spam (5m+)\n**Link Protection:** Auto-timeout for unauthorized links (8m+)\n**Escalating Penalties:** Longer timeouts for repeat offenders",
+            value="**🔴 `/timeout-settings feature enabled`** - Configure auto-timeouts\n**Bad Words:** Auto-timeout for inappropriate language (10m+)\n**Spam Detection:** Auto-timeout for message spam (5m+)\n**Link Protection:** Auto-timeout for unauthorized links (8m+)\n**Anti-Spam & Anti-Link:** Already integrated with timeout system\n**Escalating Penalties:** Longer timeouts for repeat offenders",
             inline=False
         )
         embed.add_field(

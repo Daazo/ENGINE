@@ -425,5 +425,4 @@ async def handle_nuke_detection(guild, nuke_type, count):
     """Handle detected nuke attempt"""
     await log_action(guild.id, "security", f"🚨 [ANTI-NUKE] Potential {nuke_type} nuke detected! {count} {nuke_type}s affected in 5 minutes")
 
-# Add persistent view for verification
-bot.add_view(VerificationView(0))  # Dummy role ID, will be updated when used
+# Note: VerificationView will be added in main.py after bot is ready to avoid event loop issues
