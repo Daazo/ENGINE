@@ -37,12 +37,6 @@ async def reaction_role_setup(
         )
 
         async def on_submit(self, modal_interaction: discord.Interaction):
-            # If this is not from a modal, create the modal interface
-            if not hasattr(modal_interaction, 'data') or 'components' not in modal_interaction.data:
-                # Show modal
-                await modal_interaction.response.send_modal(self)
-                return
-
             await modal_interaction.response.defer()
 
             try:
@@ -157,7 +151,10 @@ async def reaction_role_setup(
 
     # Show the modal properly
     modal = ReactionRoleModal()
-    await interaction.response.send_modal(modal)
+    try:
+        await interaction.followup.send_modal(modal)
+    except:
+        await interaction.response.send_modal(modal)
 
 # Alternative command for quick single reaction role setup
 @bot.tree.command(name="quickreactionrole", description="🎭 Quick setup for single reaction role")
