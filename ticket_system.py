@@ -140,9 +140,21 @@ class TicketControlView(discord.ui.View):
     
     @discord.ui.button(label='Close Ticket', style=discord.ButtonStyle.danger, emoji='🔒', custom_id='ticket_close_button')
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not await has_permission(interaction, "junior_moderator"):
-            await interaction.response.send_message("❌ You need Junior Moderator permissions to close tickets!", ephemeral=True)
-            return
+        # Check if user has moderator permissions OR ticket support role
+        has_mod_permission = await has_permission(interaction, "junior_moderator")
+        
+        server_data = await get_server_data(interaction.guild.id)
+        support_role_id = server_data.get('ticket_support_role')
+        has_support_role = False
+        
+        if support_role_id:
+            support_role = interaction.guild.get_role(int(support_role_id))
+            if support_role and support_role in interaction.user.roles:
+                has_support_role = True
+        
+        if not has_mod_permission and not has_support_role:
+            await interaction.response.send_message("❌ You need Junior Moderator permissions or Ticket Support role to close tickets!", ephemeral=True)
+            return</old_str>
         
         server_data = await get_server_data(interaction.guild.id)
         close_category_id = server_data.get('ticket_close_category')
@@ -184,9 +196,9 @@ class ReopenTicketView(discord.ui.View):
     
     @discord.ui.button(label='Reopen Ticket', style=discord.ButtonStyle.success, emoji='🔓', custom_id='ticket_reopen_button')
     async def reopen_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not await has_permission(interaction, "main_moderator"):
-            await interaction.response.send_message("❌ Only Main Moderators can reopen tickets!", ephemeral=True)
-            return
+        if not await has_permission(interaction, "junior_moderator"):
+            await interaction.response.send_message("❌ You need Junior Moderator permissions or higher to reopen tickets!", ephemeral=True)
+            return</old_str>
         
         server_data = await get_server_data(interaction.guild.id)
         open_category_id = server_data.get('ticket_open_category')
@@ -213,7 +225,9 @@ class ReopenTicketView(discord.ui.View):
             color=0x43b581
         )
         
-        await interaction.response.send_message(embed=embed)
+        # Add close button back to the reopened ticket
+        close_view = TicketControlView()
+        await interaction.response.send_message(embed=embed, view=close_view)</old_str>
         
         await log_action(interaction.guild.id, "tickets", f"🔓 [TICKET REOPENED] {interaction.channel.name} by {interaction.user}")
 
