@@ -997,8 +997,13 @@ class HelpView(discord.ui.View):
             color=0xe67e22
         )
         embed.add_field(
-            name="🔴 `/reactionrole message emoji role channel`",
-            value="**Usage:** `/reactionrole message:\"React for roles!\" emoji:😀 role:@Member channel:#roles`\n**Description:** Setup reaction roles for automatic self-assignment\n**Features:** Users get/lose roles by reacting to messages",
+            name="🎭 **Multi-Reaction Role System** (NEW!)",
+            value="**🔴 `/reactionrole`** - Setup multiple emoji/role pairs in one message (up to 10)\n**🔴 `/quickreactionrole`** - Quick single reaction role setup\n**🟡 `/listreactionroles`** - View all active reaction role setups\n**Features:** Multiple roles per message, auto-remove roles, interactive setup",
+            inline=False
+        )
+        embed.add_field(
+            name="✨ **New Reaction Role Features**",
+            value="**Multiple Emoji/Roles:** Up to 10 emoji:role pairs per message\n**Auto-Remove Role:** Automatically remove specified role when user gets any reaction role\n**Interactive Setup:** User-friendly form for multiple pairs\n**Format:** 🎯:@Role1 (one per line in setup form)",
             inline=False
         )
 
