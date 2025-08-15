@@ -81,7 +81,9 @@ async def log_action(guild_id, log_type, message):
             "welcome": "welcome",
             "voice": "voice",
             "timed_roles": "timed",
-            "timeout": "timeout"
+            "timeout": "timeout",
+            "profile": "profile",
+            "utility": "utility"
         }
 
         mapped_channel = log_mapping.get(log_type)
@@ -631,6 +633,8 @@ async def help_command_callback(interaction):
 
     view = HelpView()
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+    
+    await log_action(interaction.guild.id, "general", f"📋 [HELP] {interaction.user} used help command")
 
 # Professional Help View Class
 class HelpView(discord.ui.View):
@@ -667,6 +671,11 @@ class HelpView(discord.ui.View):
         embed.add_field(
             name="🟡 `/uptime`",
             value="**Usage:** `/uptime`\n**Description:** Display how long the bot has been running continuously",
+            inline=False
+        )
+        embed.add_field(
+            name="🎨 **Profile & Visual Commands**",
+            value="**🟢 `/profile [user]`** - Generate beautiful profile cards with stats\n**🟡 `/servercard`** - Create server overview cards\n**🟢 `/botprofile`** - View bot information card\n**🟢 `/contact`** - Get bot contact information and support",
             inline=False
         )
         embed.set_footer(text="🟢 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
@@ -1046,6 +1055,8 @@ async def ping(interaction: discord.Interaction):
     )
     embed.set_footer(text="🌴 ᴠᴀᴀᴢʜᴀ Network Status", icon_url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
+    
+    await log_action(interaction.guild.id, "general", f"🏓 [PING] {interaction.user} checked bot latency ({latency}ms)")
 
 @bot.tree.command(name="uptime", description="⏰ Show how long the bot has been running")
 async def uptime(interaction: discord.Interaction):
@@ -1063,6 +1074,8 @@ async def uptime(interaction: discord.Interaction):
     )
     embed.set_footer(text="🌴 ᴠᴀᴀᴢʜᴀ System Status", icon_url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
+    
+    await log_action(interaction.guild.id, "general", f"⏰ [UPTIME] {interaction.user} checked bot uptime ({uptime_str})")
 
 @bot.tree.command(name="userinfo", description="👤 Show detailed information about a user")
 async def userinfo(interaction: discord.Interaction, user: discord.Member = None):
@@ -1100,6 +1113,8 @@ async def userinfo(interaction: discord.Interaction, user: discord.Member = None
 
     embed.set_footer(text=f"🌴 Requested by {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
+    
+    await log_action(interaction.guild.id, "general", f"👤 [USERINFO] {interaction.user} viewed info for {user}")
 
 @bot.tree.command(name="serverinfo", description="🏰 Show detailed server information")
 async def serverinfo(interaction: discord.Interaction):
@@ -1132,6 +1147,8 @@ async def serverinfo(interaction: discord.Interaction):
 
     embed.set_footer(text=f"🌴 Requested by {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
+    
+    await log_action(interaction.guild.id, "general", f"🏰 [SERVERINFO] {interaction.user} viewed server information")
 
 # Contact info command
 @bot.tree.command(name="synccommands", description="🔄 Force sync all bot commands (Owner only)")
@@ -1207,6 +1224,7 @@ async def sync_commands(interaction: discord.Interaction):
 
 @bot.tree.command(name="contact", description="📞 Get bot contact information and support details")
 async def contact_info(interaction: discord.Interaction):
+    await log_action(interaction.guild.id, "general", f"📞 [CONTACT] {interaction.user} viewed contact information")
     bot_owner_id = os.getenv('BOT_OWNER_ID')
     contact_email = os.getenv('CONTACT_EMAIL')
     support_server = os.getenv('SUPPORT_SERVER_LINK')

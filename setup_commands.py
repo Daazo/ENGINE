@@ -252,7 +252,9 @@ async def setup(
                 ("👋-welcome-logs", "Member join and welcome message logs 🎊", False),
                 ("🔊-voice-logs", "Voice channel join, leave, and activity logs 🎵", False),
                 ("🕰️-timed-role-logs", "Timed role assignments and removals logs ⏰", False),
-                ("🔒-timeout-logs", "Auto-timeout system and penalty logs ⚠️", False)
+                ("🔒-timeout-logs", "Auto-timeout system and penalty logs ⚠️", False),
+                ("🎨-profile-logs", "Profile cards and visual command logs 📊", False),
+                ("🔧-utility-logs", "Utility commands like ping, uptime, info logs ⚙️", False)
             ]
             
             created_channels = []

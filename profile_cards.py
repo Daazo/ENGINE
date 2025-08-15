@@ -238,7 +238,7 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
     # Owner information
     draw.text((400, stats_y), "👨‍💻 BOT DEVELOPER", fill=KARMA_COLOR, font=subtitle_font)
     draw.text((400, stats_y + 30), BOT_OWNER_NAME, fill=TEXT_COLOR, font=text_font)
-    
+
     # Better status display
     if owner_status == "Offline":
         status_color = (128, 128, 128)
@@ -250,19 +250,19 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
         status_color = (220, 53, 69)
     else:
         status_color = (200, 200, 200)
-    
+
     draw.text((400, stats_y + 55), f"{owner_status_emoji} {owner_status}", fill=status_color, font=text_font)
     draw.text((400, stats_y + 80), "🇮🇳 From God's Own Country", fill=ACCENT_COLOR, font=text_font)
 
     # Features section - reorganized to avoid overlap
     features_y = 270
     draw.text((50, features_y), "⚡ KEY FEATURES", fill=COIN_COLOR, font=subtitle_font)
-    
+
     # Column 1 features
     draw.text((50, features_y + 25), "✨ Karma System", fill=(200, 200, 200), font=small_font)
     draw.text((50, features_y + 45), "🪙 Economy", fill=(200, 200, 200), font=small_font)
     draw.text((50, features_y + 65), "🎫 Tickets", fill=(200, 200, 200), font=small_font)
-    
+
     # Column 2 features
     draw.text((180, features_y + 25), "🛡️ Moderation", fill=(200, 200, 200), font=small_font)
     draw.text((180, features_y + 45), "🎮 Games", fill=(200, 200, 200), font=small_font)
@@ -322,7 +322,7 @@ async def profile_card(interaction: discord.Interaction, user: discord.Member = 
 
         await interaction.followup.send(embed=embed, file=file)
 
-        await log_action(interaction.guild.id, "karma", f"🎨 [PROFILE] {interaction.user} generated profile card for {target_user}")
+        await log_action(interaction.guild.id, "general", f"🎨 [PROFILE] {interaction.user} generated profile card for {target_user}")
 
     except Exception as e:
         print(f"Error creating profile card: {e}")
@@ -415,6 +415,8 @@ async def server_card(interaction: discord.Interaction):
 
         await interaction.followup.send(embed=embed, file=file)
 
+        await log_action(interaction.guild.id, "general", f"🏰 [SERVERCARD] {interaction.user} generated server card")
+
     except Exception as e:
         print(f"Error creating server card: {e}")
         await interaction.followup.send("❌ Server card generation failed. Please try again later.", ephemeral=True)
@@ -432,7 +434,7 @@ async def bot_profile(interaction: discord.Interaction):
         # Get bot owner status and uptime
         owner_status = "Offline"
         owner_status_emoji = "⚫"
-        
+
         # Assuming you have a way to track bot owner's status,
         # e.g., through another bot or a shared variable.
         # For now, we'll use placeholder values.
