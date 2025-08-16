@@ -82,9 +82,7 @@ async def log_action(guild_id, log_type, message):
         print(f"Global logging error: {e}")
         pass
 
-    # SKIP local logging to avoid duplication - global system handles everything
-    return
-
+    # ALSO handle LOCAL logging for this server - both systems work together
     # Check for organized logging system first
     organized_logs = server_data.get('organized_log_channels', {})
     if organized_logs:
