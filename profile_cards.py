@@ -187,57 +187,63 @@ async def create_profile_card(user, guild, karma_data, economy_data):
 
 async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_str, server_count):
     """Create a profile card for the bot with information"""
-    from main import BOT_NAME, BOT_TAGLINE, BOT_OWNER_NAME
+    from main import BOT_NAME, BOT_TAGLINE, BOT_OWNER_NAME, BOT_VERSION
     import time
 
-    # Create base image with gradient background
-    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), BACKGROUND_COLOR)
+    # Create base image with more height to avoid overlap
+    card = Image.new('RGB', (CARD_WIDTH, 450), BACKGROUND_COLOR)
     draw = ImageDraw.Draw(card)
 
-    # Load fonts
-    title_font = get_default_font(28)
-    subtitle_font = get_default_font(18)
-    text_font = get_default_font(16)
-    small_font = get_default_font(14)
+    # Load fonts with better sizing
+    title_font = get_default_font(26)
+    subtitle_font = get_default_font(16)
+    text_font = get_default_font(14)
+    small_font = get_default_font(12)
 
     # Download and process bot avatar
     avatar_url = str(bot.user.display_avatar.url)
     avatar_image = await download_avatar(avatar_url)
-    circular_avatar = create_circular_avatar(avatar_image, 120)
+    circular_avatar = create_circular_avatar(avatar_image, 100)
 
     # Paste avatar with special border for bot
     avatar_x = 50
-    avatar_y = 40
+    avatar_y = 30
     card.paste(circular_avatar, (avatar_x, avatar_y), circular_avatar)
 
-    # Draw special bot border (gradient-like with multiple colors)
-    draw.ellipse([avatar_x-3, avatar_y-3, avatar_x+123, avatar_y+123], outline=ACCENT_COLOR, width=2)
-    draw.ellipse([avatar_x-5, avatar_y-5, avatar_x+125, avatar_y+125], outline=KARMA_COLOR, width=1)
+    # Draw special bot border
+    draw.ellipse([avatar_x-3, avatar_y-3, avatar_x+103, avatar_y+103], outline=ACCENT_COLOR, width=2)
+    draw.ellipse([avatar_x-5, avatar_y-5, avatar_x+105, avatar_y+105], outline=KARMA_COLOR, width=1)
 
     # Bot information section
-    info_x = 200
-    info_y = 50
+    info_x = 170
+    info_y = 35
 
     # Bot name and tag
     draw.text((info_x, info_y), BOT_NAME, fill=TEXT_COLOR, font=title_font)
-    draw.text((info_x, info_y + 35), f"@{bot.user.name}", fill=(150, 150, 150), font=subtitle_font)
-    draw.text((info_x, info_y + 60), "🤖 Discord Bot", fill=ACCENT_COLOR, font=text_font)
+    draw.text((info_x, info_y + 30), f"@{bot.user.name}", fill=(150, 150, 150), font=subtitle_font)
+    draw.text((info_x, info_y + 50), f"{BOT_VERSION} • 🤖 Discord Bot", fill=ACCENT_COLOR, font=text_font)
 
-    # Tagline (properly formatted for display)
-    draw.text((info_x, info_y + 85), BOT_TAGLINE, fill=(200, 200, 200), font=small_font)
+    # Tagline (properly wrapped)
+    tagline_words = BOT_TAGLINE.split()
+    line1 = " ".join(tagline_words[:6])  # First 6 words
+    line2 = " ".join(tagline_words[6:]) if len(tagline_words) > 6 else ""
+    
+    draw.text((info_x, info_y + 70), line1, fill=(200, 200, 200), font=small_font)
+    if line2:
+        draw.text((info_x, info_y + 85), line2, fill=(200, 200, 200), font=small_font)
 
-    # Stats section
-    stats_y = 180
+    # Stats section - better spacing
+    stats_y = 160
 
-    # Server count and uptime
+    # Server count and status
     draw.text((50, stats_y), "🏰 SERVER STATISTICS", fill=ACCENT_COLOR, font=subtitle_font)
-    draw.text((50, stats_y + 30), f"{server_count} servers", fill=TEXT_COLOR, font=text_font)
-    draw.text((50, stats_y + 55), f"⏰ Uptime: {uptime_str}", fill=(200, 200, 200), font=text_font)
-    draw.text((50, stats_y + 80), "🟢 Status: Online & Ready", fill=(46, 204, 113), font=text_font)
+    draw.text((50, stats_y + 25), f"📊 {server_count} servers active", fill=TEXT_COLOR, font=text_font)
+    draw.text((50, stats_y + 45), f"⏰ Uptime: {uptime_str}", fill=(200, 200, 200), font=text_font)
+    draw.text((50, stats_y + 65), "🟢 Status: Online & Ready", fill=(46, 204, 113), font=text_font)
 
     # Owner information
     draw.text((400, stats_y), "👨‍💻 BOT DEVELOPER", fill=KARMA_COLOR, font=subtitle_font)
-    draw.text((400, stats_y + 30), BOT_OWNER_NAME, fill=TEXT_COLOR, font=text_font)
+    draw.text((400, stats_y + 25), BOT_OWNER_NAME, fill=TEXT_COLOR, font=text_font)
 
     # Better status display
     if owner_status == "Offline":
@@ -251,31 +257,42 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
     else:
         status_color = (200, 200, 200)
 
-    draw.text((400, stats_y + 55), f"{owner_status_emoji} {owner_status}", fill=status_color, font=text_font)
-    draw.text((400, stats_y + 80), "🇮🇳 From God's Own Country", fill=ACCENT_COLOR, font=text_font)
+    draw.text((400, stats_y + 45), f"{owner_status_emoji} {owner_status}", fill=status_color, font=text_font)
+    draw.text((400, stats_y + 65), "🇮🇳 From God's Own Country", fill=ACCENT_COLOR, font=text_font)
 
-    # Features section - reorganized to avoid overlap
-    features_y = 270
-    draw.text((50, features_y), "⚡ KEY FEATURES", fill=COIN_COLOR, font=subtitle_font)
+    # Features section - better layout with more space
+    features_y = 260
+    draw.text((50, features_y), "⚡ CORE FEATURES", fill=COIN_COLOR, font=subtitle_font)
 
     # Column 1 features
-    draw.text((50, features_y + 25), "✨ Karma System", fill=(200, 200, 200), font=small_font)
-    draw.text((50, features_y + 45), "🪙 Economy", fill=(200, 200, 200), font=small_font)
-    draw.text((50, features_y + 65), "🎫 Tickets", fill=(200, 200, 200), font=small_font)
+    draw.text((50, features_y + 25), "✨ Advanced Karma System", fill=(200, 200, 200), font=small_font)
+    draw.text((50, features_y + 40), "🪙 Vaazha Coins Economy", fill=(200, 200, 200), font=small_font)
+    draw.text((50, features_y + 55), "🎫 Professional Tickets", fill=(200, 200, 200), font=small_font)
+    draw.text((50, features_y + 70), "🎭 Reaction Roles", fill=(200, 200, 200), font=small_font)
 
     # Column 2 features
-    draw.text((180, features_y + 25), "🛡️ Moderation", fill=(200, 200, 200), font=small_font)
-    draw.text((180, features_y + 45), "🎮 Games", fill=(200, 200, 200), font=small_font)
-    draw.text((180, features_y + 65), "🎭 Roles", fill=(200, 200, 200), font=small_font)
+    draw.text((280, features_y + 25), "🛡️ Smart Moderation", fill=(200, 200, 200), font=small_font)
+    draw.text((280, features_y + 40), "🎮 Mini-Games & Trivia", fill=(200, 200, 200), font=small_font)
+    draw.text((280, features_y + 55), "📊 Profile Cards", fill=(200, 200, 200), font=small_font)
+    draw.text((280, features_y + 70), "🔔 Auto-Timeouts", fill=(200, 200, 200), font=small_font)
 
-    # Version and build info - moved to the right side
-    draw.text((500, features_y), "🔧 BUILD INFO", fill=(155, 89, 182), font=subtitle_font)
-    draw.text((500, features_y + 25), "Version: Latest Stable", fill=(200, 200, 200), font=small_font)
-    draw.text((500, features_y + 45), "Framework: discord.py", fill=(200, 200, 200), font=small_font)
+    # Column 3 features
+    draw.text((500, features_y + 25), "🏦 Banking System", fill=(200, 200, 200), font=small_font)
+    draw.text((500, features_y + 40), "🛡️ Security Suite", fill=(200, 200, 200), font=small_font)
+    draw.text((500, features_y + 55), "⏰ Timed Roles", fill=(200, 200, 200), font=small_font)
+    draw.text((500, features_y + 70), "🎨 Welcome Cards", fill=(200, 200, 200), font=small_font)
 
-    # Footer with special message
-    footer_y = CARD_HEIGHT - 35
-    draw.text((50, footer_y), "🌴 VAAZHA-BOT Profile Card • Your friendly Kerala assistant! • Made with ❤️", fill=(100, 100, 100), font=small_font)
+    # Build info section
+    build_y = 360
+    draw.text((50, build_y), "🔧 BUILD INFORMATION", fill=(155, 89, 182), font=subtitle_font)
+    draw.text((50, build_y + 25), f"Version: {BOT_VERSION} Stable", fill=(200, 200, 200), font=small_font)
+    draw.text((50, build_y + 40), "Framework: discord.py v2.3+", fill=(200, 200, 200), font=small_font)
+    draw.text((400, build_y + 25), "Database: MongoDB Atlas", fill=(200, 200, 200), font=small_font)
+    draw.text((400, build_y + 40), "Language: Python 3.11+", fill=(200, 200, 200), font=small_font)
+
+    # Footer with proper spacing
+    footer_y = 420
+    draw.text((50, footer_y), f"🌴 VAAZHA-BOT {BOT_VERSION} • Your Kerala Assistant • Made with ❤️ by {BOT_OWNER_NAME}", fill=(100, 100, 100), font=small_font)
 
     return card
 

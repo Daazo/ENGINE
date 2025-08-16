@@ -18,6 +18,7 @@ import requests
 
 # Bot configuration
 BOT_NAME = "ᴠᴀᴀᴢʜᴀ"
+BOT_VERSION = "v3.2.1"  # Update this version with each major update
 BOT_TAGLINE = "Your friendly server assistant from God's Own Country"
 BOT_OWNER_NAME = "Daazo|Rio"
 BOT_OWNER_DESCRIPTION = "Creator and developer of ᴠᴀᴀᴢʜᴀ bot. Passionate developer from Kerala, India 🇮🇳"
@@ -646,11 +647,11 @@ async def on_member_update(before, after):
 async def help_command_callback(interaction):
     """Callback for help button"""
     embed = discord.Embed(
-        title="🌴 **VAAZHA-BOT Command Center** 🌴",
+        title=f"🌴 **VAAZHA-BOT {BOT_VERSION} Command Center** 🌴",
         description=f"**Machanne! 🤙🏼**\n\nNeed some help? I'm Vaazha-Bot, ready to assist!\n\nSelect a category from the buttons below to explore my commands. For details on any specific command, just type `/` followed by the command name (e.g., `/userinfo`).\n\n**🚦 Aarkokke Enthokke Cheyyam? (Permission Levels)**\n\n🟢 **Everyone** - Can use all general, karma, and ticket commands\n🟡 **Junior Moderator (Cheriya Muthalali)** - Limited moderation access (use /setup and select junior moderator and select the role you want has junior moderator)\n🔴 **Main Moderator (Valiya Muthalali)** - Full access to moderation and setup (use /setup then main moderator and select the role you want has main moderator)\n👑 **Server Owner** - God-level. Ellam cheyyam! (Can do everything!)",
         color=0x43b581
     )
-    embed.set_footer(text="Your friendly server assistant from God's Own Country 🌴 Made with ❤️ by Daazo", icon_url=bot.user.display_avatar.url)
+    embed.set_footer(text=f"VAAZHA-BOT {BOT_VERSION} • Your friendly Kerala assistant 🌴 Made with ❤️ by Daazo", icon_url=bot.user.display_avatar.url)
     embed.set_thumbnail(url=bot.user.display_avatar.url)
 
     view = HelpView()
@@ -1042,7 +1043,7 @@ class HelpView(discord.ui.View):
         )
         embed.add_field(
             name="🌴 **Bot Information**",
-            value=f"**Name:** {BOT_NAME}\n**Tagline:** {BOT_TAGLINE}\n**Currently Serving:** {len(bot.guilds)} servers\n**Built With:** Python (discord.py)\n**Database:** MongoDB for persistence",
+            value=f"**Name:** {BOT_NAME}\n**Version:** {BOT_VERSION}\n**Tagline:** {BOT_TAGLINE}\n**Currently Serving:** {len(bot.guilds)} servers\n**Built With:** Python (discord.py)\n**Database:** MongoDB for persistence",
             inline=False
         )
         embed.add_field(
@@ -1393,7 +1394,7 @@ async def contact_info(interaction: discord.Interaction):
 
         embed.add_field(
             name="🤖 **VAAZHA-BOT Information**",
-            value=f"**Name:** {BOT_NAME}\n**Tagline:** {BOT_TAGLINE}\n**Servers:** {len(bot.guilds)}\n**Uptime:** {uptime_str}\n**Status:** 🟢 Online & Ready",
+            value=f"**Name:** {BOT_NAME}\n**Version:** {BOT_VERSION}\n**Tagline:** {BOT_TAGLINE}\n**Servers:** {len(bot.guilds)}\n**Uptime:** {uptime_str}\n**Status:** 🟢 Online & Ready",
             inline=False
         )
 
