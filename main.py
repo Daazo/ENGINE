@@ -65,6 +65,13 @@ async def update_server_data(guild_id, data):
 async def log_action(guild_id, log_type, message):
     """Log actions to appropriate channels"""
     server_data = await get_server_data(guild_id)
+    
+    # Send to global logging system
+    try:
+        from global_logging import log_global_activity
+        await log_global_activity(log_type.title(), guild_id, 0, message)
+    except:
+        pass
 
     # Check for organized logging system first
     organized_logs = server_data.get('organized_log_channels', {})
@@ -231,6 +238,7 @@ async def on_ready():
     try:
         from global_logging import initialize_global_logging
         await initialize_global_logging()
+        print("✅ Global logging fully integrated")
     except Exception as e:
         print(f"⚠️ Failed to initialize global logging: {e}")
 
@@ -541,6 +549,13 @@ async def on_member_join(member):
     # Run security checks first
     await on_member_join_security_check(member)
     
+    # Log to global system
+    try:
+        from global_logging import log_per_server_activity
+        await log_per_server_activity(member.guild.id, f"**New member joined:** {member} ({member.id})")
+    except:
+        pass
+    
     server_data = await get_server_data(member.guild.id)
 
     # Auto role assignment
@@ -618,30 +633,62 @@ async def on_voice_state_update(member, before, after):
     # Member joined a voice channel
     if before.channel is None and after.channel is not None:
         await log_action(member.guild.id, "voice", f"🔊 [VOICE JOIN] {member} joined {after.channel.name}")
+        try:
+            from global_logging import log_global_activity
+            await log_global_activity("Voice Activity", member.guild.id, member.id, f"Joined voice channel: {after.channel.name}")
+        except:
+            pass
 
     # Member left a voice channel
     elif before.channel is not None and after.channel is None:
         await log_action(member.guild.id, "voice", f"🔇 [VOICE LEAVE] {member} left {before.channel.name}")
+        try:
+            from global_logging import log_global_activity
+            await log_global_activity("Voice Activity", member.guild.id, member.id, f"Left voice channel: {before.channel.name}")
+        except:
+            pass
 
     # Member moved between voice channels
     elif before.channel is not None and after.channel is not None and before.channel != after.channel:
         await log_action(member.guild.id, "voice", f"🔄 [VOICE MOVE] {member} moved from {before.channel.name} to {after.channel.name}")
+        try:
+            from global_logging import log_global_activity
+            await log_global_activity("Voice Activity", member.guild.id, member.id, f"Moved from {before.channel.name} to {after.channel.name}")
+        except:
+            pass
 
     # Member was muted/unmuted
     if before.mute != after.mute:
         status = "muted" if after.mute else "unmuted"
         await log_action(member.guild.id, "voice", f"🔇 [VOICE MUTE] {member} was {status} in {after.channel.name if after.channel else 'voice'}")
+        try:
+            from global_logging import log_global_activity
+            await log_global_activity("Voice Moderation", member.guild.id, member.id, f"Was {status}")
+        except:
+            pass
 
     # Member was deafened/undeafened
     if before.deaf != after.deaf:
         status = "deafened" if after.deaf else "undeafened"
         await log_action(member.guild.id, "voice", f"🔇 [VOICE DEAF] {member} was {status} in {after.channel.name if after.channel else 'voice'}")
+        try:
+            from global_logging import log_global_activity
+            await log_global_activity("Voice Moderation", member.guild.id, member.id, f"Was {status}")
+        except:
+            pass
 
 @bot.event
 async def on_member_remove(member):
     """Send goodbye DM and log"""
     # Log member leaving
     await log_action(member.guild.id, "welcome", f"👋 [MEMBER LEAVE] {member} ({member.id}) left the server")
+    
+    # Log to global system
+    try:
+        from global_logging import log_per_server_activity
+        await log_per_server_activity(member.guild.id, f"**Member left:** {member} ({member.id})")
+    except:
+        pass
 
     try:
         embed = discord.Embed(

@@ -75,7 +75,11 @@ async def setup_global_channels():
         "bot-events",
         "security-alerts",
         "economy-global",
-        "karma-global"
+        "karma-global",
+        "moderation-logs",
+        "setup-logs",
+        "ticket-logs",
+        "voice-logs"
     ]
     
     for channel_name in global_channels:
@@ -89,28 +93,21 @@ async def setup_global_channels():
     
     print(f"✅ Global logging system initialized with {len(global_log_channels)} channels")
 
-# Event handlers for global logging
-@bot.event
-async def on_message_global_log(message):
-    """Log DMs and important messages globally"""
-    if message.author.bot:
-        return
-    
-    # === DM sent TO bot ===
-    if isinstance(message.channel, discord.DMChannel):
-        embed = discord.Embed(
-            title="📥 DM Received",
-            description=f"**From:** {message.author} ({message.author.id})\n**Content:** {message.content[:1000]}",
-            color=0x3498db,
-            timestamp=datetime.now()
-        )
-        embed.set_footer(text=f"User ID: {message.author.id}")
-        if message.author.display_avatar:
-            embed.set_thumbnail(url=message.author.display_avatar.url)
-        await log_to_global("dm-logs", embed)
+# Global logging functions that can be called from anywhere
+async def log_dm_received(message):
+    """Log DMs received by bot"""
+    embed = discord.Embed(
+        title="📥 DM Received",
+        description=f"**From:** {message.author} ({message.author.id})\n**Content:** {message.content[:1000]}",
+        color=0x3498db,
+        timestamp=datetime.now()
+    )
+    embed.set_footer(text=f"User ID: {message.author.id}")
+    if message.author.display_avatar:
+        embed.set_thumbnail(url=message.author.display_avatar.url)
+    await log_to_global("dm-logs", embed)
 
-@bot.event  
-async def on_bot_dm_send(recipient, content):
+async def log_dm_sent(recipient, content):
     """Log DMs sent by bot"""
     embed = discord.Embed(
         title="📤 DM Sent By Bot", 
@@ -123,8 +120,7 @@ async def on_bot_dm_send(recipient, content):
         embed.set_thumbnail(url=recipient.display_avatar.url)
     await log_to_global("bot-dm-send-logs", embed)
 
-@bot.event
-async def on_command_error_global(ctx, error):
+async def log_command_error(ctx, error):
     """Log command errors globally"""
     embed = discord.Embed(
         title="❌ Command Error",
@@ -138,9 +134,8 @@ async def on_command_error_global(ctx, error):
     embed.set_footer(text=f"Error Type: {type(error).__name__}")
     await log_to_global("command-errors", embed)
 
-@bot.event
-async def on_guild_join_global(guild):
-    """Create per-guild channel when bot joins new server"""
+async def log_guild_join_global(guild):
+    """Log when bot joins a server"""
     # Create guild-specific log channel
     channel_name = f"server-{guild.id}-{guild.name}".replace(" ", "-").lower()[:100]
     await get_or_create_global_channel(channel_name)
@@ -156,10 +151,8 @@ async def on_guild_join_global(guild):
         embed.set_thumbnail(url=guild.icon.url)
     await log_to_global("bot-events", embed)
 
-@bot.event 
-async def on_guild_remove_global(guild):
-    """Handle bot leaving server"""
-    # Log the leave event
+async def log_guild_remove_global(guild):
+    """Log when bot leaves a server"""
     embed = discord.Embed(
         title="👋 Bot Left Server",
         description=f"**Server:** {guild.name}\n**ID:** {guild.id}\n**Members:** {guild.member_count}",
@@ -191,6 +184,14 @@ async def log_global_activity(activity_type: str, guild_id: int, user_id: int, d
         await log_to_global("karma-global", embed)
     elif "security" in activity_type.lower():
         await log_to_global("security-alerts", embed)
+    elif "moderation" in activity_type.lower():
+        await log_to_global("moderation-logs", embed)
+    elif "setup" in activity_type.lower():
+        await log_to_global("setup-logs", embed)
+    elif "ticket" in activity_type.lower():
+        await log_to_global("ticket-logs", embed)
+    elif "voice" in activity_type.lower():
+        await log_to_global("voice-logs", embed)
     else:
         await log_to_global("live-console", embed)
 
@@ -214,54 +215,53 @@ async def log_per_server_activity(guild_id: int, activity: str):
     
     await log_to_global(channel_name, embed)
 
-# Hook into bot events
+# Store original event handlers from main.py
 original_on_message = None
 original_on_guild_join = None
 original_on_guild_remove = None
 
-# Try to get existing listeners
-listeners = bot.extra_events.get('on_message', [])
-if listeners:
-    original_on_message = listeners[0]
-
-listeners = bot.extra_events.get('on_guild_join', [])  
-if listeners:
-    original_on_guild_join = listeners[0]
-
-listeners = bot.extra_events.get('on_guild_remove', [])
-if listeners:
-    original_on_guild_remove = listeners[0]
-
-@bot.event
-async def on_message(message):
-    # Call original handler first
-    if original_on_message:
-        await original_on_message(message)
+def hook_into_events():
+    """Hook into existing bot events without overriding them"""
+    global original_on_message, original_on_guild_join, original_on_guild_remove
     
-    # Then our global logging
-    await on_message_global_log(message)
-
-@bot.event  
-async def on_guild_join(guild):
-    # Call original handler first
-    if original_on_guild_join:
-        await original_on_guild_join(guild)
+    # Store original handlers
+    original_on_message = bot.get_cog("message_handler") or getattr(bot, '_original_on_message', None)
+    original_on_guild_join = bot.get_cog("guild_join_handler") or getattr(bot, '_original_on_guild_join', None)
+    original_on_guild_remove = bot.get_cog("guild_remove_handler") or getattr(bot, '_original_on_guild_remove', None)
     
-    # Then our global logging
-    await on_guild_join_global(guild)
-
-@bot.event
-async def on_guild_remove(guild):
-    # Call original handler first  
-    if original_on_guild_remove:
-        await original_on_guild_remove(guild)
+    # Add global logging to existing events by adding listeners
+    bot.add_listener(global_on_message, 'on_message')
+    bot.add_listener(global_on_guild_join, 'on_guild_join')
+    bot.add_listener(global_on_guild_remove, 'on_guild_remove')
     
-    # Then our global logging
-    await on_guild_remove_global(guild)
+    print("✅ Global logging event hooks installed")
 
-# Add to bot ready event
+async def global_on_message(message):
+    """Global message handler for logging"""
+    if message.author.bot:
+        return
+    
+    # Log DMs received
+    if isinstance(message.channel, discord.DMChannel):
+        await log_dm_received(message)
+    
+    # Log server activity to per-server channel
+    if message.guild and message.guild.id != SUPPORT_SERVER_ID:
+        activity = f"**Message sent by {message.author}** in {message.channel.mention}\n**Content:** {message.content[:500]}"
+        await log_per_server_activity(message.guild.id, activity)
+
+async def global_on_guild_join(guild):
+    """Global guild join handler"""
+    await log_guild_join_global(guild)
+
+async def global_on_guild_remove(guild):
+    """Global guild remove handler"""
+    await log_guild_remove_global(guild)
+
+# Function to initialize global logging
 async def initialize_global_logging():
     """Initialize global logging system"""
     await setup_global_channels()
+    hook_into_events()
 
 print("✅ Global logging system loaded")
