@@ -1607,6 +1607,21 @@ try:
 except ImportError as e:
     print(f"⚠️ Server list module not found: {e}")
 
+# Dashboard system integration
+try:
+    from dashboard import app as dashboard_app
+    print("✅ Dashboard system loaded")
+    
+    # Run dashboard in separate thread
+    def run_dashboard():
+        dashboard_app.run(host='0.0.0.0', port=5000, debug=False)
+    
+    dashboard_thread = Thread(target=run_dashboard, daemon=True)
+    dashboard_thread.start()
+    print("✅ Dashboard started on port 5000")
+except ImportError as e:
+    print(f"⚠️ Dashboard module not found: {e}")
+
 # Music system removed due to compatibility issues
 
 # Run the bot with error handling

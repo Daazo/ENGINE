@@ -1,0 +1,517 @@
+
+{% extends "base.html" %}
+
+{% block title %}{{ guild.name }} - VAAZHA Bot Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .config-section {
+        margin-bottom: 2rem;
+    }
+    
+    .log-entry {
+        border-left: 3px solid var(--discord-purple);
+        padding-left: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .log-entry.error {
+        border-left-color: #dc3545;
+    }
+    
+    .log-entry.success {
+        border-left-color: var(--success-green);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--discord-purple);
+    }
+    
+    .real-time-badge {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Server Header -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        {% if guild.icon %}
+                        <img src="{{ guild.icon.url }}" alt="Server Icon" class="guild-avatar">
+                        {% else %}
+                        <div class="guild-avatar bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-server fs-2"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        <h2 class="mb-1">{{ guild.name }}</h2>
+                        <p class="text-muted mb-0">Server ID: {{ guild.id }}</p>
+                        <span class="badge bg-success real-time-badge">🟢 Bot Online</span>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="member-count">{{ guild.member_count }}</div>
+                <p class="mb-0">Total Members</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="online-count">Loading...</div>
+                <p class="mb-0">Online Members</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="channel-count">Loading...</div>
+                <p class="mb-0">Channels</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="role-count">Loading...</div>
+                <p class="mb-0">Roles</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Configuration Panel -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general-config" type="button">
+                            <i class="fas fa-cog"></i> General
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#moderation-config" type="button">
+                            <i class="fas fa-shield-alt"></i> Moderation
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#welcome-config" type="button">
+                            <i class="fas fa-hand-paper"></i> Welcome
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#logging-config" type="button">
+                            <i class="fas fa-file-alt"></i> Logging
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- General Configuration -->
+                    <div class="tab-pane fade show active" id="general-config">
+                        <form id="general-form">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Main Moderator Role</label>
+                                    <select class="form-select" name="main_moderator_role" id="main-mod-role">
+                                        <option value="">Select Role...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Junior Moderator Role</label>
+                                    <select class="form-select" name="junior_moderator_role" id="junior-mod-role">
+                                        <option value="">Select Role...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Auto Role</label>
+                                    <select class="form-select" name="auto_role" id="auto-role">
+                                        <option value="">No Auto Role</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Karma Channel</label>
+                                    <select class="form-select" name="karma_channel" id="karma-channel">
+                                        <option value="">Select Channel...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Moderation Configuration -->
+                    <div class="tab-pane fade" id="moderation-config">
+                        <form id="moderation-form">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <h6>Auto-Timeout Settings</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="timeout_bad_words" id="timeout-bad-words">
+                                                <label class="form-check-label" for="timeout-bad-words">
+                                                    Bad Words Detection
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="timeout_spam" id="timeout-spam">
+                                                <label class="form-check-label" for="timeout-spam">
+                                                    Spam Detection
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="timeout_links" id="timeout-links">
+                                                <label class="form-check-label" for="timeout-links">
+                                                    Link Protection
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <h6>Security Settings</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="anti_raid" id="anti-raid">
+                                                <label class="form-check-label" for="anti-raid">
+                                                    Anti-Raid Protection
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="anti_nuke" id="anti-nuke">
+                                                <label class="form-check-label" for="anti-nuke">
+                                                    Anti-Nuke Protection
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="verification_system" id="verification">
+                                                <label class="form-check-label" for="verification">
+                                                    Verification System
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Moderation Settings
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Welcome Configuration -->
+                    <div class="tab-pane fade" id="welcome-config">
+                        <form id="welcome-form">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Welcome Channel</label>
+                                    <select class="form-select" name="welcome_channel" id="welcome-channel">
+                                        <option value="">Select Channel...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Welcome Image URL (Optional)</label>
+                                    <input type="url" class="form-control" name="welcome_image" id="welcome-image" 
+                                           placeholder="https://example.com/image.png">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Welcome Message</label>
+                                    <textarea class="form-control" name="welcome_message" id="welcome-message" rows="3"
+                                              placeholder="Welcome {user} to {server}! We're excited to have you here!"></textarea>
+                                    <small class="form-text text-muted">
+                                        Use {user} for user mention and {server} for server name
+                                    </small>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Welcome Settings
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Logging Configuration -->
+                    <div class="tab-pane fade" id="logging-config">
+                        <form id="logging-form">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">General Logs Channel</label>
+                                    <select class="form-select" name="log_channel_general" id="log-general">
+                                        <option value="">Select Channel...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Moderation Logs Channel</label>
+                                    <select class="form-select" name="log_channel_moderation" id="log-moderation">
+                                        <option value="">Select Channel...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Karma Logs Channel</label>
+                                    <select class="form-select" name="log_channel_karma" id="log-karma">
+                                        <option value="">Select Channel...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Security Logs Channel</label>
+                                    <select class="form-select" name="log_channel_security" id="log-security">
+                                        <option value="">Select Channel...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Logging Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Logs Panel -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-eye"></i> Live Server Logs</h5>
+                <span class="badge bg-success real-time-badge">🔴 Live</span>
+            </div>
+            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                <div id="live-logs">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-spinner fa-spin"></i> Loading logs...
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-outline-light btn-sm" onclick="refreshLogs()">
+                    <i class="fas fa-refresh"></i> Refresh
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="clearLogs()">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const guildId = '{{ guild.id }}';
+
+$(document).ready(function() {
+    loadServerStats();
+    loadChannelsAndRoles();
+    loadCurrentConfig();
+    loadLogs();
+    
+    // Refresh logs every 10 seconds
+    setInterval(loadLogs, 10000);
+    
+    // Refresh stats every 30 seconds
+    setInterval(loadServerStats, 30000);
+});
+
+function loadServerStats() {
+    $.get(`/api/server/${guildId}/stats`)
+        .done(function(data) {
+            $('#online-count').text(data.online_members);
+            $('#channel-count').text(data.text_channels + data.voice_channels);
+            $('#role-count').text(data.roles);
+        })
+        .fail(function() {
+            console.error('Failed to load server stats');
+        });
+}
+
+function loadChannelsAndRoles() {
+    // Load channels
+    $.get(`/api/channels/${guildId}`)
+        .done(function(channels) {
+            const textChannels = channels.filter(c => c.type === 'text');
+            const selects = ['#welcome-channel', '#karma-channel', '#log-general', 
+                           '#log-moderation', '#log-karma', '#log-security'];
+            
+            selects.forEach(select => {
+                const $select = $(select);
+                $select.empty().append('<option value="">Select Channel...</option>');
+                textChannels.forEach(channel => {
+                    $select.append(`<option value="${channel.id}">#${channel.name}</option>`);
+                });
+            });
+        });
+    
+    // Load roles
+    $.get(`/api/roles/${guildId}`)
+        .done(function(roles) {
+            const selects = ['#main-mod-role', '#junior-mod-role', '#auto-role'];
+            
+            selects.forEach(select => {
+                const $select = $(select);
+                $select.empty().append('<option value="">Select Role...</option>');
+                roles.forEach(role => {
+                    $select.append(`<option value="${role.id}">@${role.name}</option>`);
+                });
+            });
+        });
+}
+
+function loadCurrentConfig() {
+    $.get(`/api/server/${guildId}/config`)
+        .done(function(config) {
+            // Populate form fields with current config
+            Object.keys(config).forEach(key => {
+                const $field = $(`[name="${key}"]`);
+                if ($field.length) {
+                    if ($field.is(':checkbox')) {
+                        $field.prop('checked', config[key]);
+                    } else {
+                        $field.val(config[key]);
+                    }
+                }
+            });
+        });
+}
+
+function loadLogs() {
+    $.get(`/api/server/${guildId}/logs`)
+        .done(function(logs) {
+            const $logsContainer = $('#live-logs');
+            $logsContainer.empty();
+            
+            if (logs.length === 0) {
+                $logsContainer.html('<div class="text-muted text-center">No recent logs</div>');
+                return;
+            }
+            
+            logs.slice(0, 20).forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                const logClass = log.level === 'error' ? 'error' : 
+                                log.level === 'success' ? 'success' : '';
+                
+                $logsContainer.append(`
+                    <div class="log-entry ${logClass}">
+                        <small class="text-muted">${timestamp}</small><br>
+                        <span>${log.message || log.description}</span>
+                    </div>
+                `);
+            });
+        })
+        .fail(function() {
+            $('#live-logs').html('<div class="text-danger">Failed to load logs</div>');
+        });
+}
+
+function refreshLogs() {
+    loadLogs();
+}
+
+function clearLogs() {
+    $('#live-logs').html('<div class="text-muted text-center">Logs cleared</div>');
+}
+
+// Form submission handlers
+$('#general-form').on('submit', function(e) {
+    e.preventDefault();
+    saveConfig($(this), 'General settings saved successfully!');
+});
+
+$('#moderation-form').on('submit', function(e) {
+    e.preventDefault();
+    saveConfig($(this), 'Moderation settings saved successfully!');
+});
+
+$('#welcome-form').on('submit', function(e) {
+    e.preventDefault();
+    saveConfig($(this), 'Welcome settings saved successfully!');
+});
+
+$('#logging-form').on('submit', function(e) {
+    e.preventDefault();
+    saveConfig($(this), 'Logging settings saved successfully!');
+});
+
+function saveConfig($form, successMessage) {
+    const formData = {};
+    $form.serializeArray().forEach(field => {
+        formData[field.name] = field.value;
+    });
+    
+    // Handle checkboxes
+    $form.find(':checkbox').each(function() {
+        formData[this.name] = this.checked;
+    });
+    
+    $.ajax({
+        url: `/api/server/${guildId}/config`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function() {
+            showAlert(successMessage, 'success');
+        },
+        error: function() {
+            showAlert('Failed to save configuration', 'error');
+        }
+    });
+}
+
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alert = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('main').prepend(alert);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        $('.alert').alert('close');
+    }, 3000);
+}
+</script>
+{% endblock %}

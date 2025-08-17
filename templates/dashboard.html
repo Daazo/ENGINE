@@ -1,0 +1,144 @@
+
+{% extends "base.html" %}
+
+{% block title %}Dashboard - VAAZHA Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- User Info -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png" 
+                             alt="Avatar" class="avatar">
+                    </div>
+                    <div class="col">
+                        <h4 class="mb-1">Welcome back, {{ user.username }}!</h4>
+                        <p class="text-muted mb-0">Manage your Discord servers with VAAZHA Bot</p>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{{ invite_url }}" target="_blank" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Invite Bot to Server
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Servers with Bot -->
+    {% if bot_guilds %}
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-server"></i> Your Servers with VAAZHA Bot</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for guild in bot_guilds %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card server-card h-100" onclick="location.href='/server/{{ guild.id }}'">
+                            <div class="card-body text-center">
+                                {% if guild.icon %}
+                                <img src="{{ guild.icon }}" alt="Server Icon" class="guild-avatar mb-3">
+                                {% else %}
+                                <div class="guild-avatar mb-3 bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-server fs-2"></i>
+                                </div>
+                                {% endif %}
+                                <h6 class="card-title">{{ guild.name }}</h6>
+                                <p class="text-muted mb-2">{{ guild.member_count }} members</p>
+                                <span class="badge bg-success">Bot Active</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Servers without Bot -->
+    {% if user_guilds %}
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-plus-circle"></i> Add Bot to Your Servers</h5>
+            </div>
+            <div class="card-body">
+                {% set servers_without_bot = [] %}
+                {% for user_guild in user_guilds %}
+                    {% set has_bot = false %}
+                    {% for bot_guild in bot_guilds %}
+                        {% if bot_guild.id|string == user_guild.id %}
+                            {% set has_bot = true %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if not has_bot %}
+                        {% set _ = servers_without_bot.append(user_guild) %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if servers_without_bot %}
+                <div class="row">
+                    {% for guild in servers_without_bot %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                {% if guild.icon %}
+                                <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" 
+                                     alt="Server Icon" class="guild-avatar mb-3">
+                                {% else %}
+                                <div class="guild-avatar mb-3 bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-server fs-2"></i>
+                                </div>
+                                {% endif %}
+                                <h6 class="card-title">{{ guild.name }}</h6>
+                                <a href="{{ invite_url }}&guild_id={{ guild.id }}" target="_blank" 
+                                   class="btn btn-discord btn-sm">
+                                    <i class="fas fa-plus"></i> Add Bot
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center">
+                    <p class="text-muted">VAAZHA Bot is already in all your servers! 🎉</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not user_guilds %}
+    <div class="col-md-12">
+        <div class="alert alert-info text-center">
+            <h5><i class="fas fa-info-circle"></i> No Servers Found</h5>
+            <p class="mb-0">You don't have administrator permissions in any Discord servers, or your servers are not visible to the bot.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add hover effects and animations
+    $('.server-card').hover(
+        function() {
+            $(this).addClass('shadow-lg');
+        },
+        function() {
+            $(this).removeClass('shadow-lg');
+        }
+    );
+});
+</script>
+{% endblock %}
