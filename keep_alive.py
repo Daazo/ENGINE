@@ -55,7 +55,7 @@ def status():
 
 def run():
     """Run Flask server"""
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=3000, debug=False, use_reloader=False)reloader=False)
 
 def keep_alive():
     """Start the Flask server in a separate thread"""

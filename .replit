@@ -34,3 +34,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python restart_bot.py"
+
+[[workflows.workflow]]
+name = "Run Dashboard"
+author = 46500081
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_dashboard.py"

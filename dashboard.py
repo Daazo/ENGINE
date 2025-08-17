@@ -18,7 +18,7 @@ mongo_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI) if MONGO_URI el
 dashboard_db = mongo_client.vaazha_bot if mongo_client else None
 
 # Dashboard configuration
-DASHBOARD_PORT = 5000
+DASHBOARD_PORT = 8080
 
 @app.route('/')
 def dashboard_home():
