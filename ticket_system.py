@@ -194,10 +194,9 @@ class TicketModal(discord.ui.Modal):
         await interaction.response.send_message(embed=success_embed, ephemeral=True)
 
         await log_action(
-            interaction.guild,
-            "Ticket Created",
-            f"{interaction.user.mention} created ticket {ticket_channel.mention} in category **{self.category_data.get('name')}**",
-            BrandColors.INFO
+            interaction.guild.id,
+            "tickets",
+            f"🎫 [TICKET CREATED] {interaction.user.mention} created ticket {ticket_channel.mention} in category **{self.category_data.get('name')}**"
         )
 
 class TicketControlView(discord.ui.View):
@@ -208,7 +207,7 @@ class TicketControlView(discord.ui.View):
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         server_data = await get_server_data(interaction.guild.id)
         
-        if not await has_permission(interaction.user, server_data, 'junior_moderator'):
+        if not await has_permission(interaction, 'junior_moderator'):
             await interaction.response.send_message("❌ You don't have permission to close tickets!", ephemeral=True)
             return
 
@@ -256,10 +255,9 @@ class TicketControlView(discord.ui.View):
             await interaction.response.send_message(embed=embed, view=reopen_delete_view)
 
             await log_action(
-                interaction.guild,
-                "Ticket Closed",
-                f"{interaction.user.mention} closed ticket {channel.mention}",
-                BrandColors.WARNING
+                interaction.guild.id,
+                "tickets",
+                f"🔒 [TICKET CLOSED] {interaction.user.mention} closed ticket {channel.mention}"
             )
 
         except Exception as e:
@@ -273,7 +271,7 @@ class ReopenDeleteTicketView(discord.ui.View):
     async def reopen_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         server_data = await get_server_data(interaction.guild.id)
         
-        if not await has_permission(interaction.user, server_data, 'junior_moderator'):
+        if not await has_permission(interaction, 'junior_moderator'):
             await interaction.response.send_message("❌ You don't have permission to reopen tickets!", ephemeral=True)
             return
 
@@ -321,10 +319,9 @@ class ReopenDeleteTicketView(discord.ui.View):
             await interaction.response.send_message(embed=embed, view=control_view)
 
             await log_action(
-                interaction.guild,
-                "Ticket Reopened",
-                f"{interaction.user.mention} reopened ticket {channel.mention}",
-                BrandColors.INFO
+                interaction.guild.id,
+                "tickets",
+                f"🔓 [TICKET REOPENED] {interaction.user.mention} reopened ticket {channel.mention}"
             )
 
         except Exception as e:
@@ -335,7 +332,7 @@ class ReopenDeleteTicketView(discord.ui.View):
         server_data = await get_server_data(interaction.guild.id)
         
         is_owner = interaction.user.id == interaction.guild.owner_id
-        is_main_mod = await has_permission(interaction.user, server_data, 'main_moderator')
+        is_main_mod = await has_permission(interaction, 'main_moderator')
         
         if not (is_owner or is_main_mod):
             await interaction.response.send_message("❌ Only the server owner and main moderators can permanently delete tickets!", ephemeral=True)
@@ -360,10 +357,9 @@ class ConfirmDeleteView(discord.ui.View):
             channel_name = self.channel.name
             
             await log_action(
-                interaction.guild,
-                "Ticket Permanently Deleted",
-                f"{interaction.user.mention} permanently deleted ticket **{channel_name}**",
-                BrandColors.ERROR
+                interaction.guild.id,
+                "tickets",
+                f"🗑️ [TICKET DELETED] {interaction.user.mention} permanently deleted ticket **{channel_name}**"
             )
             
             await interaction.response.send_message("🗑️ Deleting ticket in 3 seconds...", ephemeral=True)
@@ -382,7 +378,7 @@ class ConfirmDeleteView(discord.ui.View):
 async def ticketpanel(interaction: discord.Interaction):
     server_data = await get_server_data(interaction.guild.id)
     
-    if not await has_permission(interaction.user, server_data, 'main_moderator') and interaction.user.id != interaction.guild.owner_id:
+    if not await has_permission(interaction, 'main_moderator') and interaction.user.id != interaction.guild.owner_id:
         await interaction.response.send_message("❌ Only server owners and main moderators can create ticket panels!", ephemeral=True)
         return
 
@@ -439,7 +435,7 @@ async def ticketcategory(
 ):
     server_data = await get_server_data(interaction.guild.id)
     
-    if not await has_permission(interaction.user, server_data, 'main_moderator') and interaction.user.id != interaction.guild.owner_id:
+    if not await has_permission(interaction, 'main_moderator') and interaction.user.id != interaction.guild.owner_id:
         await interaction.response.send_message("❌ Only server owners and main moderators can configure ticket categories!", ephemeral=True)
         return
 
@@ -534,7 +530,7 @@ async def action_autocomplete(interaction: discord.Interaction, current: str):
 async def ticketfields(interaction: discord.Interaction, category_number: int):
     server_data = await get_server_data(interaction.guild.id)
     
-    if not await has_permission(interaction.user, server_data, 'main_moderator') and interaction.user.id != interaction.guild.owner_id:
+    if not await has_permission(interaction, 'main_moderator') and interaction.user.id != interaction.guild.owner_id:
         await interaction.response.send_message("❌ Only server owners and main moderators can configure ticket fields!", ephemeral=True)
         return
 
@@ -660,7 +656,7 @@ class FieldConfigModal(discord.ui.Modal, title='Configure Form Fields'):
 async def tnamechange(interaction: discord.Interaction, new_name: str):
     server_data = await get_server_data(interaction.guild.id)
     
-    if not await has_permission(interaction.user, server_data, 'junior_moderator'):
+    if not await has_permission(interaction, 'junior_moderator'):
         await interaction.response.send_message("❌ You don't have permission to rename tickets!", ephemeral=True)
         return
 
@@ -681,10 +677,9 @@ async def tnamechange(interaction: discord.Interaction, new_name: str):
     await interaction.response.send_message(embed=embed)
     
     await log_action(
-        interaction.guild,
-        "Ticket Renamed",
-        f"{interaction.user.mention} renamed ticket from **{old_name}** to **{clean_name}**",
-        BrandColors.INFO
+        interaction.guild.id,
+        "tickets",
+        f"✏️ [TICKET RENAMED] {interaction.user.mention} renamed ticket from **{old_name}** to **{clean_name}**"
     )
 
 def setup(bot):
