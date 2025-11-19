@@ -1124,6 +1124,9 @@ class HelpView(discord.ui.View):
     async def bot_info_help(self, interaction: discord.Interaction, button: discord.ui.Button):
         bot_owner_id = os.getenv('BOT_OWNER_ID')
         owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
+        support_server = os.getenv('SUPPORT_SERVER')
+        contact_email = os.getenv('CONTACT_EMAIL')
+        email_text = contact_email if contact_email else "Not available"
 
         embed = discord.Embed(
             title="💠 **About RXT ENGINE**",
@@ -1141,81 +1144,24 @@ class HelpView(discord.ui.View):
             inline=False
         )
         embed.add_field(
+            name="📞 **Contact Information**",
+            value=f"**📩 Email:** `{email_text}`\n**💬 Discord:** {owner_mention}\n**🏠 Support Server:** {'Available via button below' if support_server else 'Contact owner for invite'}",
+            inline=False
+        )
+        embed.add_field(
             name="💠 **Quantum Capabilities**",
             value="◆ **Holographic UI** — Advanced quantum purple interface\n◆ **AI Moderation** — Intelligent enforcement protocols\n◆ **Karma Matrix** — Community recognition system\n◆ **Support Grid** — Multi-channel ticket resolution\n◆ **Neural Storage** — Persistent data architecture\n◆ **Security Core** — Multi-layer protection systems",
             inline=False
         )
-        support_server = os.getenv('SUPPORT_SERVER')
-        
         embed.add_field(
-            name="🔗 **Connect with RXT ENGINE**",
-            value=f"**💠 Quantum Invite:** [Integrate RXT ENGINE Into Your Matrix](https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands)\n\n**◆ Direct Support Channels:**\n➤ **DM Developer:** {owner_mention}\n➤ **Support Server:** {'[Join Support Hub](' + support_server + ')' if support_server else 'Contact owner for invite'}\n\n**⚡ Engineered by R!O</>**",
+            name="🔗 **Quick Links**",
+            value=f"**💠 Bot Invite:** [Add to Your Server](https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands)\n**💬 DM Developer:** [Click Here](https://discord.com/users/{bot_owner_id if bot_owner_id else '0'})\n{f'**🏠 Support Server:** [Join Here]({support_server})' if support_server else ''}\n\n**⚡ Engineered by R!O</>**",
             inline=False
         )
         embed.set_footer(text=BOT_FOOTER)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         
-        view_with_buttons = discord.ui.View()
-        invite_btn = discord.ui.Button(label="Add to Server", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="⚡")
-        view_with_buttons.add_item(invite_btn)
-        if support_server:
-            support_btn = discord.ui.Button(label="Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
-            view_with_buttons.add_item(support_btn)
-        dm_btn = discord.ui.Button(label="DM Developer", style=discord.ButtonStyle.link, url=f"https://discord.com/users/{bot_owner_id}" if bot_owner_id else "https://discord.com", emoji="💬")
-        view_with_buttons.add_item(dm_btn)
-        
-        for item in self.children:
-            view_with_buttons.add_item(item)
-        
-        await interaction.response.edit_message(embed=embed, view=view_with_buttons)
-
-    @discord.ui.button(label="Contact", style=discord.ButtonStyle.success, emoji="📞", row=3)
-    async def contact_help(self, interaction: discord.Interaction, button: discord.ui.Button):
-        bot_owner_id = os.getenv('BOT_OWNER_ID')
-        contact_email = os.getenv('CONTACT_EMAIL')
-        support_server = os.getenv('SUPPORT_SERVER')
-        
-        owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Not available"
-        email_text = contact_email if contact_email else "Not available"
-        
-        embed = discord.Embed(
-            title="📞 **RXT ENGINE Contact Protocols**",
-            description=f"*{BOT_DESCRIPTION}*\n\n{VisualElements.CIRCUIT_LINE}",
-            color=BrandColors.SUCCESS
-        )
-        
-        embed.add_field(
-            name="🤖 **About RXT ENGINE**",
-            value=f"**Name:** {BOT_NAME}\n**Version:** {BOT_VERSION}\n**Active Servers:** {len(bot.guilds)}\n**Status:** {VisualElements.STATUS_ONLINE}",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="👨‍💻 **System Architect**",
-            value=f"**Developer:** {BOT_OWNER_NAME}\n**Discord:** {owner_mention}\n**Role:** {BOT_OWNER_DESCRIPTION}",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="📧 **Contact Methods**",
-            value=f"**📩 Email:** `{email_text}`\n**💬 Direct Message:** Click button below\n**🏠 Support Server:** Click button below",
-            inline=False
-        )
-        
-        embed.set_thumbnail(url=bot.user.display_avatar.url)
-        embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-        
-        view = discord.ui.View()
-        if bot_owner_id:
-            dm_button = discord.ui.Button(label=f"DM {BOT_OWNER_NAME}", style=discord.ButtonStyle.link, url=f"https://discord.com/users/{bot_owner_id}", emoji="💬")
-            view.add_item(dm_button)
-        if support_server:
-            support_button = discord.ui.Button(label="Support Server", style=discord.ButtonStyle.link, url=support_server, emoji="🏠")
-            view.add_item(support_button)
-        invite_button = discord.ui.Button(label="Invite Bot", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="⚡")
-        view.add_item(invite_button)
-        
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Updates", style=discord.ButtonStyle.success, emoji="🆕", row=3)
     async def recent_updates_help(self, interaction: discord.Interaction, button: discord.ui.Button):

@@ -23,6 +23,7 @@ class TicketCategorySelect(discord.ui.Select):
                 )
         
         super().__init__(
+            custom_id="persistent_ticket_select",
             placeholder="📋 Select a ticket category...",
             min_values=1,
             max_values=1,
@@ -39,12 +40,19 @@ class TicketCategorySelect(discord.ui.Select):
         ticket_categories = server_data.get('ticket_categories', {})
         category_data = ticket_categories.get(str(category_num), {})
         
+        if not category_data:
+            await interaction.response.send_message("❌ This ticket category no longer exists! Please contact an administrator.", ephemeral=True)
+            return
+        
         modal = TicketModal(category_num, category_data, server_data)
         await interaction.response.send_modal(modal)
 
 class TicketSelectionView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, categories=None):
         super().__init__(timeout=None)
+        if categories is None:
+            categories = {}
+        self.add_item(TicketCategorySelect(categories))
 
 class TicketModal(discord.ui.Modal):
     def __init__(self, category_num, category_data, server_data):
@@ -393,8 +401,7 @@ async def ticketpanel(interaction: discord.Interaction):
     
     embed.set_footer(text=BOT_FOOTER)
 
-    view = TicketSelectionView()
-    view.add_item(TicketCategorySelect(enabled_cats))
+    view = TicketSelectionView(enabled_cats)
     
     await interaction.channel.send(embed=embed, view=view)
     await interaction.response.send_message("✅ Ticket panel created!", ephemeral=True)
