@@ -150,8 +150,9 @@ class TicketModal(discord.ui.Modal):
         for idx, field_config in enumerate(form_fields[:5]):
             field_attr = getattr(self, f'field_{idx}', None)
             if field_attr:
+                field_emoji = field_config.get('emoji', '📋')
                 embed.add_field(
-                    name=f"📋 {field_config.get('label', f'Field {idx + 1}')}",
+                    name=f"{field_emoji} {field_config.get('label', f'Field {idx + 1}')}",
                     value=field_attr.value or 'N/A',
                     inline=True if field_config.get('style') == 'short' else False
                 )
@@ -445,8 +446,8 @@ async def ticketcategory(
             'enabled': True,
             'ticket_count': 0,
             'form_fields': [
-                {'label': 'Name', 'placeholder': 'Your full name...', 'style': 'short', 'required': True, 'max_length': 100},
-                {'label': 'Issue Description', 'placeholder': 'Describe in detail...', 'style': 'long', 'required': True, 'max_length': 1000}
+                {'label': 'Name', 'placeholder': 'Your full name...', 'style': 'short', 'emoji': '👤', 'required': True, 'max_length': 100},
+                {'label': 'Issue Description', 'placeholder': 'Describe in detail...', 'style': 'long', 'emoji': '📝', 'required': True, 'max_length': 1000}
             ]
         }
         
@@ -547,32 +548,32 @@ class FieldConfigModal(discord.ui.Modal, title='Configure Form Fields'):
     )
     
     field1 = discord.ui.TextInput(
-        label='Field 1: Label|Placeholder|Style',
-        placeholder='Name|Enter your name...|short',
+        label='Field 1: Label|Placeholder|Style|Emoji',
+        placeholder='Name|Enter your name...|short|👤',
         style=discord.TextStyle.short,
         required=False,
         max_length=200
     )
     
     field2 = discord.ui.TextInput(
-        label='Field 2: Label|Placeholder|Style',
-        placeholder='Issue|Describe your issue...|long',
+        label='Field 2: Label|Placeholder|Style|Emoji',
+        placeholder='Issue|Describe your issue...|long|📝',
         style=discord.TextStyle.short,
         required=False,
         max_length=200
     )
     
     field3 = discord.ui.TextInput(
-        label='Field 3: Label|Placeholder|Style',
-        placeholder='Priority|Low/Medium/High|short',
+        label='Field 3: Label|Placeholder|Style|Emoji',
+        placeholder='Priority|Low/Medium/High|short|⚠️',
         style=discord.TextStyle.short,
         required=False,
         max_length=200
     )
     
     field4 = discord.ui.TextInput(
-        label='Field 4: Label|Placeholder|Style',
-        placeholder='Additional Info|Any other details...|long',
+        label='Field 4: Label|Placeholder|Style|Emoji',
+        placeholder='Additional Info|Any other details...|long|ℹ️',
         style=discord.TextStyle.short,
         required=False,
         max_length=200
@@ -598,11 +599,13 @@ class FieldConfigModal(discord.ui.Modal, title='Configure Form Fields'):
                     label = parts[0].strip()
                     placeholder = parts[1].strip() if len(parts) > 1 else ''
                     style = parts[2].strip().lower() if len(parts) > 2 else 'short'
+                    emoji = parts[3].strip() if len(parts) > 3 else '📋'
                     
                     form_fields.append({
                         'label': label,
                         'placeholder': placeholder,
                         'style': style if style in ['short', 'long'] else 'short',
+                        'emoji': emoji,
                         'required': True,
                         'max_length': 1000 if style == 'long' else 100
                     })
@@ -627,7 +630,7 @@ class FieldConfigModal(discord.ui.Modal, title='Configure Form Fields'):
             
             for idx, field in enumerate(form_fields, 1):
                 embed.add_field(
-                    name=f"Field {idx}: {field['label']}",
+                    name=f"{field.get('emoji', '📋')} Field {idx}: {field['label']}",
                     value=f"Style: {field['style']}\nPlaceholder: {field['placeholder']}",
                     inline=False
                 )
