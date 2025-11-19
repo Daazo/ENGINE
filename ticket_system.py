@@ -232,7 +232,7 @@ class TicketControlView(discord.ui.View):
             embed = discord.Embed(
                 title="🔒 Ticket Closed",
                 description=f"This ticket has been closed by {interaction.user.mention}.\n\nModerators can reopen or permanently delete this ticket using the buttons below.",
-                color=BrandColors.ERROR,
+                color=BrandColors.DANGER,
                 timestamp=datetime.now()
             )
             embed.set_footer(text=BOT_FOOTER)
@@ -328,7 +328,7 @@ class ReopenDeleteTicketView(discord.ui.View):
         embed = discord.Embed(
             title="⚠️ Confirm Permanent Deletion",
             description=f"Are you sure you want to **permanently delete** this ticket?\n\n**Channel:** {interaction.channel.mention}\n**This action cannot be undone!**",
-            color=BrandColors.ERROR
+            color=BrandColors.DANGER
         )
         await interaction.response.send_message(embed=embed, view=confirm_view, ephemeral=True)
 
