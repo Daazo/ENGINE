@@ -376,47 +376,8 @@ async def timeout_settings(
     await interaction.response.send_message(embed=embed)
     await log_action(interaction.guild.id, "setup", f"⚙️ [TIMEOUT SETTINGS] {feature_names.get(feature, feature)} {status.lower()} by {interaction.user}")
 
-@bot.tree.command(name="remove-timeout", description="🔓 Remove timeout from a user early")
-@app_commands.describe(user="User to remove timeout from")
-async def remove_timeout(interaction: discord.Interaction, user: discord.Member):
-    if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
-        return
-
-    if not user.is_timed_out():
-        await interaction.response.send_message(f"❌ {user.mention} is not currently timed out!", ephemeral=True)
-        return
-
-    try:
-        await user.timeout(None, reason=f"Timeout removed by {interaction.user}")
-        
-        # Restore previous channel permissions
-        await restore_timeout_permissions(interaction.guild, user)
-
-        embed = discord.Embed(
-            title="🔓 **Timeout Removed**",
-            description=f"**User:** {user.mention}\n**Removed by:** {interaction.user.mention}\n**Action:** Timeout has been lifted early",
-            color=BrandColors.SUCCESS
-        )
-        embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-
-        await interaction.response.send_message(embed=embed)
-        await log_action(interaction.guild.id, "timeout", f"⏰ [TIMEOUT REMOVED] {user} timeout removed by {interaction.user}")
-
-        # Notify user via DM
-        try:
-            dm_embed = discord.Embed(
-                title="🔓 **Timeout Removed**",
-                description=f"**Server:** {interaction.guild.name}\n**Removed by:** {interaction.user}\n**Status:** You can now participate normally in the server",
-                color=BrandColors.SUCCESS
-            )
-            dm_embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-            await user.send(embed=dm_embed)
-        except:
-            pass  # User has DMs disabled
-
-    except Exception as e:
-        await interaction.response.send_message(f"❌ Failed to remove timeout: {str(e)}", ephemeral=True)
+# NOTE: /remove-timeout command has been moved to enhanced_security.py (Phase 1)
+# The enhanced version includes role restoration in addition to channel permission restoration
 
 @bot.tree.command(name="timeout-stats", description="📊 View timeout statistics for a user")
 @app_commands.describe(user="User to check timeout stats for")

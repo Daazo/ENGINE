@@ -229,7 +229,10 @@ async def apply_enhanced_timeout(guild, member, duration_minutes, reason, trigge
                 description=f"**◆ You have been timed out**\n\n**Server:** {guild.name}\n**Duration:** {duration_minutes} minutes\n**Reason:** {reason}\n\n💠 Your roles have been temporarily removed and will be restored when the timeout ends.",
                 color=BrandColors.DANGER
             )
-            dm_embed.set_footer(text=BOT_FOOTER, icon_url=guild.me.display_avatar.url if guild.me else None)
+            if guild.me:
+                dm_embed.set_footer(text=BOT_FOOTER, icon_url=guild.me.display_avatar.url)
+            else:
+                dm_embed.set_footer(text=BOT_FOOTER)
             await member.send(embed=dm_embed)
         except:
             pass  # User has DMs disabled
@@ -284,7 +287,10 @@ async def remove_enhanced_timeout(guild, member, removed_by=None):
                 description=f"**◆ Your timeout has ended**\n\n**Server:** {guild.name}\n\n✅ Your previous roles have been restored\n💠 You now have full server access",
                 color=BrandColors.SUCCESS
             )
-            dm_embed.set_footer(text=BOT_FOOTER, icon_url=guild.me.display_avatar.url if guild.me else None)
+            if guild.me:
+                dm_embed.set_footer(text=BOT_FOOTER, icon_url=guild.me.display_avatar.url)
+            else:
+                dm_embed.set_footer(text=BOT_FOOTER)
             await member.send(embed=dm_embed)
         except:
             pass
@@ -395,7 +401,10 @@ async def on_message_mention_check(message):
                 description=f"**{message.author.mention} has been timed out**\n\n**◆ Reason:** Unauthorized @everyone/@here mention\n**◆ Duration:** {duration} minutes\n\n💠 Message deleted by Quantum Security",
                 color=BrandColors.DANGER
             )
-            embed.set_footer(text=BOT_FOOTER, icon_url=message.guild.me.display_avatar.url if message.guild.me else None)
+            if message.guild and message.guild.me:
+                embed.set_footer(text=BOT_FOOTER, icon_url=message.guild.me.display_avatar.url)
+            else:
+                embed.set_footer(text=BOT_FOOTER)
             await message.channel.send(embed=embed, delete_after=10)
         except:
             pass
