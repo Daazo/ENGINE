@@ -34,6 +34,8 @@ RXT ENGINE is a powerful multi-function Discord bot focused on automation, moder
   - Fully integrated with `/verification-setup` command
   - **Removed confusing duplicate verification option from `/security` command**
   - Now only `/verification-setup` is used for CAPTCHA verification (cleaner UX)
+  - **Full RXT ENGINE Quantum Purple theme** - all embeds use quantum purple/neon theme
+  - Consistent branding across all verification messages with quantum symbols (⚡, ◆, 💠)
 
 ### November 19, 2025 - Critical Bug Fixes
 - ✅ Fixed `/help` About button interaction failure (removed duplicate view creation)

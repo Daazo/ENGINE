@@ -80,9 +80,9 @@ async def security_settings(
         extra_info = f"\n**Threshold:** {threshold}"
 
     embed = discord.Embed(
-        title="🛡️ **Security Settings Updated**",
-        description=f"**Feature:** {feature_names.get(feature, feature)}\n**Status:** {status}{extra_info}",
-        color=BrandColors.SUCCESS if enabled else 0xe74c3c
+        title="⚡ **Security Settings Updated**",
+        description=f"**◆ Feature:** {feature_names.get(feature, feature)}\n**◆ Status:** {status}{extra_info}",
+        color=BrandColors.PRIMARY if enabled else BrandColors.DANGER
     )
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
 
@@ -122,11 +122,11 @@ async def verification_setup(
     security_settings['verification_system'] = verification_config
     await update_server_data(interaction.guild.id, {'security_settings': security_settings})
 
-    # Create verification embed and button
+    # Create verification embed and button - RXT ENGINE Quantum Purple Theme
     embed = discord.Embed(
-        title="✅ **Server Verification Required**",
-        description=f"**{message}**\n\n🔒 You must verify to access all channels and features.\n\n📋 **What verification gives you:**\n• Access to all server channels\n• Ability to participate in discussions\n• Full server member privileges",
-        color=BrandColors.SUCCESS
+        title="🔐 **Server Verification Required**",
+        description=f"**{message}**\n\n⚡ **Quantum Security Protocol Active**\n\n◆ **What verification grants you:**\n• Full server channel access\n• Participation in community\n• Complete member privileges\n\n🔒 Complete CAPTCHA to verify",
+        color=BrandColors.PRIMARY
     )
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
 
@@ -139,9 +139,9 @@ async def verification_setup(
     description += f"\n**Status:** Active\n\n*New members will need to verify before accessing the server.*"
     
     response_embed = discord.Embed(
-        title="✅ **Verification System Setup Complete**",
+        title="⚡ **Verification System Setup Complete**",
         description=description,
-        color=BrandColors.SUCCESS
+        color=BrandColors.PRIMARY
     )
     await interaction.response.send_message(embed=response_embed)
     await log_action(interaction.guild.id, "security", f"✅ [VERIFICATION] Verification system setup by {interaction.user}")
@@ -181,9 +181,9 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
                 await interaction.user.add_roles(self.verified_role, reason="CAPTCHA verification successful")
                 
                 embed = discord.Embed(
-                    title="✅ **Verification Successful!**",
-                    description="**Welcome to the server!** 🎉\n\nYou correctly solved the CAPTCHA and now have full access to the server.\n\n*Enjoy your stay!* ⚡",
-                    color=BrandColors.SUCCESS
+                    title="⚡ **Verification Successful!**",
+                    description="**Welcome to the server!**\n\n✓ CAPTCHA solved correctly\n✓ Quantum security check passed\n✓ Full server access granted\n\n◆ You are now a verified member!",
+                    color=BrandColors.PRIMARY
                 )
                 embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
                 
@@ -195,13 +195,13 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
             except Exception as e:
                 await interaction.response.send_message(f"❌ Verification failed: {str(e)}", ephemeral=True)
         else:
-            # Incorrect CAPTCHA
+            # Incorrect CAPTCHA - RXT ENGINE Theme
             embed = discord.Embed(
-                title="❌ **Verification Failed**",
-                description=f"**Incorrect CAPTCHA code!**\n\nYou entered: `{user_input}`\n\nPlease click the **Verify Me** button again to get a new CAPTCHA and try again.",
-                color=0xFF4444
+                title="✗ **Verification Failed**",
+                description=f"**◆ Incorrect CAPTCHA code**\n\n**You entered:** `{user_input}`\n\n⚡ Click the **Verify Me** button to get a new CAPTCHA\n💠 Each attempt generates a unique code",
+                color=BrandColors.DANGER
             )
-            embed.set_footer(text="Try again to verify", icon_url=bot.user.display_avatar.url)
+            embed.set_footer(text="◆ Quantum security active", icon_url=bot.user.display_avatar.url)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             await log_action(interaction.guild.id, "security", f"❌ [CAPTCHA FAILED] {interaction.user} entered incorrect CAPTCHA: {user_input}")
 
@@ -253,14 +253,14 @@ class VerificationView(discord.ui.View):
             # Create modal and view
             modal = CaptchaModal(captcha_text, verified_role, remove_role)
             
-            # Send CAPTCHA image with button in ONE message
+            # Send CAPTCHA image with button in ONE message - RXT ENGINE Theme
             embed = discord.Embed(
-                title="🔐 **CAPTCHA Verification**",
-                description="**Solve the CAPTCHA to verify:**\n\n**1.** Look at the code in the image below\n**2.** Click the button to enter the code\n\n⚠️ Code is case-insensitive",
+                title="🔐 **Quantum Security Verification**",
+                description="**◆ Solve the CAPTCHA to verify:**\n\n**1.** Analyze the code in the image below\n**2.** Click the button to enter the code\n\n⚡ Code is case-insensitive\n💠 Quantum encryption active",
                 color=BrandColors.PRIMARY
             )
             embed.set_image(url="attachment://captcha.png")
-            embed.set_footer(text="This CAPTCHA is unique to you", icon_url=bot.user.display_avatar.url)
+            embed.set_footer(text="◆ This CAPTCHA is uniquely generated for you", icon_url=bot.user.display_avatar.url)
             
             await interaction.response.send_message(
                 embed=embed,
@@ -318,8 +318,8 @@ async def whitelist_command(
         role_list = [f"<@&{role_id}>" for role_id in whitelist.get('roles', [])]
         
         embed = discord.Embed(
-            title="🤖 **Security Whitelist**",
-            color=BrandColors.INFO
+            title="◆ **Security Whitelist**",
+            color=BrandColors.PRIMARY
         )
         embed.add_field(
             name="🤖 Whitelisted Bots",
@@ -350,9 +350,9 @@ async def whitelist_command(
             await update_server_data(interaction.guild.id, {'security_whitelist': whitelist})
             
             embed = discord.Embed(
-                title="✅ **Added to Whitelist**",
-                description=f"**{target_type.title()}:** {target.mention}\n**Action:** Added to security whitelist",
-                color=BrandColors.SUCCESS
+                title="⚡ **Added to Whitelist**",
+                description=f"**◆ {target_type.title()}:** {target.mention}\n**◆ Action:** Added to security whitelist",
+                color=BrandColors.PRIMARY
             )
             await log_action(interaction.guild.id, "security", f"🤖 [WHITELIST] {target} added to {target_type} whitelist by {interaction.user}")
         else:
@@ -369,9 +369,9 @@ async def whitelist_command(
             await update_server_data(interaction.guild.id, {'security_whitelist': whitelist})
             
             embed = discord.Embed(
-                title="✅ **Removed from Whitelist**",
-                description=f"**{target_type.title()}:** {target.mention}\n**Action:** Removed from security whitelist",
-                color=BrandColors.DANGER
+                title="⚡ **Removed from Whitelist**",
+                description=f"**◆ {target_type.title()}:** {target.mention}\n**◆ Action:** Removed from security whitelist",
+                color=BrandColors.PRIMARY
             )
             await log_action(interaction.guild.id, "security", f"🤖 [WHITELIST] {target} removed from {target_type} whitelist by {interaction.user}")
         else:
