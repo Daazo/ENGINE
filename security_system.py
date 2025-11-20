@@ -198,8 +198,8 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
             # Incorrect CAPTCHA
             embed = discord.Embed(
                 title="❌ **Verification Failed**",
-                description=f"**Incorrect CAPTCHA code!**\n\nYou entered: `{user_input}`\n\nPlease try again by clicking the Verify button.",
-                color=BrandColors.ERROR
+                description=f"**Incorrect CAPTCHA code!**\n\nYou entered: `{user_input}`\n\nPlease click the **Verify Me** button again to get a new CAPTCHA and try again.",
+                color=0xFF4444
             )
             embed.set_footer(text="Try again to verify", icon_url=bot.user.display_avatar.url)
             await interaction.response.send_message(embed=embed, ephemeral=True)
