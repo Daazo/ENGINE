@@ -561,7 +561,11 @@ async def security_whitelist_command(
 @app_commands.describe(
     feature="Security feature to configure",
     enabled="Enable or disable the feature",
-    duration="Timeout duration in minutes (where applicable)"
+    duration="Timeout duration in minutes (where applicable)",
+    ban_threshold="Ban threshold for anti-nuke (default: 5)",
+    kick_threshold="Kick threshold for anti-nuke (default: 5)",
+    role_threshold="Role delete threshold for anti-nuke (default: 3)",
+    channel_threshold="Channel delete threshold for anti-nuke (default: 3)"
 )
 @app_commands.choices(feature=[
     app_commands.Choice(name="Auto-Timeout @everyone/@here", value="auto_timeout_mentions"),
@@ -569,12 +573,19 @@ async def security_whitelist_command(
     app_commands.Choice(name="Anti-Invite", value="anti_invite"),
     app_commands.Choice(name="Anti-Spam", value="anti_spam"),
     app_commands.Choice(name="Anti-Raid", value="anti_raid"),
+    app_commands.Choice(name="Anti-Nuke (Mass Bans/Kicks/Deletes)", value="anti_nuke"),
+    app_commands.Choice(name="Permission Shield", value="permission_shield"),
+    app_commands.Choice(name="Webhook Protection", value="webhook_protection"),
 ])
 async def security_config_command(
     interaction: discord.Interaction,
     feature: str,
     enabled: bool,
-    duration: int = 30
+    duration: int = 30,
+    ban_threshold: int = 5,
+    kick_threshold: int = 5,
+    role_threshold: int = 3,
+    channel_threshold: int = 3
 ):
     if not await has_permission(interaction, "main_moderator"):
         await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
@@ -612,6 +623,23 @@ async def security_config_command(
             'threshold_seconds': 10,
             'join_threshold': 5
         }
+    elif feature == "anti_nuke":
+        security_settings['anti_nuke'] = {
+            'enabled': enabled,
+            'ban_threshold': ban_threshold,
+            'kick_threshold': kick_threshold,
+            'role_delete_threshold': role_threshold,
+            'channel_delete_threshold': channel_threshold,
+            'auto_rollback': True  # Enable automatic rollback
+        }
+    elif feature == "permission_shield":
+        security_settings['permission_shield'] = {
+            'enabled': enabled
+        }
+    elif feature == "webhook_protection":
+        security_settings['webhook_protection'] = {
+            'enabled': enabled
+        }
     
     await update_server_data(interaction.guild.id, {'security_settings': security_settings})
     
@@ -621,18 +649,37 @@ async def security_config_command(
         'link_filter': '🔗 Link Filter',
         'anti_invite': '💬 Anti-Invite (Discord Invites)',
         'anti_spam': '💨 Anti-Spam',
-        'anti_raid': '🚨 Anti-Raid (Mass Joins)'
+        'anti_raid': '🚨 Anti-Raid (Mass Joins)',
+        'anti_nuke': '🚫 Anti-Nuke (Mass Bans/Kicks/Deletes)',
+        'permission_shield': '🛡️ Permission Shield',
+        'webhook_protection': '🔗 Webhook Protection'
     }
+    
+    # Build description based on feature type
+    description_parts = [
+        f"**◆ Feature:** {feature_names.get(feature, feature)}",
+        f"**◆ Status:** {status}"
+    ]
+    
+    if feature in ['auto_timeout_mentions', 'anti_spam']:
+        description_parts.append(f"**◆ Duration:** {duration} minutes")
+    
+    if feature == 'anti_nuke':
+        description_parts.append(f"**◆ Ban Threshold:** {ban_threshold}/min")
+        description_parts.append(f"**◆ Kick Threshold:** {kick_threshold}/min")
+        description_parts.append(f"**◆ Role Delete Threshold:** {role_threshold}/min")
+        description_parts.append(f"**◆ Channel Delete Threshold:** {channel_threshold}/min")
+        description_parts.append(f"**◆ Auto-Rollback:** Enabled")
     
     embed = discord.Embed(
         title="⚡ **Security Configuration Updated**",
-        description=f"**◆ Feature:** {feature_names.get(feature, feature)}\n**◆ Status:** {status}\n**◆ Duration:** {duration} minutes",
+        description="\n".join(description_parts),
         color=BrandColors.PRIMARY if enabled else BrandColors.DANGER
     )
     embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
     
     await interaction.response.send_message(embed=embed)
-    await log_action(interaction.guild.id, "security", f"⚙️ [SECURITY CONFIG] {feature_names.get(feature, feature)} {status} | Duration: {duration}m | By: {interaction.user}")
+    await log_action(interaction.guild.id, "security", f"⚙️ [SECURITY CONFIG] {feature_names.get(feature, feature)} {status} | By: {interaction.user}")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PHASE 2: LINK FILTER SYSTEM
@@ -985,4 +1032,496 @@ async def raid_mode_command(interaction: discord.Interaction, enabled: bool):
     await interaction.response.send_message(embed=embed)
     await log_action(interaction.guild.id, "security", f"🚨 [RAID MODE] {'Enabled' if enabled else 'Disabled'} by {interaction.user}")
 
-print("✅ [ENHANCED SECURITY] Phase 1 & 2 systems loaded - Full Security Suite Active")
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 3: ANTI-NUKE SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Add Phase 3 tracking to enhanced_security_data
+enhanced_security_data['nuke_tracking'] = {
+    'bans': {},  # {guild_id: [(timestamp, user_id, moderator_id)]}
+    'kicks': {},  # {guild_id: [(timestamp, user_id, moderator_id)]}
+    'role_deletes': {},  # {guild_id: [(timestamp, role_data, moderator_id)]}
+    'channel_deletes': {},  # {guild_id: [(timestamp, channel_data, moderator_id)]}
+}
+enhanced_security_data['permission_backup'] = {}  # Backup of role permissions {guild_id: {role_id: permissions}}
+enhanced_security_data['webhook_tracking'] = {}  # Track webhook actions {guild_id: [webhooks]}
+
+async def check_nuke_threshold(guild_id, action_type, threshold, time_window=60):
+    """Check if nuke threshold has been exceeded"""
+    guild_id = str(guild_id)
+    current_time = time.time()
+    
+    if guild_id not in enhanced_security_data['nuke_tracking'][action_type]:
+        enhanced_security_data['nuke_tracking'][action_type][guild_id] = []
+    
+    # Clean old actions (older than time_window seconds)
+    enhanced_security_data['nuke_tracking'][action_type][guild_id] = [
+        action for action in enhanced_security_data['nuke_tracking'][action_type][guild_id]
+        if current_time - action[0] < time_window
+    ]
+    
+    # Check if threshold exceeded
+    action_count = len(enhanced_security_data['nuke_tracking'][action_type][guild_id])
+    return action_count >= threshold
+
+async def track_nuke_action(guild_id, action_type, data):
+    """Track a nuke action (ban/kick/delete)"""
+    guild_id = str(guild_id)
+    current_time = time.time()
+    
+    if guild_id not in enhanced_security_data['nuke_tracking'][action_type]:
+        enhanced_security_data['nuke_tracking'][action_type][guild_id] = []
+    
+    enhanced_security_data['nuke_tracking'][action_type][guild_id].append((current_time, data))
+
+async def handle_anti_nuke_alert(guild, action_type, count, moderator=None):
+    """Send alert when nuke is detected"""
+    action_names = {
+        'bans': 'Mass Bans',
+        'kicks': 'Mass Kicks',
+        'role_deletes': 'Mass Role Deletions',
+        'channel_deletes': 'Mass Channel Deletions'
+    }
+    
+    action_name = action_names.get(action_type, 'Mass Actions')
+    
+    # Log to security channel
+    await log_action(guild.id, "security", f"🚨 [ANTI-NUKE] {action_name} detected! {count} actions in 60 seconds - NUKE PROTECTION ACTIVATED")
+    
+    # Send critical alert to security channel
+    server_data = await get_server_data(guild.id)
+    organized_logs = server_data.get('organized_log_channels', {})
+    
+    if organized_logs and 'security' in organized_logs:
+        channel = bot.get_channel(int(organized_logs['security']))
+        if channel:
+            mod_mention = moderator.mention if moderator else "Unknown"
+            embed = discord.Embed(
+                title="🚨 **ANTI-NUKE ALERT - PROTECTION ACTIVATED**",
+                description=f"**◆ Detection:** {action_name}\n**◆ Count:** {count} actions in 60 seconds\n**◆ Moderator:** {mod_mention}\n**◆ Status:** NUKE PROTECTION ACTIVE\n\n💠 Future actions will be blocked automatically\n⚡ Server owner has been notified",
+                color=BrandColors.DANGER
+            )
+            if guild.me:
+                embed.set_footer(text=BOT_FOOTER, icon_url=guild.me.display_avatar.url)
+            else:
+                embed.set_footer(text=BOT_FOOTER)
+            await channel.send(embed=embed)
+    
+    # Try to DM the server owner
+    try:
+        owner = guild.owner
+        if owner:
+            dm_embed = discord.Embed(
+                title="🚨 **CRITICAL: Anti-Nuke Protection Activated**",
+                description=f"**Server:** {guild.name}\n\n**◆ Alert:** {action_name} detected\n**◆ Count:** {count} actions in 60 seconds\n**◆ Moderator:** {moderator if moderator else 'Unknown'}\n\n⚡ RXT ENGINE Anti-Nuke system has activated and is blocking further destructive actions.\n\n💠 Review your server's security settings and moderator permissions immediately.",
+                color=BrandColors.DANGER
+            )
+            if guild.me:
+                dm_embed.set_footer(text=BOT_FOOTER, icon_url=guild.me.display_avatar.url)
+            else:
+                dm_embed.set_footer(text=BOT_FOOTER)
+            await owner.send(embed=dm_embed)
+            print(f"✅ [ANTI-NUKE] Sent owner DM for {guild.name}")
+    except Exception as e:
+        print(f"⚠️ [ANTI-NUKE] Could not DM owner: {e}")
+
+async def on_member_ban_check(guild, user, moderator=None):
+    """Check for mass bans (Anti-Nuke) with automatic rollback"""
+    if not guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(guild.id)
+    security_settings = server_data.get('security_settings', {})
+    anti_nuke = security_settings.get('anti_nuke', {})
+    
+    if not anti_nuke.get('enabled', False):
+        return
+    
+    # Track this ban
+    await track_nuke_action(guild.id, 'bans', (user.id, moderator.id if moderator else None))
+    
+    # Check threshold (default: 5 bans in 60 seconds)
+    threshold = anti_nuke.get('ban_threshold', 5)
+    
+    if await check_nuke_threshold(guild.id, 'bans', threshold):
+        await handle_anti_nuke_alert(guild, 'bans', threshold, moderator)
+        
+        # AUTO-ROLLBACK: Unban all recently banned users
+        if anti_nuke.get('auto_rollback', True):
+            guild_id = str(guild.id)
+            banned_users = enhanced_security_data['nuke_tracking']['bans'].get(guild_id, [])
+            
+            unbanned_count = 0
+            for timestamp, (banned_user_id, ban_moderator_id) in banned_users:
+                try:
+                    # Unban the user
+                    banned_user = await bot.fetch_user(int(banned_user_id))
+                    await guild.unban(banned_user, reason="RXT ENGINE Anti-Nuke: Mass ban rollback")
+                    unbanned_count += 1
+                    print(f"✅ [ANTI-NUKE ROLLBACK] Unbanned {banned_user} (ID: {banned_user_id})")
+                except Exception as e:
+                    print(f"⚠️ [ANTI-NUKE ROLLBACK] Could not unban user {banned_user_id}: {e}")
+            
+            # Log rollback action
+            await log_action(guild.id, "security", f"🔄 [ANTI-NUKE ROLLBACK] Automatically unbanned {unbanned_count} users after mass ban detection")
+            
+            # Clear the tracked bans
+            enhanced_security_data['nuke_tracking']['bans'][guild_id] = []
+            
+            print(f"🔄 [ANTI-NUKE ROLLBACK] Unbanned {unbanned_count}/{len(banned_users)} users")
+        
+        return True  # Nuke detected
+    
+    return False
+
+async def on_member_kick_check(guild, user, moderator=None):
+    """Check for mass kicks (Anti-Nuke)"""
+    if not guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(guild.id)
+    security_settings = server_data.get('security_settings', {})
+    anti_nuke = security_settings.get('anti_nuke', {})
+    
+    if not anti_nuke.get('enabled', False):
+        return
+    
+    # Track this kick
+    await track_nuke_action(guild.id, 'kicks', (user.id, moderator.id if moderator else None))
+    
+    # Check threshold (default: 5 kicks in 60 seconds)
+    threshold = anti_nuke.get('kick_threshold', 5)
+    
+    if await check_nuke_threshold(guild.id, 'kicks', threshold):
+        await handle_anti_nuke_alert(guild, 'kicks', threshold, moderator)
+        return True  # Nuke detected
+    
+    return False
+
+async def on_role_delete_check(guild, role, moderator=None):
+    """Check for mass role deletions (Anti-Nuke) with automatic rollback"""
+    if not guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(guild.id)
+    security_settings = server_data.get('security_settings', {})
+    anti_nuke = security_settings.get('anti_nuke', {})
+    
+    if not anti_nuke.get('enabled', False):
+        return
+    
+    # Save role data for potential rollback
+    role_data = {
+        'id': role.id,
+        'name': role.name,
+        'color': role.color.value,
+        'hoist': role.hoist,
+        'mentionable': role.mentionable,
+        'permissions': role.permissions.value,
+        'position': role.position
+    }
+    
+    # Track this role deletion
+    await track_nuke_action(guild.id, 'role_deletes', (role_data, moderator.id if moderator else None))
+    
+    # Check threshold (default: 3 role deletions in 60 seconds)
+    threshold = anti_nuke.get('role_delete_threshold', 3)
+    
+    if await check_nuke_threshold(guild.id, 'role_deletes', threshold):
+        await handle_anti_nuke_alert(guild, 'role_deletes', threshold, moderator)
+        
+        # AUTO-ROLLBACK: Recreate deleted roles
+        if anti_nuke.get('auto_rollback', True):
+            guild_id = str(guild.id)
+            deleted_roles = enhanced_security_data['nuke_tracking']['role_deletes'].get(guild_id, [])
+            
+            recreated_count = 0
+            for timestamp, (deleted_role_data, delete_moderator_id) in deleted_roles:
+                try:
+                    # Recreate the role
+                    new_role = await guild.create_role(
+                        name=deleted_role_data['name'],
+                        permissions=discord.Permissions(deleted_role_data['permissions']),
+                        color=discord.Color(deleted_role_data['color']),
+                        hoist=deleted_role_data['hoist'],
+                        mentionable=deleted_role_data['mentionable'],
+                        reason="RXT ENGINE Anti-Nuke: Mass role deletion rollback"
+                    )
+                    recreated_count += 1
+                    print(f"✅ [ANTI-NUKE ROLLBACK] Recreated role: {deleted_role_data['name']}")
+                except Exception as e:
+                    print(f"⚠️ [ANTI-NUKE ROLLBACK] Could not recreate role {deleted_role_data['name']}: {e}")
+            
+            # Log rollback action
+            await log_action(guild.id, "security", f"🔄 [ANTI-NUKE ROLLBACK] Automatically recreated {recreated_count} roles after mass deletion detection")
+            
+            # Clear the tracked role deletions
+            enhanced_security_data['nuke_tracking']['role_deletes'][guild_id] = []
+            
+            print(f"🔄 [ANTI-NUKE ROLLBACK] Recreated {recreated_count}/{len(deleted_roles)} roles")
+        
+        return True  # Nuke detected
+    
+    return False
+
+async def on_channel_delete_check(guild, channel, moderator=None):
+    """Check for mass channel deletions (Anti-Nuke) with automatic rollback"""
+    if not guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(guild.id)
+    security_settings = server_data.get('security_settings', {})
+    anti_nuke = security_settings.get('anti_nuke', {})
+    
+    if not anti_nuke.get('enabled', False):
+        return
+    
+    # Save channel data for potential rollback
+    channel_data = {
+        'id': channel.id,
+        'name': channel.name,
+        'type': str(channel.type),
+        'category': channel.category.name if channel.category else None,
+        'category_id': channel.category.id if channel.category else None,
+        'position': channel.position if hasattr(channel, 'position') else 0
+    }
+    
+    # Add text channel specific data
+    if isinstance(channel, discord.TextChannel):
+        channel_data['topic'] = channel.topic
+        channel_data['slowmode_delay'] = channel.slowmode_delay
+        channel_data['nsfw'] = channel.nsfw
+    
+    # Track this channel deletion
+    await track_nuke_action(guild.id, 'channel_deletes', (channel_data, moderator.id if moderator else None))
+    
+    # Check threshold (default: 3 channel deletions in 60 seconds)
+    threshold = anti_nuke.get('channel_delete_threshold', 3)
+    
+    if await check_nuke_threshold(guild.id, 'channel_deletes', threshold):
+        await handle_anti_nuke_alert(guild, 'channel_deletes', threshold, moderator)
+        
+        # AUTO-ROLLBACK: Recreate deleted channels
+        if anti_nuke.get('auto_rollback', True):
+            guild_id = str(guild.id)
+            deleted_channels = enhanced_security_data['nuke_tracking']['channel_deletes'].get(guild_id, [])
+            
+            recreated_count = 0
+            for timestamp, (deleted_channel_data, delete_moderator_id) in deleted_channels:
+                try:
+                    # Get category if it exists
+                    category = None
+                    if deleted_channel_data.get('category_id'):
+                        category = guild.get_channel(int(deleted_channel_data['category_id']))
+                    
+                    # Recreate the channel (basic structure)
+                    if 'text' in deleted_channel_data['type'].lower():
+                        new_channel = await guild.create_text_channel(
+                            name=deleted_channel_data['name'],
+                            topic=deleted_channel_data.get('topic'),
+                            slowmode_delay=deleted_channel_data.get('slowmode_delay', 0),
+                            nsfw=deleted_channel_data.get('nsfw', False),
+                            category=category,
+                            reason="RXT ENGINE Anti-Nuke: Mass channel deletion rollback"
+                        )
+                    elif 'voice' in deleted_channel_data['type'].lower():
+                        new_channel = await guild.create_voice_channel(
+                            name=deleted_channel_data['name'],
+                            category=category,
+                            reason="RXT ENGINE Anti-Nuke: Mass channel deletion rollback"
+                        )
+                    else:
+                        # Unknown channel type, skip
+                        continue
+                    
+                    recreated_count += 1
+                    print(f"✅ [ANTI-NUKE ROLLBACK] Recreated channel: {deleted_channel_data['name']}")
+                except Exception as e:
+                    print(f"⚠️ [ANTI-NUKE ROLLBACK] Could not recreate channel {deleted_channel_data['name']}: {e}")
+            
+            # Log rollback action
+            await log_action(guild.id, "security", f"🔄 [ANTI-NUKE ROLLBACK] Automatically recreated {recreated_count} channels after mass deletion detection")
+            
+            # Clear the tracked channel deletions
+            enhanced_security_data['nuke_tracking']['channel_deletes'][guild_id] = []
+            
+            print(f"🔄 [ANTI-NUKE ROLLBACK] Recreated {recreated_count}/{len(deleted_channels)} channels")
+        
+        return True  # Nuke detected
+    
+    return False
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 3: PERMISSION SHIELD SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def backup_role_permissions(guild):
+    """Backup all role permissions for the guild"""
+    guild_id = str(guild.id)
+    
+    if guild_id not in enhanced_security_data['permission_backup']:
+        enhanced_security_data['permission_backup'][guild_id] = {}
+    
+    for role in guild.roles:
+        enhanced_security_data['permission_backup'][guild_id][str(role.id)] = {
+            'permissions': role.permissions.value,
+            'name': role.name,
+            'is_admin': role.permissions.administrator,
+            'dangerous_perms': {
+                'administrator': role.permissions.administrator,
+                'manage_guild': role.permissions.manage_guild,
+                'manage_channels': role.permissions.manage_channels,
+                'manage_roles': role.permissions.manage_roles,
+                'ban_members': role.permissions.ban_members,
+                'kick_members': role.permissions.kick_members,
+                'manage_webhooks': role.permissions.manage_webhooks
+            }
+        }
+
+async def on_role_permission_change(before_role, after_role, moderator=None):
+    """Detect and revert dangerous permission changes (Permission Shield)"""
+    if not after_role.guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(after_role.guild.id)
+    security_settings = server_data.get('security_settings', {})
+    permission_shield = security_settings.get('permission_shield', {})
+    
+    if not permission_shield.get('enabled', False):
+        return
+    
+    # Check for moderator whitelist
+    if moderator:
+        if await has_permission_user(moderator, after_role.guild, "main_moderator"):
+            return  # Allow main moderators to change permissions
+    
+    # Dangerous permissions to monitor
+    dangerous_perms = ['administrator', 'manage_guild', 'manage_channels', 'manage_roles', 'ban_members', 'kick_members', 'manage_webhooks']
+    
+    # Check if dangerous permissions were added
+    permissions_added = []
+    for perm in dangerous_perms:
+        before_val = getattr(before_role.permissions, perm, False)
+        after_val = getattr(after_role.permissions, perm, False)
+        
+        if not before_val and after_val:
+            permissions_added.append(perm)
+    
+    # If dangerous permissions were added, revert
+    if permissions_added:
+        try:
+            # Revert to previous permissions
+            await after_role.edit(permissions=before_role.permissions, reason="RXT ENGINE Permission Shield - Reverting unauthorized permission changes")
+            
+            # Log action
+            await log_action(after_role.guild.id, "security", f"🛡️ [PERMISSION SHIELD] Reverted unauthorized permission changes to {after_role.name} | Added permissions: {', '.join(permissions_added)} | By: {moderator if moderator else 'Unknown'}")
+            
+            # Send alert to security channel
+            server_data = await get_server_data(after_role.guild.id)
+            organized_logs = server_data.get('organized_log_channels', {})
+            
+            if organized_logs and 'security' in organized_logs:
+                channel = bot.get_channel(int(organized_logs['security']))
+                if channel:
+                    mod_mention = moderator.mention if moderator else "Unknown"
+                    embed = discord.Embed(
+                        title="🛡️ **PERMISSION SHIELD ACTIVATED**",
+                        description=f"**◆ Role:** {after_role.mention}\n**◆ Moderator:** {mod_mention}\n**◆ Blocked Permissions:** {', '.join(permissions_added)}\n\n⚡ Unauthorized permission changes have been automatically reverted\n💠 RXT ENGINE Permission Shield Active",
+                        color=BrandColors.WARNING
+                    )
+                    if after_role.guild.me:
+                        embed.set_footer(text=BOT_FOOTER, icon_url=after_role.guild.me.display_avatar.url)
+                    else:
+                        embed.set_footer(text=BOT_FOOTER)
+                    await channel.send(embed=embed)
+            
+            print(f"🛡️ [PERMISSION SHIELD] Reverted permissions on {after_role.name}: {', '.join(permissions_added)}")
+            return True  # Permissions reverted
+            
+        except Exception as e:
+            print(f"❌ [PERMISSION SHIELD] Failed to revert permissions: {e}")
+            await log_action(after_role.guild.id, "security", f"❌ [PERMISSION SHIELD ERROR] Could not revert permissions on {after_role.name}: {e}")
+    
+    return False
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 3: WEBHOOK PROTECTION SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def on_webhook_create_check(webhook, moderator=None):
+    """Prevent unauthorized webhook creation"""
+    if not webhook.guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(webhook.guild.id)
+    security_settings = server_data.get('security_settings', {})
+    webhook_protection = security_settings.get('webhook_protection', {})
+    
+    if not webhook_protection.get('enabled', False):
+        return
+    
+    # Check for moderator whitelist
+    if moderator:
+        if await has_permission_user(moderator, webhook.guild, "main_moderator"):
+            await log_action(webhook.guild.id, "security", f"🔗 [WEBHOOK] Created by authorized moderator: {webhook.name} in #{webhook.channel.name}")
+            return False  # Allow authorized creation
+    
+    # Unauthorized webhook creation detected
+    try:
+        # Delete the webhook
+        await webhook.delete(reason="RXT ENGINE Webhook Protection - Unauthorized webhook creation")
+        
+        # Log action
+        await log_action(webhook.guild.id, "security", f"🔗 [WEBHOOK PROTECTION] Blocked unauthorized webhook creation: {webhook.name} in #{webhook.channel.name} | By: {moderator if moderator else 'Unknown'}")
+        
+        # Send alert to security channel
+        server_data = await get_server_data(webhook.guild.id)
+        organized_logs = server_data.get('organized_log_channels', {})
+        
+        if organized_logs and 'security' in organized_logs:
+            channel = bot.get_channel(int(organized_logs['security']))
+            if channel:
+                mod_mention = moderator.mention if moderator else "Unknown"
+                embed = discord.Embed(
+                    title="🔗 **WEBHOOK PROTECTION ACTIVATED**",
+                    description=f"**◆ Webhook Name:** {webhook.name}\n**◆ Channel:** #{webhook.channel.name}\n**◆ Moderator:** {mod_mention}\n\n⚡ Unauthorized webhook has been deleted\n💠 RXT ENGINE Webhook Protection Active",
+                    color=BrandColors.WARNING
+                )
+                if webhook.guild.me:
+                    embed.set_footer(text=BOT_FOOTER, icon_url=webhook.guild.me.display_avatar.url)
+                else:
+                    embed.set_footer(text=BOT_FOOTER)
+                await channel.send(embed=embed)
+        
+        print(f"🔗 [WEBHOOK PROTECTION] Deleted unauthorized webhook: {webhook.name}")
+        return True  # Webhook deleted
+        
+    except Exception as e:
+        print(f"❌ [WEBHOOK PROTECTION] Failed to delete webhook: {e}")
+        await log_action(webhook.guild.id, "security", f"❌ [WEBHOOK PROTECTION ERROR] Could not delete webhook {webhook.name}: {e}")
+    
+    return False
+
+async def on_webhook_delete_check(webhook, moderator=None):
+    """Log webhook deletions"""
+    if not webhook.guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(webhook.guild.id)
+    security_settings = server_data.get('security_settings', {})
+    webhook_protection = security_settings.get('webhook_protection', {})
+    
+    if not webhook_protection.get('enabled', False):
+        return
+    
+    # Log webhook deletion
+    await log_action(webhook.guild.id, "security", f"🔗 [WEBHOOK] Deleted: {webhook.name} from #{webhook.channel.name if webhook.channel else 'Unknown'} | By: {moderator if moderator else 'Unknown'}")
+
+print("✅ [ENHANCED SECURITY] Phase 1, 2 & 3 systems loaded - Full Security Suite Active")

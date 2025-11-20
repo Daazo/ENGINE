@@ -773,51 +773,177 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_member_remove(member):
-    """Send goodbye DM and log"""
-    # Log member leaving
-    await log_action(member.guild.id, "welcome", f"👋 [MEMBER LEAVE] {member} ({member.id}) left the server")
+    """Send goodbye DM and log - Also check for kicks (Phase 3 Anti-Nuke)"""
+    
+    # Phase 3: Check for kicks via audit log (Anti-Nuke)
+    is_kick = False
+    kicker = None
+    try:
+        from enhanced_security import on_member_kick_check
+        
+        # Check audit log to see if this was a kick
+        async for entry in member.guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
+            # Check if the kick happened recently (within last 3 seconds) and targets this user
+            if entry.target.id == member.id and (datetime.now() - entry.created_at.replace(tzinfo=None)).total_seconds() < 3:
+                is_kick = True
+                kicker = entry.user
+                await on_member_kick_check(member.guild, member, kicker)
+                break
+    except Exception as e:
+        print(f"⚠️ [ANTI-NUKE] Kick check error: {e}")
+    
+    # Log member leaving (or being kicked)
+    if is_kick:
+        await log_action(member.guild.id, "welcome", f"🚨 [MEMBER KICKED] {member} ({member.id}) was kicked by {kicker}")
+    else:
+        await log_action(member.guild.id, "welcome", f"👋 [MEMBER LEAVE] {member} ({member.id}) left the server")
 
     # Log to global system
     try:
         from global_logging import log_per_server_activity
-        await log_per_server_activity(member.guild.id, f"**Member left:** {member} ({member.id})")
+        await log_per_server_activity(member.guild.id, f"**Member {'kicked' if is_kick else 'left'}:** {member} ({member.id})")
     except:
         pass
 
-    try:
-        embed = discord.Embed(
-            title=f"💠 **Neural Disconnection Detected: {member.display_name}**",
-            description=f"**Quantum core acknowledges departure from {member.guild.name}**\n\n{VisualElements.CIRCUIT_LINE}\n\n**◆ Connection archived to quantum memory banks**\n**◆ Neural pathway preserved for potential reconnection**\n**◆ System status: Nominal**\n\n{VisualElements.CIRCUIT_LINE}\n\n*— {BOT_NAME} Quantum Core*",
-            color=BrandColors.DANGER
-        )
-        embed.set_thumbnail(url=member.guild.icon.url if member.guild.icon else bot.user.display_avatar.url)
-        embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-
-        view = discord.ui.View()
-        invite_button = discord.ui.Button(label="🤖 Invite Bot to Other Servers", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🤖")
-        view.add_item(invite_button)
-
-        await member.send(embed=embed, view=view)
-
-        # Log goodbye DM globally
+    # Only send goodbye DM if they left voluntarily (not kicked)
+    if not is_kick:
         try:
-            from global_logging import log_dm_sent
-            await log_dm_sent(member, f"Goodbye message - Thank you for being part of {member.guild.name}")
+            embed = discord.Embed(
+                title=f"💠 **Neural Disconnection Detected: {member.display_name}**",
+                description=f"**Quantum core acknowledges departure from {member.guild.name}**\n\n{VisualElements.CIRCUIT_LINE}\n\n**◆ Connection archived to quantum memory banks**\n**◆ Neural pathway preserved for potential reconnection**\n**◆ System status: Nominal**\n\n{VisualElements.CIRCUIT_LINE}\n\n*— {BOT_NAME} Quantum Core*",
+                color=BrandColors.DANGER
+            )
+            embed.set_thumbnail(url=member.guild.icon.url if member.guild.icon else bot.user.display_avatar.url)
+            embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
+
+            view = discord.ui.View()
+            invite_button = discord.ui.Button(label="🤖 Invite Bot to Other Servers", style=discord.ButtonStyle.link, url=f"https://discord.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot%20applications.commands", emoji="🤖")
+            view.add_item(invite_button)
+
+            await member.send(embed=embed, view=view)
+
+            # Log goodbye DM globally
+            try:
+                from global_logging import log_dm_sent
+                await log_dm_sent(member, f"Goodbye message - Thank you for being part of {member.guild.name}")
+            except:
+                pass
         except:
-            pass
-    except:
-        pass  # User has DMs disabled
+            pass  # User has DMs disabled
 
 # Security event hooks
 @bot.event
 async def on_guild_channel_delete(channel):
     """Security hook for channel deletions"""
     await on_guild_channel_delete_security(channel)
+    
+    # Phase 3: Anti-Nuke channel deletion check
+    try:
+        from enhanced_security import on_channel_delete_check
+        await on_channel_delete_check(channel.guild, channel)
+    except Exception as e:
+        print(f"⚠️ [ANTI-NUKE] Channel delete check error: {e}")
 
 @bot.event
 async def on_member_update(before, after):
     """Security hook for member updates"""
     await on_member_update_security(before, after)
+
+@bot.event
+async def on_member_ban(guild, user):
+    """Phase 3: Anti-Nuke ban detection"""
+    try:
+        from enhanced_security import on_member_ban_check
+        
+        # Get audit log to find who banned
+        try:
+            async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+                if entry.target.id == user.id:
+                    await on_member_ban_check(guild, user, entry.user)
+                    return
+        except:
+            pass
+        
+        # If audit log fails, proceed without moderator info
+        await on_member_ban_check(guild, user)
+    except Exception as e:
+        print(f"⚠️ [ANTI-NUKE] Ban check error: {e}")
+
+@bot.event
+async def on_guild_role_delete(role):
+    """Phase 3: Anti-Nuke role deletion detection"""
+    try:
+        from enhanced_security import on_role_delete_check
+        
+        # Get audit log to find who deleted the role
+        try:
+            async for entry in role.guild.audit_logs(limit=1, action=discord.AuditLogAction.role_delete):
+                if entry.target.id == role.id:
+                    await on_role_delete_check(role.guild, role, entry.user)
+                    return
+        except:
+            pass
+        
+        # If audit log fails, proceed without moderator info
+        await on_role_delete_check(role.guild, role)
+    except Exception as e:
+        print(f"⚠️ [ANTI-NUKE] Role delete check error: {e}")
+
+@bot.event
+async def on_guild_role_update(before, after):
+    """Phase 3: Permission Shield - Detect and revert dangerous permission changes"""
+    try:
+        from enhanced_security import on_role_permission_change
+        
+        # Only check if permissions changed
+        if before.permissions != after.permissions:
+            # Get audit log to find who made the change
+            try:
+                async for entry in after.guild.audit_logs(limit=1, action=discord.AuditLogAction.role_update):
+                    if entry.target.id == after.id:
+                        await on_role_permission_change(before, after, entry.user)
+                        return
+            except:
+                pass
+            
+            # If audit log fails, proceed without moderator info
+            await on_role_permission_change(before, after)
+    except Exception as e:
+        print(f"⚠️ [PERMISSION SHIELD] Role update check error: {e}")
+
+@bot.event
+async def on_webhooks_update(channel):
+    """Phase 3: Webhook Protection - Detect unauthorized webhook creation/deletion"""
+    try:
+        from enhanced_security import on_webhook_create_check, on_webhook_delete_check
+        
+        # Get current webhooks in channel
+        current_webhooks = await channel.webhooks()
+        
+        # Check audit log for webhook actions
+        try:
+            async for entry in channel.guild.audit_logs(limit=5, action=discord.AuditLogAction.webhook_create):
+                if entry.target.channel_id == channel.id:
+                    # Find the created webhook
+                    for webhook in current_webhooks:
+                        if webhook.id == entry.target.id:
+                            await on_webhook_create_check(webhook, entry.user)
+                            break
+                    break
+        except:
+            pass
+        
+        # Check for webhook deletions
+        try:
+            async for entry in channel.guild.audit_logs(limit=5, action=discord.AuditLogAction.webhook_delete):
+                if entry.target.channel_id == channel.id:
+                    await on_webhook_delete_check(entry.target, entry.user)
+                    break
+        except:
+            pass
+            
+    except Exception as e:
+        print(f"⚠️ [WEBHOOK PROTECTION] Webhook update check error: {e}")
 
 # Help Command Callback
 async def help_command_callback(interaction):

@@ -9,6 +9,78 @@ RXT ENGINE is a powerful multi-function Discord bot focused on automation, moder
 
 ## Recent Changes
 
+### November 20, 2025 - Phase 3: Anti-Nuke, Permission Shield, Webhook Protection Implementation
+- 🚫 **Anti-Nuke System (Mass Action Detection & Auto-Rollback)**
+  - **Mass Ban Detection & Rollback**: Tracks bans via audit logs (default: 5 bans/min), automatically unbans all affected users
+  - **Mass Kick Detection & Alert**: Detects kicks in `on_member_remove` via audit logs (default: 5 kicks/min), sends alerts and logs kicked user IDs (**Discord API Limitation**: Automatic re-invitation is not supported by Discord's API - kicked users must be manually re-invited by server administrators)
+  - **Mass Role Deletion & Rollback**: Monitors role deletes (default: 3 deletes/min), recreates deleted roles with full permissions
+  - **Mass Channel Deletion & Rollback**: Monitors channel deletes (default: 3 deletes/min), recreates deleted channels with settings
+  - **Independent Threshold Configuration**: Separate configurable thresholds for bans, kicks, role deletes, and channel deletes via `/security-config`
+  - Automatically tracks destructive actions via Discord audit logs
+  - Sends critical alerts to security channel when nuke detected
+  - DMs server owner with critical alerts and moderator information
+  - **Full Auto-Rollback System**:
+    - Unbans: Automatically unbans all users when mass ban threshold exceeded
+    - Roles: Recreates deleted roles with original permissions, colors, and settings
+    - Channels: Recreates deleted text/voice channels with topics, slowmode, and categories
+  - Rollback actions logged to security channel with success count
+  - Protects against server nuking/raiding attacks with automatic mitigation
+  
+- 🛡️ **Permission Shield System**
+  - Monitors role permission changes in real-time
+  - Automatically reverts unauthorized dangerous permission additions:
+    - Administrator
+    - Manage Server
+    - Manage Channels
+    - Manage Roles
+    - Ban Members
+    - Kick Members
+    - Manage Webhooks
+  - Main moderators exempt from permission shield
+  - Automatic permission rollback with detailed alerts
+  - Sends alerts to security channel with moderator info
+  - Prevents privilege escalation attacks
+  - Works on all roles including @everyone
+  
+- 🔗 **Webhook Protection System**
+  - Monitors webhook creation events
+  - Automatically deletes unauthorized webhooks
+  - Main moderators can create webhooks (whitelisted)
+  - Logs all webhook creation/deletion attempts
+  - Sends alerts to security channel
+  - Prevents webhook-based attacks and spam
+  - Tracks webhook deletions for security auditing
+  
+- ⚙️ **Enhanced /security-config Command**
+  - Now supports 8 security features (up from 5):
+    - Auto-Timeout @everyone/@here
+    - Link Filter
+    - Anti-Invite
+    - Anti-Spam
+    - Anti-Raid
+    - **Anti-Nuke (Mass Bans/Kicks/Deletes)** ← NEW
+    - **Permission Shield** ← NEW
+    - **Webhook Protection** ← NEW
+  - Configurable thresholds for anti-nuke detection
+  - Simple enable/disable per feature
+  - All Phase 3 features log to security channel
+  
+- 🔧 **Phase 3 Event Handlers Integrated**
+  - `on_member_ban` - Detects mass ban attempts
+  - `on_guild_role_delete` - Detects mass role deletions
+  - `on_guild_channel_delete` - Enhanced with anti-nuke channel deletion check
+  - `on_guild_role_update` - Permission shield monitoring
+  - `on_webhooks_update` - Webhook protection monitoring
+  - All handlers use Discord audit logs to identify responsible moderators
+  - Automatic error handling with detailed logging
+  
+- 🔐 **Full Integration with Phase 1 & Phase 2**
+  - Phase 3 works seamlessly with existing security systems
+  - All features use RXT ENGINE Quantum Purple theme
+  - Unified logging to security channel
+  - Consistent alert format across all phases
+  - Complete server protection from nuke/raid/permission attacks
+
 ### November 20, 2025 - Phase 2: Anti-Spam, Anti-Raid, Link Filter, Anti-Invite Implementation
 - ⚡ **Link Filter System**
   - Automatically deletes external links (http://, https://, www.) from non-moderators
