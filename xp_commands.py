@@ -171,9 +171,9 @@ async def give_karma(interaction: discord.Interaction, user: discord.Member, amo
     role_text = "👑 Server Owner" if is_owner else "🔴 Main Moderator" if is_main_mod else "🟡 Junior Moderator" if is_junior_mod else "🟢 Member"
 
     embed = discord.Embed(
-        title="⚡ Quantum Karma Transferred",
-        description=f"**{interaction.user.mention}** ({role_text}) transmitted **+{karma_points} karma** to **{user.mention}**{reason_text}\n\n*Neural network updated*",
-        color=BrandColors.SUCCESS
+        title="⚡ **Quantum Karma Transferred**",
+        description=f"**{interaction.user.mention}** ({role_text}) transmitted **+{karma_points} karma** to **{user.mention}**{reason_text}\n\n*◆ Neural network updated*",
+        color=BrandColors.PRIMARY
     )
     embed.add_field(name="◆ New Karma Index", value=f"{new_karma} points", inline=True)
     embed.set_footer(text="💠 Quantum recognition protocol active", icon_url=bot.user.display_avatar.url)
@@ -387,9 +387,9 @@ async def karma_leaderboard(interaction: discord.Interaction):
             leaderboard_text += f"{medal} **{user.display_name}** ({level_title}) - {karma} karma ✨\n"
 
     embed = discord.Embed(
-        title="🏆 **Community Karma Leaderboard** ✨",
+        title="💠 **Community Karma Leaderboard**",
         description=leaderboard_text,
-        color=BrandColors.WARNING
+        color=BrandColors.PRIMARY
     )
     embed.set_footer(text="🌟 These members are making our community amazing!", icon_url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
@@ -424,9 +424,9 @@ async def reset_karma(interaction: discord.Interaction, scope: str, user: discor
 
         if result.deleted_count > 0:
             embed = discord.Embed(
-                title="✅ User Karma Reset",
-                description=f"**User:** {user.mention}\n**Action:** Karma data has been reset\n**Reset by:** {interaction.user.mention}",
-                color=BrandColors.SUCCESS
+                title="⚡ **User Karma Reset**",
+                description=f"**◆ User:** {user.mention}\n**◆ Action:** Karma data has been reset\n**◆ Reset by:** {interaction.user.mention}",
+                color=BrandColors.PRIMARY
             )
         else:
             embed = discord.Embed(
@@ -439,9 +439,9 @@ async def reset_karma(interaction: discord.Interaction, scope: str, user: discor
         result = await db.karma.delete_many({'guild_id': str(interaction.guild.id)})
 
         embed = discord.Embed(
-            title="✅ Server Karma Reset",
-            description=f"**Action:** All karma data has been reset\n**Users affected:** {result.deleted_count}\n**Reset by:** {interaction.user.mention}",
-            color=BrandColors.SUCCESS
+            title="⚡ **Server Karma Reset**",
+            description=f"**◆ Action:** All karma data has been reset\n**◆ Users affected:** {result.deleted_count}\n**◆ Reset by:** {interaction.user.mention}",
+            color=BrandColors.PRIMARY
         )
 
     embed.set_footer(text="🌟 Fresh start for karma system!", icon_url=bot.user.display_avatar.url)
