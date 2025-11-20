@@ -540,6 +540,13 @@ async def on_member_join(member):
         await check_raid_on_join(member)
     except Exception as e:
         print(f"⚠️ [ANTI-RAID CHECK] Error: {e}")
+    
+    # Run Phase 4 security checks (anti-alt, bot-block)
+    try:
+        from enhanced_security import on_member_join_phase4_checks
+        await on_member_join_phase4_checks(member)
+    except Exception as e:
+        print(f"⚠️ [PHASE 4 CHECKS] Error: {e}")
 
     # Log to global system
     try:
@@ -670,6 +677,13 @@ async def on_message(message):
         await on_message_security_checks(message)
     except Exception as e:
         print(f"⚠️ [SECURITY CHECKS] Error: {e}")
+    
+    # Call Phase 4 enhanced security checks (malware filter)
+    try:
+        from enhanced_security import on_message_phase4_checks
+        await on_message_phase4_checks(message)
+    except Exception as e:
+        print(f"⚠️ [PHASE 4 CHECKS] Error: {e}")
 
 @bot.event
 async def on_message_delete(message):

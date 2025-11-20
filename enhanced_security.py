@@ -468,6 +468,9 @@ async def remove_timeout_command(interaction: discord.Interaction, member: disco
         app_commands.Choice(name="Mention @everyone/@here", value="mention_everyone"),
         app_commands.Choice(name="Post Links", value="post_links"),
         app_commands.Choice(name="Discord Invites", value="discord_invites"),
+        app_commands.Choice(name="Anti-Alt Protection", value="anti_alt"),
+        app_commands.Choice(name="Bot-Block (for bots)", value="bot_block"),
+        app_commands.Choice(name="Malware Filter", value="malware_filter"),
         app_commands.Choice(name="All Security", value="all_security")
     ]
 )
@@ -508,6 +511,9 @@ async def security_whitelist_command(
             'mention_everyone': '📣 Mention @everyone/@here',
             'post_links': '🔗 Post Links',
             'discord_invites': '💬 Discord Invites',
+            'anti_alt': '🚫 Anti-Alt Protection',
+            'bot_block': '🤖 Bot-Block',
+            'malware_filter': '🛡️ Malware Filter',
             'all_security': '🛡️ All Security Features'
         }
         
@@ -571,7 +577,11 @@ async def security_whitelist_command(
     ban_threshold="Ban threshold for anti-nuke (default: 5)",
     kick_threshold="Kick threshold for anti-nuke (default: 5)",
     role_threshold="Role delete threshold for anti-nuke (default: 3)",
-    channel_threshold="Channel delete threshold for anti-nuke (default: 3)"
+    channel_threshold="Channel delete threshold for anti-nuke (default: 3)",
+    min_age_days="Minimum account age in days for anti-alt (default: 7)",
+    strike_1="Warning count for Strike 1 - 1h timeout (default: 3)",
+    strike_2="Warning count for Strike 2 - 24h timeout (default: 5)",
+    strike_3="Warning count for Strike 3 - ban (default: 7)"
 )
 @app_commands.choices(feature=[
     app_commands.Choice(name="Auto-Timeout @everyone/@here", value="auto_timeout_mentions"),
@@ -582,6 +592,10 @@ async def security_whitelist_command(
     app_commands.Choice(name="Anti-Nuke (Mass Bans/Kicks/Deletes)", value="anti_nuke"),
     app_commands.Choice(name="Permission Shield", value="permission_shield"),
     app_commands.Choice(name="Webhook Protection", value="webhook_protection"),
+    app_commands.Choice(name="Anti-Alt (Quarantine New Accounts)", value="anti_alt"),
+    app_commands.Choice(name="Auto Bot-Block", value="bot_block"),
+    app_commands.Choice(name="Malware/File Filter", value="malware_filter"),
+    app_commands.Choice(name="Auto Warning System", value="warning_system"),
 ])
 async def security_config_command(
     interaction: discord.Interaction,
@@ -591,7 +605,11 @@ async def security_config_command(
     ban_threshold: int = 5,
     kick_threshold: int = 5,
     role_threshold: int = 3,
-    channel_threshold: int = 3
+    channel_threshold: int = 3,
+    min_age_days: int = 7,
+    strike_1: int = 3,
+    strike_2: int = 5,
+    strike_3: int = 7
 ):
     if not await has_permission(interaction, "main_moderator"):
         await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
@@ -646,6 +664,26 @@ async def security_config_command(
         security_settings['webhook_protection'] = {
             'enabled': enabled
         }
+    elif feature == "anti_alt":
+        security_settings['anti_alt'] = {
+            'enabled': enabled,
+            'min_age_days': min_age_days
+        }
+    elif feature == "bot_block":
+        security_settings['bot_block'] = {
+            'enabled': enabled
+        }
+    elif feature == "malware_filter":
+        security_settings['malware_filter'] = {
+            'enabled': enabled
+        }
+    elif feature == "warning_system":
+        security_settings['warning_system'] = {
+            'enabled': enabled,
+            'strike_1_warnings': strike_1,
+            'strike_2_warnings': strike_2,
+            'strike_3_warnings': strike_3
+        }
     
     await update_server_data(interaction.guild.id, {'security_settings': security_settings})
     
@@ -658,7 +696,11 @@ async def security_config_command(
         'anti_raid': '🚨 Anti-Raid (Mass Joins)',
         'anti_nuke': '🚫 Anti-Nuke (Mass Bans/Kicks/Deletes)',
         'permission_shield': '🛡️ Permission Shield',
-        'webhook_protection': '🔗 Webhook Protection'
+        'webhook_protection': '🔗 Webhook Protection',
+        'anti_alt': '🚫 Anti-Alt (Quarantine New Accounts)',
+        'bot_block': '🤖 Auto Bot-Block',
+        'malware_filter': '🛡️ Malware/File Filter',
+        'warning_system': '⚠️ Auto Warning System'
     }
     
     # Build description based on feature type
@@ -676,6 +718,14 @@ async def security_config_command(
         description_parts.append(f"**◆ Role Delete Threshold:** {role_threshold}/min")
         description_parts.append(f"**◆ Channel Delete Threshold:** {channel_threshold}/min")
         description_parts.append(f"**◆ Auto-Rollback:** Enabled")
+    
+    if feature == 'anti_alt':
+        description_parts.append(f"**◆ Minimum Account Age:** {min_age_days} days")
+    
+    if feature == 'warning_system':
+        description_parts.append(f"**◆ Strike 1 (1h timeout):** {strike_1} warnings")
+        description_parts.append(f"**◆ Strike 2 (24h timeout):** {strike_2} warnings")
+        description_parts.append(f"**◆ Strike 3 (ban):** {strike_3} warnings")
     
     embed = discord.Embed(
         title="⚡ **Security Configuration Updated**",
@@ -1604,4 +1654,535 @@ async def on_webhook_delete_check(webhook, moderator=None):
     # Log webhook deletion
     await log_action(webhook.guild.id, "security", f"🔗 [WEBHOOK] Deleted: {webhook.name} from #{webhook.channel.name if webhook.channel else 'Unknown'} | By: {moderator if moderator else 'Unknown'}")
 
-print("✅ [ENHANCED SECURITY] Phase 1, 2 & 3 systems loaded - Full Security Suite Active")
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: ANTI-ALT SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+enhanced_security_data['quarantine_roles'] = {}  # Store quarantine role IDs {guild_id: role_id}
+
+async def get_or_create_quarantine_role(guild):
+    """Get or create the quarantine role for alt accounts"""
+    guild_id = str(guild.id)
+    
+    # Check cache
+    if guild_id in enhanced_security_data['quarantine_roles']:
+        role_id = enhanced_security_data['quarantine_roles'][guild_id]
+        role = guild.get_role(int(role_id))
+        if role:
+            return role
+    
+    # Check database
+    server_data = await get_server_data(guild.id)
+    security_settings = server_data.get('security_settings', {})
+    quarantine_role_id = security_settings.get('quarantine_role_id')
+    
+    if quarantine_role_id:
+        role = guild.get_role(int(quarantine_role_id))
+        if role:
+            enhanced_security_data['quarantine_roles'][guild_id] = quarantine_role_id
+            return role
+    
+    # Create new quarantine role
+    try:
+        role = await guild.create_role(
+            name="🚫 Quarantine",
+            color=discord.Color(BrandColors.WARNING),
+            reason="RXT ENGINE Anti-Alt System - Auto-created",
+            mentionable=False
+        )
+        
+        # Save to database
+        security_settings['quarantine_role_id'] = str(role.id)
+        await update_server_data(guild.id, {'security_settings': security_settings})
+        enhanced_security_data['quarantine_roles'][guild_id] = str(role.id)
+        
+        # Set permissions - deny most actions
+        for channel in guild.channels:
+            if isinstance(channel, (discord.TextChannel, discord.VoiceChannel)):
+                try:
+                    await channel.set_permissions(
+                        role,
+                        view_channel=True,
+                        send_messages=False,
+                        connect=False,
+                        speak=False,
+                        reason="Quarantine role - restricted access"
+                    )
+                except Exception as e:
+                    print(f"⚠️ [ANTI-ALT] Could not set permissions for {channel.name}: {e}")
+        
+        await log_action(guild.id, "security", f"⚡ [ANTI-ALT] Created quarantine role: {role.name}")
+        print(f"✅ [ANTI-ALT] Created quarantine role in {guild.name}")
+        return role
+        
+    except Exception as e:
+        print(f"❌ [ANTI-ALT] Error creating quarantine role: {e}")
+        return None
+
+async def check_anti_alt(member):
+    """Check if member is an alt account and quarantine if necessary"""
+    if not member.guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(member.guild.id)
+    security_settings = server_data.get('security_settings', {})
+    anti_alt = security_settings.get('anti_alt', {})
+    
+    if not anti_alt.get('enabled', False):
+        return
+    
+    # Check if user is whitelisted
+    if await is_whitelisted(member.guild.id, member.id, 'anti_alt'):
+        return
+    
+    # Calculate account age in days
+    account_age = (datetime.now() - member.created_at.replace(tzinfo=None)).days
+    min_age_days = anti_alt.get('min_age_days', 7)
+    
+    if account_age < min_age_days:
+        # Account is too new - quarantine
+        quarantine_role = await get_or_create_quarantine_role(member.guild)
+        if not quarantine_role:
+            await log_action(member.guild.id, "security", f"❌ [ANTI-ALT ERROR] Could not create quarantine role for {member}")
+            return
+        
+        try:
+            # Add quarantine role
+            await member.add_roles(quarantine_role, reason=f"RXT ENGINE Anti-Alt: Account age {account_age} days (minimum: {min_age_days} days)")
+            
+            # Log action
+            await log_action(member.guild.id, "security", f"🚫 [ANTI-ALT] Quarantined {member.mention} | Account age: {account_age} days (Min: {min_age_days} days)")
+            
+            # Send alert to security channel
+            organized_logs = server_data.get('organized_log_channels', {})
+            if organized_logs and 'security' in organized_logs:
+                channel = bot.get_channel(int(organized_logs['security']))
+                if channel:
+                    embed = discord.Embed(
+                        title="🚫 **ANTI-ALT PROTECTION ACTIVATED**",
+                        description=f"**◆ User:** {member.mention}\n**◆ Account Age:** {account_age} days\n**◆ Required Age:** {min_age_days} days\n**◆ Account Created:** <t:{int(member.created_at.timestamp())}:R>\n\n⚡ User has been quarantined\n💠 Review manually to release",
+                        color=BrandColors.WARNING
+                    )
+                    if member.guild.me:
+                        embed.set_footer(text=BOT_FOOTER, icon_url=member.guild.me.display_avatar.url)
+                    else:
+                        embed.set_footer(text=BOT_FOOTER)
+                    await channel.send(embed=embed)
+            
+            # Send DM to user
+            try:
+                dm_embed = discord.Embed(
+                    title="🚫 **Account Quarantined**",
+                    description=f"**Welcome to {member.guild.name}!**\n\n**Your account has been temporarily quarantined because it's too new.**\n\n**◆ Your Account Age:** {account_age} days\n**◆ Required Age:** {min_age_days} days\n\n💠 This is an automated security measure to prevent alt accounts and raids.\n⚡ A moderator will review your account shortly.",
+                    color=BrandColors.WARNING
+                )
+                dm_embed.set_footer(text=BOT_FOOTER)
+                await member.send(embed=dm_embed)
+            except:
+                pass
+            
+            print(f"🚫 [ANTI-ALT] Quarantined {member} - Account age: {account_age} days")
+            
+        except Exception as e:
+            print(f"❌ [ANTI-ALT] Error quarantining {member}: {e}")
+            await log_action(member.guild.id, "security", f"❌ [ANTI-ALT ERROR] Could not quarantine {member.mention}: {e}")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: AUTO BOT-BLOCK SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def check_bot_block(member):
+    """Block unauthorized bot joins"""
+    if not member.bot or not member.guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(member.guild.id)
+    security_settings = server_data.get('security_settings', {})
+    bot_block = security_settings.get('bot_block', {})
+    
+    if not bot_block.get('enabled', False):
+        return
+    
+    # Check if bot is whitelisted
+    if await is_whitelisted(member.guild.id, member.id, 'bot_block'):
+        await log_action(member.guild.id, "security", f"✅ [BOT-BLOCK] Allowed whitelisted bot: {member} ({member.id})")
+        return
+    
+    # Bot is not whitelisted - kick it
+    try:
+        # Log action first
+        await log_action(member.guild.id, "security", f"🤖 [BOT-BLOCK] Blocked unauthorized bot: {member} ({member.id})")
+        
+        # Send alert to security channel
+        organized_logs = server_data.get('organized_log_channels', {})
+        if organized_logs and 'security' in organized_logs:
+            channel = bot.get_channel(int(organized_logs['security']))
+            if channel:
+                embed = discord.Embed(
+                    title="🤖 **AUTO BOT-BLOCK ACTIVATED**",
+                    description=f"**◆ Bot:** {member.mention}\n**◆ Bot Name:** {member.name}\n**◆ Bot ID:** {member.id}\n\n⚡ Unauthorized bot has been blocked\n💠 Use `/security-whitelist add bot_block @bot` to approve bots",
+                    color=BrandColors.DANGER
+                )
+                if member.guild.me:
+                    embed.set_footer(text=BOT_FOOTER, icon_url=member.guild.me.display_avatar.url)
+                else:
+                    embed.set_footer(text=BOT_FOOTER)
+                await channel.send(embed=embed)
+        
+        # Kick the bot
+        await member.kick(reason="RXT ENGINE Auto Bot-Block - Unauthorized bot join")
+        print(f"🤖 [BOT-BLOCK] Kicked unauthorized bot: {member.name}")
+        
+    except Exception as e:
+        print(f"❌ [BOT-BLOCK] Error kicking bot {member}: {e}")
+        await log_action(member.guild.id, "security", f"❌ [BOT-BLOCK ERROR] Could not kick bot {member.mention}: {e}")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: FILE/MALWARE FILTER SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+# List of known malicious/suspicious file extensions and domains
+BLOCKED_FILE_EXTENSIONS = [
+    '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar',
+    '.msi', '.app', '.deb', '.rpm', '.dmg', '.pkg', '.apk', '.ipa',
+    '.dll', '.sys', '.drv', '.ocx', '.cpl', '.inf', '.ins', '.isp',
+    '.reg', '.scf', '.lnk', '.hta', '.chm', '.gadget', '.msc', '.ps1',
+    '.psm1', '.psc1', '.psd1', '.pssc', '.pl', '.py', '.rb', '.sh'
+]
+
+SUSPICIOUS_DOMAINS = [
+    'grabify', 'iplogger', 'blasze', 'linkify', 'streamable', 'bit.ly',
+    'tinyurl', 'discord.gg', 'discordapp', 'discord.com/api/webhooks',
+    'steamcommunity.com/openid', 'steemcommunity', 'discordnitro',
+    'steam-wallet', 'discrod', 'dlscord', 'free-nitro', 'steamcommunnity'
+]
+
+async def check_malware_filter(message):
+    """Check message for malicious files and links"""
+    if message.author.bot or not message.guild:
+        return
+    
+    # Get security settings
+    server_data = await get_server_data(message.guild.id)
+    security_settings = server_data.get('security_settings', {})
+    malware_filter = security_settings.get('malware_filter', {})
+    
+    if not malware_filter.get('enabled', False):
+        return
+    
+    # Check if user has moderator permissions (exempt)
+    if await has_permission_user(message.author, message.guild, "junior_moderator"):
+        return
+    
+    # Check if user is whitelisted
+    if await is_whitelisted(message.guild.id, message.author.id, 'malware_filter'):
+        return
+    
+    is_dangerous = False
+    danger_reason = ""
+    
+    # Check attachments for dangerous file extensions
+    for attachment in message.attachments:
+        file_ext = attachment.filename[attachment.filename.rfind('.'):].lower() if '.' in attachment.filename else ''
+        if file_ext in BLOCKED_FILE_EXTENSIONS:
+            is_dangerous = True
+            danger_reason = f"Blocked file type: {file_ext}"
+            break
+    
+    # Check message content for suspicious links
+    if not is_dangerous and message.content:
+        content_lower = message.content.lower()
+        for domain in SUSPICIOUS_DOMAINS:
+            if domain in content_lower:
+                is_dangerous = True
+                danger_reason = f"Suspicious domain detected: {domain}"
+                break
+    
+    if is_dangerous:
+        # Delete the message
+        try:
+            await message.delete()
+        except:
+            pass
+        
+        # Log action
+        await log_action(message.guild.id, "security", f"🛡️ [MALWARE FILTER] Blocked dangerous content from {message.author.mention} | Reason: {danger_reason}")
+        
+        # Apply warning (if warning system is enabled)
+        await add_warning(message.guild, message.author, "Auto-Warning: Posted malicious/dangerous content", triggered_by="Auto-Security System")
+        
+        # Send notification in channel
+        try:
+            embed = discord.Embed(
+                title="🛡️ **Malware Filter Activated**",
+                description=f"**{message.author.mention}, your message was deleted**\n\n**◆ Reason:** {danger_reason}\n**◆ Action:** Auto-warning applied\n\n💠 Do not share malicious files or suspicious links",
+                color=BrandColors.DANGER
+            )
+            if message.guild and message.guild.me:
+                embed.set_footer(text=BOT_FOOTER, icon_url=message.guild.me.display_avatar.url)
+            else:
+                embed.set_footer(text=BOT_FOOTER)
+            await message.channel.send(embed=embed, delete_after=10)
+        except:
+            pass
+        
+        # Send alert to security channel
+        organized_logs = server_data.get('organized_log_channels', {})
+        if organized_logs and 'security' in organized_logs:
+            channel = bot.get_channel(int(organized_logs['security']))
+            if channel:
+                embed = discord.Embed(
+                    title="🛡️ **MALWARE FILTER ALERT**",
+                    description=f"**◆ User:** {message.author.mention}\n**◆ Channel:** {message.channel.mention}\n**◆ Reason:** {danger_reason}\n**◆ Message:** {message.content[:200] if message.content else 'File attachment'}\n\n⚡ Content deleted and warning applied",
+                    color=BrandColors.DANGER
+                )
+                if message.guild.me:
+                    embed.set_footer(text=BOT_FOOTER, icon_url=message.guild.me.display_avatar.url)
+                else:
+                    embed.set_footer(text=BOT_FOOTER)
+                await channel.send(embed=embed)
+        
+        print(f"🛡️ [MALWARE FILTER] Blocked content from {message.author} - {danger_reason}")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: AUTO WARNING SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+enhanced_security_data['warnings'] = {}  # Store user warnings {guild_id: {user_id: [warnings]}}
+
+async def add_warning(guild, member, reason, triggered_by="System"):
+    """Add a warning to a user and apply escalating punishments"""
+    guild_id = str(guild.id)
+    user_id = str(member.id)
+    
+    # Initialize tracking
+    if guild_id not in enhanced_security_data['warnings']:
+        enhanced_security_data['warnings'][guild_id] = {}
+    
+    if user_id not in enhanced_security_data['warnings'][guild_id]:
+        enhanced_security_data['warnings'][guild_id][user_id] = []
+    
+    # Add warning with timestamp
+    warning_data = {
+        'reason': reason,
+        'timestamp': datetime.now().isoformat(),
+        'triggered_by': triggered_by
+    }
+    enhanced_security_data['warnings'][guild_id][user_id].append(warning_data)
+    
+    # Save to database
+    server_data = await get_server_data(guild.id)
+    saved_warnings = server_data.get('user_warnings', {})
+    saved_warnings[user_id] = enhanced_security_data['warnings'][guild_id][user_id]
+    await update_server_data(guild.id, {'user_warnings': saved_warnings})
+    
+    # Get warning count
+    warning_count = len(enhanced_security_data['warnings'][guild_id][user_id])
+    
+    # Get warning system settings
+    security_settings = server_data.get('security_settings', {})
+    warning_system = security_settings.get('warning_system', {})
+    
+    if not warning_system.get('enabled', False):
+        return
+    
+    # Apply escalating punishments based on strike levels
+    strike_1 = warning_system.get('strike_1_warnings', 3)
+    strike_2 = warning_system.get('strike_2_warnings', 5)
+    strike_3 = warning_system.get('strike_3_warnings', 7)
+    
+    action_taken = None
+    
+    if warning_count >= strike_3:
+        # Strike 3: Ban
+        try:
+            await member.ban(reason=f"RXT ENGINE Auto-Warning: {warning_count} warnings - Strike 3")
+            action_taken = f"🔨 BANNED (Strike 3 - {warning_count} warnings)"
+            print(f"🔨 [WARNING SYSTEM] Banned {member} - {warning_count} warnings")
+        except Exception as e:
+            print(f"❌ [WARNING SYSTEM] Could not ban {member}: {e}")
+    
+    elif warning_count >= strike_2:
+        # Strike 2: Timeout (24 hours)
+        try:
+            await apply_enhanced_timeout(guild, member, 1440, f"Auto-Warning Strike 2: {warning_count} warnings", triggered_by="Auto-Warning System")
+            action_taken = f"⏰ TIMEOUT 24H (Strike 2 - {warning_count} warnings)"
+            print(f"⏰ [WARNING SYSTEM] Timed out {member} for 24h - {warning_count} warnings")
+        except Exception as e:
+            print(f"❌ [WARNING SYSTEM] Could not timeout {member}: {e}")
+    
+    elif warning_count >= strike_1:
+        # Strike 1: Timeout (1 hour)
+        try:
+            await apply_enhanced_timeout(guild, member, 60, f"Auto-Warning Strike 1: {warning_count} warnings", triggered_by="Auto-Warning System")
+            action_taken = f"⏰ TIMEOUT 1H (Strike 1 - {warning_count} warnings)"
+            print(f"⏰ [WARNING SYSTEM] Timed out {member} for 1h - {warning_count} warnings")
+        except Exception as e:
+            print(f"❌ [WARNING SYSTEM] Could not timeout {member}: {e}")
+    else:
+        action_taken = f"⚠️ WARNING #{warning_count}"
+    
+    # Log action
+    await log_action(guild.id, "security", f"⚠️ [AUTO-WARNING] {member.mention} | Warning #{warning_count} | Reason: {reason} | Action: {action_taken}")
+    
+    # Send DM to user
+    try:
+        dm_embed = discord.Embed(
+            title="⚠️ **Auto-Warning Issued**",
+            description=f"**You have received a warning in {guild.name}**\n\n**◆ Reason:** {reason}\n**◆ Warning Count:** {warning_count}\n**◆ Action:** {action_taken}\n\n💠 Further violations may result in timeout or ban",
+            color=BrandColors.WARNING if warning_count < strike_1 else BrandColors.DANGER
+        )
+        dm_embed.set_footer(text=BOT_FOOTER)
+        await member.send(embed=dm_embed)
+    except:
+        pass
+    
+    return warning_count
+
+async def clear_warnings(guild, member):
+    """Clear all warnings for a user"""
+    guild_id = str(guild.id)
+    user_id = str(member.id)
+    
+    # Clear from memory
+    if guild_id in enhanced_security_data['warnings']:
+        if user_id in enhanced_security_data['warnings'][guild_id]:
+            del enhanced_security_data['warnings'][guild_id][user_id]
+    
+    # Clear from database
+    server_data = await get_server_data(guild.id)
+    saved_warnings = server_data.get('user_warnings', {})
+    if user_id in saved_warnings:
+        del saved_warnings[user_id]
+        await update_server_data(guild.id, {'user_warnings': saved_warnings})
+    
+    await log_action(guild.id, "security", f"✅ [WARNING SYSTEM] Cleared all warnings for {member.mention}")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: UNIFIED MEMBER JOIN HANDLER
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def on_member_join_phase4_checks(member):
+    """Run all Phase 4 security checks on member join (called from main.py)"""
+    if not member.guild:
+        return
+    
+    # Run all Phase 4 checks
+    await check_anti_alt(member)  # Check for alt accounts
+    await check_bot_block(member)  # Check for unauthorized bots
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: UNIFIED MESSAGE HANDLER
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def on_message_phase4_checks(message):
+    """Run all Phase 4 security checks on messages (called from main.py)"""
+    if message.author.bot or not message.guild:
+        return
+    
+    # Run Phase 4 checks
+    await check_malware_filter(message)  # Check for malicious files/links
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 4: WARNING SYSTEM COMMANDS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@bot.tree.command(name="warn", description="⚠️ Issue a manual warning to a user")
+@app_commands.describe(
+    member="User to warn",
+    reason="Reason for the warning"
+)
+async def warn_command(interaction: discord.Interaction, member: discord.Member, reason: str):
+    if not await has_permission(interaction, "junior_moderator"):
+        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        return
+    
+    if not interaction.guild:
+        await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+        return
+    
+    # Add warning
+    warning_count = await add_warning(interaction.guild, member, reason, triggered_by=str(interaction.user))
+    
+    embed = discord.Embed(
+        title="⚠️ **Warning Issued**",
+        description=f"**◆ User:** {member.mention}\n**◆ Reason:** {reason}\n**◆ Total Warnings:** {warning_count}\n\n✅ Warning has been recorded",
+        color=BrandColors.WARNING
+    )
+    embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
+    
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="warnings", description="📋 View a user's warning history")
+@app_commands.describe(member="User to check warnings for")
+async def warnings_command(interaction: discord.Interaction, member: discord.Member):
+    if not await has_permission(interaction, "junior_moderator"):
+        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        return
+    
+    if not interaction.guild:
+        await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+        return
+    
+    guild_id = str(interaction.guild.id)
+    user_id = str(member.id)
+    
+    # Get warnings from memory or database
+    warnings = []
+    if guild_id in enhanced_security_data['warnings'] and user_id in enhanced_security_data['warnings'][guild_id]:
+        warnings = enhanced_security_data['warnings'][guild_id][user_id]
+    else:
+        # Try database
+        server_data = await get_server_data(interaction.guild.id)
+        saved_warnings = server_data.get('user_warnings', {})
+        if user_id in saved_warnings:
+            warnings = saved_warnings[user_id]
+    
+    if not warnings:
+        embed = discord.Embed(
+            title="📋 **Warning History**",
+            description=f"**◆ User:** {member.mention}\n**◆ Total Warnings:** 0\n\n✅ No warnings on record",
+            color=BrandColors.SUCCESS
+        )
+    else:
+        warning_list = []
+        for i, warning in enumerate(warnings[-10:], 1):  # Show last 10 warnings
+            timestamp = warning.get('timestamp', 'Unknown')
+            reason = warning.get('reason', 'No reason provided')
+            by = warning.get('triggered_by', 'System')
+            warning_list.append(f"**{i}.** {reason}\n*By: {by} | {timestamp[:10]}*")
+        
+        embed = discord.Embed(
+            title="📋 **Warning History**",
+            description=f"**◆ User:** {member.mention}\n**◆ Total Warnings:** {len(warnings)}\n\n" + "\n\n".join(warning_list),
+            color=BrandColors.WARNING
+        )
+    
+    embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="clearwarnings", description="🗑️ Clear all warnings for a user")
+@app_commands.describe(member="User to clear warnings for")
+async def clearwarnings_command(interaction: discord.Interaction, member: discord.Member):
+    if not await has_permission(interaction, "main_moderator"):
+        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        return
+    
+    if not interaction.guild:
+        await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+        return
+    
+    await clear_warnings(interaction.guild, member)
+    
+    embed = discord.Embed(
+        title="✅ **Warnings Cleared**",
+        description=f"**◆ User:** {member.mention}\n\n✅ All warnings have been cleared",
+        color=BrandColors.SUCCESS
+    )
+    embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
+    
+    await interaction.response.send_message(embed=embed)
+
+print("✅ [ENHANCED SECURITY] Phase 1, 2, 3 & 4 systems loaded - Full Security Suite Active")
