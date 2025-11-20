@@ -20,14 +20,16 @@ RXT ENGINE is a powerful multi-function Discord bot focused on automation, moder
   - Saves and restores previous channel permissions (preserves staff-defined custom overrides)
   - No automatic category/channel creation - manual configuration required
   
-- ✅ **CAPTCHA-Based Verification System**
+- ✅ **CAPTCHA-Based Verification System (Chat-Based)**
   - Visual CAPTCHA challenge with random 6-character codes
   - PIL-based image generator with noise, distortion, and cyberpunk styling
   - Unique CAPTCHA per user (changes for every verification attempt)
+  - **Simple chat-based input** - users type the code directly in chat
+  - User messages automatically deleted for privacy
   - Case-insensitive validation for better UX
   - Excludes ambiguous characters (O, 0, I, l, 1) for clarity
-  - On success: assigns verified role, optionally removes unverified role
-  - On failure: shows clear error message, allows retry
+  - On success: assigns verified role, optionally removes unverified role, auto-deletes message after 10s
+  - On failure: shows clear error message, allows retry, auto-deletes message after 10s
   - Fully integrated with `/verification-setup` command
   - **Removed confusing duplicate verification option from `/security` command**
   - Now only `/verification-setup` is used for CAPTCHA verification (cleaner UX)

@@ -146,64 +146,81 @@ async def verification_setup(
     await interaction.response.send_message(embed=response_embed)
     await log_action(interaction.guild.id, "security", f"✅ [VERIFICATION] Verification system setup by {interaction.user}")
 
-class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
-    """Modal for CAPTCHA input"""
-    captcha_input = discord.ui.TextInput(
-        label='Enter the CAPTCHA code shown in the image',
-        placeholder='Type the 6-character code here...',
-        required=True,
-        max_length=6,
-        min_length=6
-    )
+# Message event listener for CAPTCHA validation
+@bot.event
+async def on_message(message):
+    # Ignore bot messages
+    if message.author.bot:
+        return
     
-    def __init__(self, correct_captcha, verified_role, remove_role=None):
-        super().__init__()
-        self.correct_captcha = correct_captcha
-        self.verified_role = verified_role
-        self.remove_role = remove_role
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        user_input = self.captcha_input.value.upper().strip()
+    # Check if user has a pending CAPTCHA
+    user_id = str(message.author.id)
+    if user_id in security_data['captcha_data']:
+        captcha_info = security_data['captcha_data'][user_id]
+        user_input = message.content.upper().strip()
         
-        # Remove user's CAPTCHA from cache
-        user_id = str(interaction.user.id)
-        if user_id in security_data['captcha_data']:
-            del security_data['captcha_data'][user_id]
-        
-        if user_input == self.correct_captcha:
-            # Correct CAPTCHA - verify the user
+        # Check if message is 6 characters (CAPTCHA length)
+        if len(user_input) == 6:
             try:
-                # Remove the specified role if configured
-                if self.remove_role and self.remove_role in interaction.user.roles:
-                    await interaction.user.remove_roles(self.remove_role, reason="Role removed during verification")
-                
-                # Add verified role
-                await interaction.user.add_roles(self.verified_role, reason="CAPTCHA verification successful")
-                
+                # Delete user's message for privacy
+                await message.delete()
+            except:
+                pass
+            
+            # Validate CAPTCHA
+            if user_input == captcha_info['code']:
+                # Correct CAPTCHA - verify the user
+                try:
+                    # Remove the specified role if configured
+                    if captcha_info['remove_role'] and captcha_info['remove_role'] in message.author.roles:
+                        await message.author.remove_roles(captcha_info['remove_role'], reason="Role removed during verification")
+                    
+                    # Add verified role
+                    await message.author.add_roles(captcha_info['verified_role'], reason="CAPTCHA verification successful")
+                    
+                    embed = discord.Embed(
+                        title="✅ **Verification Successful!**",
+                        description=f"**Welcome {message.author.mention}!** 🎉\n\nYou correctly solved the CAPTCHA and now have full access to the server.\n\n*Enjoy your stay!* ⚡",
+                        color=BrandColors.SUCCESS
+                    )
+                    embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
+                    
+                    await message.channel.send(embed=embed, delete_after=10)
+                    await log_action(message.guild.id, "security", f"✅ [CAPTCHA VERIFICATION] {message.author} verified successfully")
+                    
+                    # Remove from pending captchas
+                    del security_data['captcha_data'][user_id]
+                    
+                except discord.Forbidden:
+                    error_embed = discord.Embed(
+                        title="❌ **Verification Error**",
+                        description="I don't have permission to assign the verified role. Contact administrators.",
+                        color=BrandColors.ERROR
+                    )
+                    await message.channel.send(embed=error_embed, delete_after=10)
+                except Exception as e:
+                    error_embed = discord.Embed(
+                        title="❌ **Verification Failed**",
+                        description=f"An error occurred: {str(e)}",
+                        color=BrandColors.ERROR
+                    )
+                    await message.channel.send(embed=error_embed, delete_after=10)
+            else:
+                # Incorrect CAPTCHA
                 embed = discord.Embed(
-                    title="✅ **Verification Successful!**",
-                    description="**Welcome to the server!** 🎉\n\nYou correctly solved the CAPTCHA and now have full access to the server.\n\n*Enjoy your stay!* ⚡",
-                    color=BrandColors.SUCCESS
+                    title="❌ **Verification Failed**",
+                    description=f"**Incorrect CAPTCHA code!**\n\nYou entered: `{user_input}`\n\nPlease try again by clicking the Verify button to get a new CAPTCHA.",
+                    color=BrandColors.ERROR
                 )
-                embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
+                embed.set_footer(text="Try again to verify", icon_url=bot.user.display_avatar.url)
+                await message.channel.send(embed=embed, delete_after=10)
+                await log_action(message.guild.id, "security", f"❌ [CAPTCHA FAILED] {message.author} entered incorrect CAPTCHA: {user_input}")
                 
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                await log_action(interaction.guild.id, "security", f"✅ [CAPTCHA VERIFICATION] {interaction.user} verified successfully")
-                
-            except discord.Forbidden:
-                await interaction.response.send_message("❌ I don't have permission to assign the verified role. Contact administrators.", ephemeral=True)
-            except Exception as e:
-                await interaction.response.send_message(f"❌ Verification failed: {str(e)}", ephemeral=True)
-        else:
-            # Incorrect CAPTCHA
-            embed = discord.Embed(
-                title="❌ **Verification Failed**",
-                description=f"**Incorrect CAPTCHA code!**\n\nYou entered: `{user_input}`\n\nPlease try again by clicking the Verify button.",
-                color=BrandColors.ERROR
-            )
-            embed.set_footer(text="Try again to verify", icon_url=bot.user.display_avatar.url)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            await log_action(interaction.guild.id, "security", f"❌ [CAPTCHA FAILED] {interaction.user} entered incorrect CAPTCHA: {user_input}")
+                # Remove failed CAPTCHA
+                del security_data['captcha_data'][user_id]
+    
+    # Process commands
+    await bot.process_commands(message)
 
 class VerificationView(discord.ui.View):
     def __init__(self, verified_role_id=None, remove_role_id=None):
@@ -246,41 +263,29 @@ class VerificationView(discord.ui.View):
             # Generate unique CAPTCHA for this user
             captcha_text, captcha_file = captcha_gen.generate()
             
-            # Store CAPTCHA for validation
+            # Store CAPTCHA for validation with role info
             user_id = str(interaction.user.id)
-            security_data['captcha_data'][user_id] = captcha_text
+            security_data['captcha_data'][user_id] = {
+                'code': captcha_text,
+                'verified_role': verified_role,
+                'remove_role': remove_role,
+                'channel_id': interaction.channel_id,
+                'guild_id': interaction.guild_id
+            }
             
-            # Create modal and view
-            modal = CaptchaModal(captcha_text, verified_role, remove_role)
-            
-            # Send CAPTCHA image with input button in ONE message
+            # Send CAPTCHA image with instructions to type in chat
             embed = discord.Embed(
                 title="🔐 **CAPTCHA Verification**",
-                description="**Solve the CAPTCHA to verify:**\n\n**1.** Look at the code in the image below\n**2.** Click the button to enter the code\n\n⚠️ Code is case-insensitive",
+                description="**Solve the CAPTCHA to verify:**\n\n**1.** Look at the code in the image below\n**2.** Type the 6-character code in this channel\n\n⚠️ Code is case-insensitive\n💬 Your message will be automatically deleted for privacy",
                 color=BrandColors.PRIMARY
             )
             embed.set_image(url="attachment://captcha.png")
             embed.set_footer(text="This CAPTCHA is unique to you", icon_url=bot.user.display_avatar.url)
             
-            await interaction.response.send_message(
-                embed=embed, 
-                file=captcha_file, 
-                view=CaptchaInputView(modal), 
-                ephemeral=True
-            )
+            await interaction.response.send_message(embed=embed, file=captcha_file, ephemeral=True)
             
         except Exception as e:
             await interaction.response.send_message(f"❌ CAPTCHA generation failed: {str(e)}", ephemeral=True)
-
-class CaptchaInputView(discord.ui.View):
-    """View with button to open CAPTCHA input modal"""
-    def __init__(self, modal):
-        super().__init__(timeout=300)  # 5 minute timeout
-        self.modal = modal
-    
-    @discord.ui.button(label='Type Code Here', style=discord.ButtonStyle.success, emoji='✍️')
-    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(self.modal)
 
 # Bot whitelist command
 @bot.tree.command(name="whitelist", description="🤖 Manage bot and role whitelist for security")
