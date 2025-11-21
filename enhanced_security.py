@@ -368,12 +368,16 @@ async def on_message_mention_check(message):
     if message.author.bot or not message.guild:
         return
     
+    print(f"🔍 [@MENTION CHECK] Checking message from {message.author} in {message.guild.name}")
+    
     # Skip if user has moderator permissions
     if await has_permission_user(message.author, message.guild, "junior_moderator"):
+        print(f"✅ [@MENTION CHECK] User {message.author} is moderator - skipping")
         return
     
     # Check if user is whitelisted for mention bypass
     if await is_whitelisted(message.guild.id, message.author.id, 'mention_everyone'):
+        print(f"✅ [@MENTION CHECK] User {message.author} is whitelisted - skipping")
         return
     
     # Get security settings
@@ -381,7 +385,10 @@ async def on_message_mention_check(message):
     security_settings = server_data.get('security_settings', {})
     auto_timeout_mentions = security_settings.get('auto_timeout_mentions', {})
     
+    print(f"📊 [@MENTION CHECK] auto_timeout_mentions settings: {auto_timeout_mentions}")
+    
     if not auto_timeout_mentions.get('enabled', False):
+        print(f"⚠️ [@MENTION CHECK] @everyone/@here protection NOT ENABLED for {message.guild.name}")
         return
     
     # Check for @everyone or @here mentions (both actual mentions AND text attempts)
@@ -391,7 +398,11 @@ async def on_message_mention_check(message):
     # Negative lookbehind (?<!\S) ensures @ is not preceded by non-whitespace
     has_text_mention = bool(re.search(r'(?<!\S)@(?:everyone|here)\b', message.content, re.IGNORECASE))
     
+    print(f"📊 [@MENTION CHECK] has_mention={has_mention}, has_text_mention={has_text_mention}, content='{message.content}'")
+    
     if has_mention or has_text_mention:
+        print(f"🚨 [@MENTION CHECK] VIOLATION DETECTED! Applying timeout...")
+
         # Delete the message
         try:
             await message.delete()
