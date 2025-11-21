@@ -12,6 +12,7 @@ from brand_config import BrandColors, VisualElements, BOT_FOOTER
 user_message_timestamps = defaultdict(lambda: defaultdict(list))
 user_join_timestamps = defaultdict(list)
 user_message_deletion_attempts = defaultdict(lambda: defaultdict(list))
+user_message_deletions_bulk = defaultdict(lambda: defaultdict(list))  # Track bulk deletes by user
 user_stored_roles = {}
 user_quarantine_info = {}
 system_role_actions = set()  # Track (guild_id, user_id) tuples for system-initiated role changes
@@ -708,6 +709,53 @@ def setup(bot: commands.Bot, get_server_data_func, update_server_data_func, log_
         except Exception as e:
             await _log_action(messages[0].guild.id, "security", 
                            f"⚠️ [MASS DELETE ERROR] {e}")
+    
+    @bot.listen('on_message_delete')
+    async def security_on_message_delete(message):
+        if not message.guild or message.author.bot:
+            return
+        
+        try:
+            config = await get_security_config(message.guild.id)
+            
+            if not config.get('security_enabled') or not config.get('massdelete_enabled'):
+                return
+            
+            if await is_whitelisted(message.guild.id, message.author):
+                return
+            
+            guild_id = message.guild.id
+            user_id = message.author.id
+            current_time = time.time()
+            time_window = config.get('mass_delete_time_window', 5)
+            threshold = config.get('mass_delete_threshold', 5)
+            
+            # Track this deletion
+            user_message_deletions_bulk[guild_id][user_id].append(current_time)
+            
+            # Clean up old deletions outside time window
+            user_message_deletions_bulk[guild_id][user_id] = [
+                ts for ts in user_message_deletions_bulk[guild_id][user_id]
+                if current_time - ts < time_window
+            ]
+            
+            deletion_count = len(user_message_deletions_bulk[guild_id][user_id])
+            
+            # Quarantine if threshold exceeded
+            if deletion_count > threshold:
+                try:
+                    member = await message.guild.fetch_member(user_id)
+                    await apply_quarantine(member, f"Mass message deletion detected ({deletion_count} messages in {time_window}s)", "mass_delete_violation")
+                    
+                    await _log_action(guild_id, "security",
+                                    f"🚫 [MASS DELETE] {message.author} placed in quarantine - {deletion_count} messages deleted in {message.channel.mention}")
+                    
+                    # Reset counter after quarantine
+                    user_message_deletions_bulk[guild_id][user_id].clear()
+                except:
+                    pass
+        except:
+            pass
     
     @bot.listen('on_member_update')
     async def security_on_role_change(before, after):
