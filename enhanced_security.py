@@ -783,12 +783,16 @@ async def check_link_filter(message):
     if message.author.bot or not message.guild:
         return
     
+    print(f"🔍 [LINK FILTER] Checking message from {message.author} in {message.guild.name}")
+    
     # Skip if user has moderator permissions
     if await has_permission_user(message.author, message.guild, "junior_moderator"):
+        print(f"✅ [LINK FILTER] User {message.author} is moderator - skipping")
         return
     
     # Check if user is whitelisted for posting links
     if await is_whitelisted(message.guild.id, message.author.id, 'post_links'):
+        print(f"✅ [LINK FILTER] User {message.author} is whitelisted - skipping")
         return
     
     # Get security settings
@@ -796,7 +800,10 @@ async def check_link_filter(message):
     security_settings = server_data.get('security_settings', {})
     link_filter = security_settings.get('link_filter', {})
     
+    print(f"📊 [LINK FILTER] link_filter settings: {link_filter}")
+    
     if not link_filter.get('enabled', False):
+        print(f"⚠️ [LINK FILTER] Link filter NOT ENABLED for {message.guild.name}")
         return
     
     # Check for links (http://, https://, www.)
@@ -835,12 +842,16 @@ async def check_discord_invites(message):
     if message.author.bot or not message.guild:
         return
     
+    print(f"🔍 [ANTI-INVITE] Checking message from {message.author} in {message.guild.name}")
+    
     # Skip if user has moderator permissions
     if await has_permission_user(message.author, message.guild, "junior_moderator"):
+        print(f"✅ [ANTI-INVITE] User {message.author} is moderator - skipping")
         return
     
     # Check if user is whitelisted for posting invites
     if await is_whitelisted(message.guild.id, message.author.id, 'discord_invites'):
+        print(f"✅ [ANTI-INVITE] User {message.author} is whitelisted - skipping")
         return
     
     # Get security settings
@@ -848,7 +859,10 @@ async def check_discord_invites(message):
     security_settings = server_data.get('security_settings', {})
     anti_invite = security_settings.get('anti_invite', {})
     
+    print(f"📊 [ANTI-INVITE] anti_invite settings: {anti_invite}")
+    
     if not anti_invite.get('enabled', False):
+        print(f"⚠️ [ANTI-INVITE] Anti-invite NOT ENABLED for {message.guild.name}")
         return
     
     # Check if channel is allowed
@@ -892,8 +906,11 @@ async def check_spam(message):
     if message.author.bot or not message.guild:
         return
     
+    print(f"🔍 [SPAM CHECK] Checking message from {message.author} in {message.guild.name}")
+    
     # Skip if user has moderator permissions
     if await has_permission_user(message.author, message.guild, "junior_moderator"):
+        print(f"✅ [SPAM CHECK] User {message.author} is moderator - skipping")
         return
     
     # Get security settings
@@ -901,7 +918,10 @@ async def check_spam(message):
     security_settings = server_data.get('security_settings', {})
     anti_spam = security_settings.get('anti_spam', {})
     
+    print(f"📊 [SPAM CHECK] anti_spam settings: {anti_spam}")
+    
     if not anti_spam.get('enabled', False):
+        print(f"⚠️ [SPAM CHECK] Anti-spam NOT ENABLED for {message.guild.name}")
         return
     
     guild_id = str(message.guild.id)
@@ -1080,6 +1100,8 @@ async def on_message_security_checks(message):
     """Run all Phase 2 security checks on messages (called from main.py)"""
     if message.author.bot or not message.guild:
         return
+    
+    print(f"🔍 [PHASE 2] Running all Phase 2 security checks for {message.author} in {message.guild.name}")
     
     # Run all checks (order matters - most strict first)
     await check_spam(message)  # Check spam first (can timeout user)
@@ -1901,20 +1923,27 @@ async def check_malware_filter(message):
     if message.author.bot or not message.guild:
         return
     
+    print(f"🔍 [MALWARE FILTER] Checking message from {message.author} in {message.guild.name}")
+    
     # Get security settings
     server_data = await get_server_data(message.guild.id)
     security_settings = server_data.get('security_settings', {})
     malware_filter = security_settings.get('malware_filter', {})
     
+    print(f"📊 [MALWARE FILTER] malware_filter settings: {malware_filter}")
+    
     if not malware_filter.get('enabled', False):
+        print(f"⚠️ [MALWARE FILTER] Malware filter NOT ENABLED for {message.guild.name}")
         return
     
     # Check if user has moderator permissions (exempt)
     if await has_permission_user(message.author, message.guild, "junior_moderator"):
+        print(f"✅ [MALWARE FILTER] User {message.author} is moderator - skipping")
         return
     
     # Check if user is whitelisted
     if await is_whitelisted(message.guild.id, message.author.id, 'malware_filter'):
+        print(f"✅ [MALWARE FILTER] User {message.author} is whitelisted - skipping")
         return
     
     is_dangerous = False
