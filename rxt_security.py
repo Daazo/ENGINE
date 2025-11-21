@@ -1071,4 +1071,118 @@ def setup(bot: commands.Bot, get_server_data_func, update_server_data_func, log_
             embed.set_footer(text=BOT_FOOTER)
             await interaction.response.send_message(embed=embed)
     
+    @bot.tree.command(name="security-config", description="⚙️ Configure security system thresholds and timings")
+    @app_commands.describe(
+        setting="Setting to configure",
+        value="New value for the setting"
+    )
+    @app_commands.choices(
+        setting=[
+            app_commands.Choice(name="quarantine_time - Base quarantine duration (seconds)", value="quarantine_time"),
+            app_commands.Choice(name="raid_join_count - Joins to trigger anti-raid (default: 10)", value="raid_join_count"),
+            app_commands.Choice(name="raid_time_window - Time window for raid detection (seconds, default: 10)", value="raid_time_window"),
+            app_commands.Choice(name="raid_account_age - Minimum account age to bypass anti-raid (days, default: 7)", value="raid_account_age"),
+            app_commands.Choice(name="spam_message_threshold - Messages to trigger spam (default: 5)", value="spam_message_threshold"),
+            app_commands.Choice(name="spam_time_window - Spam detection window (seconds, default: 5)", value="spam_time_window"),
+            app_commands.Choice(name="mass_delete_threshold - Messages deleted to trigger protection (default: 5)", value="mass_delete_threshold"),
+            app_commands.Choice(name="mass_delete_time_window - Mass delete detection window (seconds, default: 5)", value="mass_delete_time_window"),
+            app_commands.Choice(name="view - View all current settings", value="view"),
+        ]
+    )
+    async def security_config_command(interaction: discord.Interaction, setting: str, value: int = None):
+        if not await _has_permission(interaction, "server_admin"):
+            embed = discord.Embed(
+                title="❌ **ACCESS DENIED**",
+                description="**Permission Required:** 🔴 Server Admin+",
+                color=BrandColors.DANGER
+            )
+            embed.set_footer(text=BOT_FOOTER)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        config = await get_security_config(interaction.guild.id)
+        
+        if setting == "view":
+            config_lines = [
+                f"⏱️ **Quarantine Base Duration:** {config.get('quarantine_base_duration', 900)}s ({config.get('quarantine_base_duration', 900) // 60}min)",
+                f"🛡️ **Raid Join Threshold:** {config.get('raid_join_threshold', 10)} joins",
+                f"📊 **Raid Time Window:** {config.get('raid_time_window', 10)}s",
+                f"👤 **Raid Account Age Check:** {config.get('raid_account_age_days', 7)} days",
+                f"💬 **Spam Message Threshold:** {config.get('spam_message_threshold', 5)} messages",
+                f"📈 **Spam Time Window:** {config.get('spam_time_window', 5)}s",
+                f"🗑️ **Mass Delete Threshold:** {config.get('mass_delete_threshold', 5)} messages",
+                f"🔄 **Mass Delete Time Window:** {config.get('mass_delete_time_window', 5)}s",
+            ]
+            
+            embed = discord.Embed(
+                title="⚙️ **SECURITY CONFIGURATION**",
+                description=f"{VisualElements.CIRCUIT_LINE}\n\n" + "\n".join(config_lines) + f"\n\n{VisualElements.CIRCUIT_LINE}",
+                color=BrandColors.INFO
+            )
+            embed.set_footer(text=BOT_FOOTER)
+            await interaction.response.send_message(embed=embed)
+            return
+        
+        if value is None or value < 0:
+            embed = discord.Embed(
+                title="❌ **INVALID VALUE**",
+                description="Value must be a positive number.",
+                color=BrandColors.DANGER
+            )
+            embed.set_footer(text=BOT_FOOTER)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        setting_map = {
+            "quarantine_time": "quarantine_base_duration",
+            "raid_join_count": "raid_join_threshold",
+            "raid_time_window": "raid_time_window",
+            "raid_account_age": "raid_account_age_days",
+            "spam_message_threshold": "spam_message_threshold",
+            "spam_time_window": "spam_time_window",
+            "mass_delete_threshold": "mass_delete_threshold",
+            "mass_delete_time_window": "mass_delete_time_window",
+        }
+        
+        db_key = setting_map.get(setting)
+        if not db_key:
+            embed = discord.Embed(
+                title="❌ **INVALID SETTING**",
+                description="Setting not found.",
+                color=BrandColors.DANGER
+            )
+            embed.set_footer(text=BOT_FOOTER)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        old_value = config.get(db_key)
+        config[db_key] = value
+        await update_security_config(interaction.guild.id, config)
+        
+        setting_name = {
+            "quarantine_base_duration": "Quarantine Base Duration",
+            "raid_join_threshold": "Raid Join Threshold",
+            "raid_time_window": "Raid Time Window",
+            "raid_account_age_days": "Raid Account Age Check",
+            "spam_message_threshold": "Spam Message Threshold",
+            "spam_time_window": "Spam Time Window",
+            "mass_delete_threshold": "Mass Delete Threshold",
+            "mass_delete_time_window": "Mass Delete Time Window",
+        }.get(db_key, setting)
+        
+        embed = discord.Embed(
+            title="✅ **CONFIGURATION UPDATED**",
+            description=f"{VisualElements.CIRCUIT_LINE}\n\n"
+                       f"**Setting:** {setting_name}\n"
+                       f"**Old Value:** {old_value}\n"
+                       f"**New Value:** {value}\n\n"
+                       f"{VisualElements.CIRCUIT_LINE}",
+            color=BrandColors.SUCCESS
+        )
+        embed.set_footer(text=BOT_FOOTER)
+        await interaction.response.send_message(embed=embed)
+        
+        await _log_action(interaction.guild.id, "security",
+                        f"⚙️ [CONFIG] {setting_name} changed from {old_value} to {value} by {interaction.user}")
+    
     print("✅ RXT Security System setup complete - event listeners and commands registered")
