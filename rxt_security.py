@@ -11,7 +11,6 @@ from brand_config import BrandColors, VisualElements, BOT_FOOTER
 
 user_message_timestamps = defaultdict(lambda: defaultdict(list))
 user_join_timestamps = defaultdict(list)
-user_stored_roles = {}
 
 _bot_instance = None
 _get_server_data = None
@@ -142,14 +141,15 @@ async def get_or_create_timeout_channel(guild: discord.Guild, config: Dict, time
     )
     
     embed = discord.Embed(
-        title="🔒 **RXT SECURITY TIMEOUT ZONE**",
+        title="🔒 **RXT SECURITY TIMEOUT NOTIFICATIONS**",
         description=f"{VisualElements.CIRCUIT_LINE}\n\n"
-                   f"⚠️ **You have been placed in timeout by the RXT Security System.**\n\n"
-                   f"**Reason:** Security violation detected\n"
-                   f"**Action:** Your roles have been temporarily removed\n"
-                   f"**Duration:** Check with moderators\n\n"
-                   f"You can only send messages in this channel while in timeout.\n"
-                   f"Your roles will be restored once the timeout expires.\n\n"
+                   f"⚠️ **This channel logs RXT Security timeout events.**\n\n"
+                   f"**Purpose:** Security timeout notifications and logging\n"
+                   f"**Note:** Users in Discord timeout cannot send messages anywhere\n\n"
+                   f"When a user is timed out by the security system:\n"
+                   f"• They cannot send messages, react, or join voice channels\n"
+                   f"• The timeout duration is set via Discord's native timeout\n"
+                   f"• Notifications will be posted here for moderator awareness\n\n"
                    f"{VisualElements.CIRCUIT_LINE}",
         color=BrandColors.DANGER
     )
@@ -162,8 +162,6 @@ async def get_or_create_timeout_channel(guild: discord.Guild, config: Dict, time
     return timeout_channel
 
 async def apply_timeout(member: discord.Member, reason: str, duration_seconds: Optional[int] = None):
-    config = await get_security_config(member.guild.id)
-    
     if duration_seconds is None:
         duration_seconds = 3600
     
@@ -184,27 +182,29 @@ async def apply_timeout(member: discord.Member, reason: str, duration_seconds: O
                         f"⚠️ [SECURITY TIMEOUT FAILED] {member} - Error: {e}")
         return
     
-    timeout_role = await get_or_create_timeout_role(member.guild, config)
-    timeout_channel = await get_or_create_timeout_channel(member.guild, config, timeout_role)
+    config = await get_security_config(member.guild.id)
+    timeout_channel_id = config.get('timeout_channel_id')
     
-    embed = discord.Embed(
-        title="🔒 **SECURITY TIMEOUT APPLIED**",
-        description=f"{VisualElements.CIRCUIT_LINE}\n\n"
-                   f"**User:** {member.mention}\n"
-                   f"**Reason:** {reason}\n"
-                   f"**Duration:** {duration_seconds // 60} minutes\n"
-                   f"**Action:** User timed out using Discord native timeout\n"
-                   f"**Channel:** {timeout_channel.mention}\n\n"
-                   f"{VisualElements.CIRCUIT_LINE}",
-        color=BrandColors.DANGER,
-        timestamp=datetime.utcnow()
-    )
-    embed.set_footer(text=BOT_FOOTER)
-    
-    try:
-        await timeout_channel.send(f"{member.mention}", embed=embed)
-    except:
-        pass
+    if timeout_channel_id:
+        timeout_channel = member.guild.get_channel(int(timeout_channel_id))
+        if timeout_channel:
+            embed = discord.Embed(
+                title="🔒 **SECURITY TIMEOUT APPLIED**",
+                description=f"{VisualElements.CIRCUIT_LINE}\n\n"
+                           f"**User:** {member.mention} (`{member.id}`)\n"
+                           f"**Reason:** {reason}\n"
+                           f"**Duration:** {duration_seconds // 60} minutes\n"
+                           f"**Status:** User timed out via Discord native timeout\n\n"
+                           f"User cannot send messages, react, join voice, or start threads until timeout expires.\n\n"
+                           f"{VisualElements.CIRCUIT_LINE}",
+                color=BrandColors.DANGER,
+                timestamp=datetime.utcnow()
+            )
+            embed.set_footer(text=BOT_FOOTER)
+            try:
+                await timeout_channel.send(embed=embed)
+            except:
+                pass
     
     await _log_action(member.guild.id, "security", 
                     f"🔒 [SECURITY TIMEOUT] {member} ({member.id}) - Reason: {reason} - Duration: {duration_seconds}s")
@@ -775,7 +775,7 @@ def setup(bot: commands.Bot, get_server_data_func, update_server_data_func, log_
                        f"**Duration:** {duration} minutes\n"
                        f"**Reason:** {reason}\n"
                        f"**Applied by:** {interaction.user.mention}\n\n"
-                       f"Roles have been removed and will be restored after timeout.\n\n"
+                       f"User cannot send messages, react, join voice channels, or start threads.\n\n"
                        f"{VisualElements.CIRCUIT_LINE}",
             color=BrandColors.WARNING
         )
@@ -802,7 +802,7 @@ def setup(bot: commands.Bot, get_server_data_func, update_server_data_func, log_
                 title="✅ **TIMEOUT REMOVED**",
                 description=f"{VisualElements.CIRCUIT_LINE}\n\n"
                            f"**User:** {user.mention}\n"
-                           f"**Action:** Timeout removed, roles restored\n"
+                           f"**Action:** Timeout removed, user can now interact normally\n"
                            f"**Removed by:** {interaction.user.mention}\n\n"
                            f"{VisualElements.CIRCUIT_LINE}",
                 color=BrandColors.SUCCESS
