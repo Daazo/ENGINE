@@ -116,7 +116,7 @@ async def get_or_create_quarantine_role(guild: discord.Guild, config: Dict):
         attach_files=False,
         mention_everyone=False,
         add_reactions=False,
-        voice=False
+        connect=False
     )
     
     role = await guild.create_role(
