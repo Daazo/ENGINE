@@ -1,24 +1,13 @@
-
 import discord
 from discord.ext import commands
 from discord import app_commands
-import asyncio
-import time
-from datetime import datetime, timedelta
 from main import bot
 from brand_config import BOT_FOOTER, BrandColors
 from main import has_permission, get_server_data, update_server_data, log_action
-import json
 from captcha_generator import CaptchaGenerator
 
-# Security tracking data
+# CAPTCHA tracking data
 security_data = {
-    'join_tracking': {},  # Track recent joins for anti-raid
-    'permission_changes': {},  # Track permission changes
-    'channel_deletions': {},  # Track channel deletions
-    'role_deletions': {},  # Track role deletions
-    'ban_tracking': {},  # Track recent bans
-    'whitelist_cache': {},  # Cache for bot/role whitelists
     'captcha_data': {}  # Store active CAPTCHA challenges {user_id: captcha_text}
 }
 
@@ -26,14 +15,8 @@ security_data = {
 captcha_gen = CaptchaGenerator()
 
 # ═══════════════════════════════════════════════════════════════════════════
-# DEPRECATED COMMANDS - MOVED TO ENHANCED_SECURITY.PY
-# These commands are now consolidated under /security-config
-# Keeping commented for reference only
+# CAPTCHA VERIFICATION SYSTEM
 # ═══════════════════════════════════════════════════════════════════════════
-
-# NOTE: The /security command has been replaced with /security-config
-# which provides more comprehensive security configuration options
-# Use /security-config instead for all security settings
 
 # Verification setup command
 @bot.tree.command(name="verification-setup", description="✅ Setup verification system for new members")
@@ -227,160 +210,3 @@ class CaptchaInputView(discord.ui.View):
     @discord.ui.button(label='Enter CAPTCHA Code', style=discord.ButtonStyle.success, emoji='✍️')
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(self.modal)
-
-# NOTE: The /whitelist command has been replaced with /security-whitelist
-# which provides more granular control over security feature whitelists
-# Use /security-whitelist instead for managing security bypasses
-
-# Event handlers for security monitoring
-@bot.event
-async def on_member_join_security_check(member):
-    """Anti-raid detection on member join"""
-    guild_id = str(member.guild.id)
-    current_time = time.time()
-    
-    # Initialize tracking if not exists
-    if guild_id not in security_data['join_tracking']:
-        security_data['join_tracking'][guild_id] = []
-    
-    # Add this join to tracking
-    security_data['join_tracking'][guild_id].append(current_time)
-    
-    # Remove joins older than 1 minute
-    security_data['join_tracking'][guild_id] = [
-        join_time for join_time in security_data['join_tracking'][guild_id] 
-        if current_time - join_time <= 60
-    ]
-    
-    # Check for raid (more than 10 joins in 1 minute by default)
-    server_data = await get_server_data(member.guild.id)
-    security_settings = server_data.get('security_settings', {})
-    anti_raid = security_settings.get('anti_raid', {'enabled': False})
-    
-    if anti_raid.get('enabled', False):
-        threshold = anti_raid.get('threshold', 10)
-        
-        if len(security_data['join_tracking'][guild_id]) > threshold:
-            # Raid detected - take action
-            await handle_raid_detection(member.guild, len(security_data['join_tracking'][guild_id]))
-    
-    # Auto-ban suspicious accounts
-    auto_ban = security_settings.get('auto_ban', {'enabled': False})
-    if auto_ban.get('enabled', False):
-        if await is_suspicious_account(member):
-            try:
-                await member.ban(reason="Auto-ban: Suspicious account detected")
-                await log_action(member.guild.id, "security", f"🔨 [AUTO-BAN] Suspicious account {member} automatically banned")
-            except:
-                pass
-
-async def handle_raid_detection(guild, join_count):
-    """Handle detected raid"""
-    # Log the raid
-    await log_action(guild.id, "security", f"🚨 [ANTI-RAID] Raid detected! {join_count} members joined in 1 minute")
-    
-    # Send alert to staff
-    server_data = await get_server_data(guild.id)
-    log_channels = server_data.get('log_channels', {})
-    
-    alert_channel = None
-    if 'security' in log_channels:
-        alert_channel = bot.get_channel(int(log_channels['security']))
-    elif 'moderation' in log_channels:
-        alert_channel = bot.get_channel(int(log_channels['moderation']))
-    elif 'all' in log_channels:
-        alert_channel = bot.get_channel(int(log_channels['all']))
-    
-    if alert_channel:
-        embed = discord.Embed(
-            title="🚨 **RAID ALERT**",
-            description=f"**Potential raid detected!**\n\n**Members joined:** {join_count}\n**Time frame:** Last 60 seconds\n**Action recommended:** Review recent joins and take appropriate action",
-            color=BrandColors.DANGER
-        )
-        embed.set_footer(text=BOT_FOOTER)
-        await alert_channel.send(embed=embed)
-
-async def is_suspicious_account(member):
-    """Check if account is suspicious"""
-    # Check account age (less than 1 day old)
-    account_age = (datetime.now() - member.created_at.replace(tzinfo=None)).days
-    if account_age < 1:
-        return True
-    
-    # Check for suspicious username patterns
-    suspicious_patterns = ['discord', 'admin', 'mod', 'bot', 'official']
-    username_lower = member.name.lower()
-    
-    for pattern in suspicious_patterns:
-        if pattern in username_lower and not member.bot:
-            return True
-    
-    # Check for default avatar (no custom avatar set)
-    if member.avatar is None:
-        return True
-    
-    return False
-
-@bot.event
-async def on_guild_channel_delete_security(channel):
-    """Monitor channel deletions for anti-nuke"""
-    guild_id = str(channel.guild.id)
-    current_time = time.time()
-    
-    # Initialize tracking
-    if guild_id not in security_data['channel_deletions']:
-        security_data['channel_deletions'][guild_id] = []
-    
-    # Add deletion to tracking
-    security_data['channel_deletions'][guild_id].append(current_time)
-    
-    # Remove deletions older than 5 minutes
-    security_data['channel_deletions'][guild_id] = [
-        del_time for del_time in security_data['channel_deletions'][guild_id]
-        if current_time - del_time <= 300
-    ]
-    
-    # Check for nuke attempt
-    server_data = await get_server_data(channel.guild.id)
-    security_settings = server_data.get('security_settings', {})
-    anti_nuke = security_settings.get('anti_nuke', {'enabled': False})
-    
-    if anti_nuke.get('enabled', False):
-        threshold = anti_nuke.get('threshold', 5)
-        
-        if len(security_data['channel_deletions'][guild_id]) >= threshold:
-            await handle_nuke_detection(channel.guild, 'channel', len(security_data['channel_deletions'][guild_id]))
-
-@bot.event 
-async def on_member_update_security(before, after):
-    """Monitor role changes for permission monitoring"""
-    if before.roles == after.roles:
-        return
-    
-    server_data = await get_server_data(after.guild.id)
-    security_settings = server_data.get('security_settings', {})
-    perm_monitoring = security_settings.get('permission_monitoring', {'enabled': False})
-    
-    if not perm_monitoring.get('enabled', False):
-        return
-    
-    # Check for dangerous permission changes
-    dangerous_perms = [
-        'administrator', 'manage_guild', 'manage_channels', 
-        'manage_roles', 'ban_members', 'kick_members'
-    ]
-    
-    new_roles = set(after.roles) - set(before.roles)
-    for role in new_roles:
-        role_perms = role.permissions
-        
-        for perm in dangerous_perms:
-            if getattr(role_perms, perm, False):
-                await log_action(after.guild.id, "security", f"⚠️ [PERMISSION ALERT] {after} received dangerous permission '{perm}' via role {role.name}")
-                break
-
-async def handle_nuke_detection(guild, nuke_type, count):
-    """Handle detected nuke attempt"""
-    await log_action(guild.id, "security", f"🚨 [ANTI-NUKE] Potential {nuke_type} nuke detected! {count} {nuke_type}s affected in 5 minutes")
-
-# Note: VerificationView will be added in main.py after bot is ready to avoid event loop issues
