@@ -14,7 +14,7 @@ user_join_timestamps = defaultdict(list)
 user_message_deletion_attempts = defaultdict(lambda: defaultdict(list))
 user_stored_roles = {}
 user_quarantine_info = {}
-system_role_actions = set()  # Track system-initiated role changes to skip checks
+system_role_actions = set()  # Track (guild_id, user_id) tuples for system-initiated role changes
 
 _bot_instance = None
 _get_server_data = None
@@ -264,8 +264,7 @@ async def restore_roles_after_quarantine(member: discord.Member, duration_second
                 roles_to_add.append(role)
         
         # Mark this action as system-initiated to skip security checks
-        action_id = f"{member.guild.id}_{member.id}_{time.time()}"
-        system_role_actions.add(action_id)
+        system_role_actions.add((member.guild.id, member.id))
         
         if quarantine_role_id:
             quarantine_role = member.guild.get_role(int(quarantine_role_id))
@@ -282,8 +281,8 @@ async def restore_roles_after_quarantine(member: discord.Member, duration_second
                 pass
         
         # Clean up system action marker after a short delay
-        await asyncio.sleep(2)
-        system_role_actions.discard(action_id)
+        await asyncio.sleep(3)
+        system_role_actions.discard((member.guild.id, member.id))
         
         del user_stored_roles[storage_key]
         if storage_key in user_quarantine_info:
@@ -314,8 +313,7 @@ async def remove_quarantine_manual(member: discord.Member):
                 roles_to_add.append(role)
         
         # Mark this action as system-initiated to skip security checks
-        action_id = f"{member.guild.id}_{member.id}_{time.time()}"
-        system_role_actions.add(action_id)
+        system_role_actions.add((member.guild.id, member.id))
         
         if quarantine_role_id:
             quarantine_role = member.guild.get_role(int(quarantine_role_id))
@@ -332,8 +330,8 @@ async def remove_quarantine_manual(member: discord.Member):
                 pass
         
         # Clean up system action marker after a short delay
-        await asyncio.sleep(2)
-        system_role_actions.discard(action_id)
+        await asyncio.sleep(3)
+        system_role_actions.discard((member.guild.id, member.id))
         
         del user_stored_roles[storage_key]
         if storage_key in user_quarantine_info:
@@ -548,10 +546,7 @@ def setup(bot: commands.Bot, get_server_data_func, update_server_data_func, log_
             return
         
         # Check if this is a system action (role restoration) - skip checks
-        action_id = f"{before.guild.id}_{before.id}_{time.time()}"
-        is_system_action = any(str(before.guild.id) in str(action) and str(before.id) in str(action) for action in system_role_actions)
-        
-        if is_system_action:
+        if (before.guild.id, before.id) in system_role_actions:
             return
         
         if await is_whitelisted(before.guild.id, before):
