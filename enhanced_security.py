@@ -2148,6 +2148,8 @@ async def on_message_phase4_checks(message):
     if message.author.bot or not message.guild:
         return
     
+    print(f"🔍 [PHASE 4] Running all Phase 4 security checks for {message.author} in {message.guild.name}")
+    
     # Run Phase 4 checks
     await check_malware_filter(message)  # Check for malicious files/links
 

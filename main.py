@@ -577,6 +577,8 @@ async def on_message(message):
     if message.author.bot:
         return
     
+    print(f"🔍 [ON_MESSAGE] Message from {message.author} in {message.guild.name if message.guild else 'DM'}: {message.content[:100]}")
+    
     # Handle DM mentions
     if not message.guild:  # This is a DM
         # Check for bot mention in DMs - Send contact info
