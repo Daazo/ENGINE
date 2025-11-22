@@ -129,10 +129,10 @@ async def send_log_embed(channel, title, log_type, description, executor=None, t
         print(f"Error sending log embed: {e}")
 
 async def send_global_log(log_type, message, guild=None):
-    """Send to global logging system"""
+    """Send server-level logs to global system category"""
     try:
         global_category_id = os.getenv('GLOBAL_LOG_CATEGORY_ID')
-        if not global_category_id:
+        if not global_category_id or not guild:
             return
         
         # Get global category
@@ -140,22 +140,29 @@ async def send_global_log(log_type, message, guild=None):
         if not global_category or not isinstance(global_category, discord.CategoryChannel):
             return
         
-        # Find the log channel
-        channel_name = log_type.lower().replace("_", "-")
-        channel = discord.utils.get(global_category.text_channels, name=channel_name)
+        # Route all server logs to system-log channel or per-server channel
+        # Try to find system-log first
+        system_channel = discord.utils.get(global_category.text_channels, name="system-log")
+        if not system_channel:
+            return
         
-        if channel:
-            embed = discord.Embed(
-                description=message,
-                color=BrandColors.INFO,
-                timestamp=datetime.now()
-            )
+        # Create embed for global log
+        embed = discord.Embed(
+            title=f"📋 **{log_type.title()} - {guild.name}**",
+            description=message,
+            color=BrandColors.INFO,
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(name="🏰 Server", value=f"{guild.name}\n`{guild.id}`", inline=True)
+        embed.add_field(name="📌 Log Type", value=log_type, inline=True)
+        embed.set_footer(text=f"{BOT_FOOTER} • Server Log", icon_url=bot.user.display_avatar.url)
+        
+        try:
+            await system_channel.send(embed=embed)
+        except Exception as e:
+            print(f"Error sending global system log: {e}")
             
-            if guild:
-                embed.add_field(name="🏰 Server", value=f"{guild.name}\n`{guild.id}`", inline=False)
-            
-            embed.set_footer(text=f"{BOT_FOOTER} • Global {log_type}", icon_url=bot.user.display_avatar.url)
-            await channel.send(embed=embed)
     except Exception as e:
         print(f"Global logging error: {e}")
 

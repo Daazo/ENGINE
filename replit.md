@@ -11,6 +11,36 @@ RXT ENGINE is a multi-functional Discord bot designed for community management a
 
 ## Recent Changes
 
+### November 22, 2025 - GLOBAL LOGGING SYSTEM FIXED & COMPLETE (PRODUCTION-READY)
+- 🌍 **GLOBAL LOGGING FULLY OPERATIONAL**
+  - **Created**: `global_logging.py` module with complete implementation
+  - **Fixed**: Server-level logs now route to global "system-log" channel
+  - **Functions Implemented**:
+    - `log_global_activity()` - Log global activities to system-log
+    - `log_per_server_activity()` - Per-server logging with auto channel creation
+    - `on_bot_dm_send()` - Log bot DMs to dm-sent channel
+    - `log_dm_sent()` - Alternative DM logging function
+    - `log_to_global()` - Generic global logging router
+  
+- ✅ **GLOBAL LOGGING ARCHITECTURE**:
+  - **5 Global Log Channels**: live-console, dm-received, dm-sent, command-errors, system-log
+  - **All Server Logs Route Through**: system-log channel (automatically)
+  - **Per-Server Channels**: Auto-created for detailed per-server tracking
+  - **Proper Motor Driver**: Fixed database checks to use `is not None` instead of truthiness
+  
+- 🔧 **INTEGRATION FIXED**:
+  - **Fixed `send_global_log()`**: Routes server-level logs to global system-log
+  - **Message Edit Logs**: Enhanced to show before/after content with embeds
+  - **All Log Types Supported**: moderation, security, message-delete, message-edit, voice, member events, etc.
+  - **Setup Simple**: Run `/setup-global-logging guild_id:<your-bot-server-id>`
+  
+- 📋 **HOW IT WORKS NOW**:
+  1. Server events trigger logs in local channels (moderation, security, etc.)
+  2. Simultaneously, ALL logs sent to global "system-log" channel
+  3. Global "system-log" shows activity from all servers bot is in
+  4. Per-server channels auto-created for detailed tracking
+  5. Complete audit trail of all bot activity across all servers
+
 ### November 22, 2025 - Complete Logging System with Auto Event Listeners (PRODUCTION-READY)
 - 📝 **COMPLETE LOGGING SYSTEM IMPLEMENTATION**
   - **18 Log Channel Types**: moderation, security, quarantine, anti-raid, anti-nuke, automod, join-leave, role-update, channel-update, message-delete, message-edit, member-ban, member-kick, voice-log, ticket-log, command-log, error-log, karma, system
