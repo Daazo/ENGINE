@@ -64,7 +64,7 @@ async def log_per_server_activity(guild_id, activity_type, description):
         if not global_category_id:
             return
         
-        from main import bot, db
+        from main import bot
         
         # Get global category
         global_category = bot.get_channel(int(global_category_id))

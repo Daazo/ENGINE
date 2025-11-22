@@ -131,7 +131,7 @@ async def send_log_embed(channel, title, log_type, description, executor=None, t
 async def send_global_log(log_type, message, guild=None):
     """Send ALL server logs to bot owner's central global logging category"""
     try:
-        if not guild or not db:
+        if not guild or db is None:
             return
         
         # Get GLOBAL bot-wide logging config (not per-server)
@@ -312,15 +312,18 @@ async def setup_global_logging(interaction: discord.Interaction, guild_id: str, 
         
         # Store in GLOBAL config (bot-wide, not per-server)
         if db is not None:
-            await db.global_config.update_one(
-                {'_id': 'logging'},
-                {'$set': {
-                    'global_category_id': str(global_category.id),
-                    'global_channels': global_channels,
-                    'global_log_target_guild': str(target_guild.id)
-                }},
-                upsert=True
-            )
+            try:
+                await db.global_config.update_one(
+                    {'_id': 'logging'},
+                    {'$set': {
+                        'global_category_id': str(global_category.id),
+                        'global_channels': global_channels,
+                        'global_log_target_guild': str(target_guild.id)
+                    }},
+                    upsert=True
+                )
+            except Exception as e:
+                print(f"Error storing global config in database: {e}")
         
         embed = discord.Embed(
             title="🌍 **Global Bot Logging Setup Complete**",
