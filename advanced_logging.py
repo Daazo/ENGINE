@@ -119,7 +119,7 @@ async def get_or_create_server_channel(global_category, guild):
     """Get or create per-server channel in global category"""
     try:
         # Check if we already have this channel stored in database
-        if db:
+        if db is not None:
             server_data = await db.global_logging.find_one({'guild_id': str(guild.id)})
             if server_data and server_data.get('log_channel_id'):
                 try:
@@ -135,7 +135,7 @@ async def get_or_create_server_channel(global_category, guild):
         for ch in global_category.text_channels:
             if ch.topic and str(guild.id) in ch.topic:
                 # Found existing channel for this server
-                if db:
+                if db is not None:
                     await db.global_logging.update_one(
                         {'guild_id': str(guild.id)},
                         {'$set': {'log_channel_id': str(ch.id), 'guild_name': guild.name}},
@@ -150,7 +150,7 @@ async def get_or_create_server_channel(global_category, guild):
         )
         
         # Store in database
-        if db:
+        if db is not None:
             await db.global_logging.update_one(
                 {'guild_id': str(guild.id)},
                 {'$set': {'log_channel_id': str(server_channel.id), 'guild_name': guild.name}},
