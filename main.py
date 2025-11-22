@@ -66,11 +66,91 @@ async def update_server_data(guild_id, data):
     server_cache[guild_id].update(data)
 
 async def log_action(guild_id, log_type, message):
-    """Log actions to appropriate channels (Discord logging disabled)"""
+    """Log actions to appropriate channels with support for single channel, organized, and cross-server logging"""
     server_data = await get_server_data(guild_id)
+    
+    # Determine target color based on log type
+    color_map = {
+        "general": BrandColors.INFO,
+        "moderation": BrandColors.DANGER,
+        "setup": BrandColors.WARNING,
+        "communication": BrandColors.SUCCESS,
+        "karma": BrandColors.PRIMARY,
+        "tickets": BrandColors.INFO,
+        "ticket": BrandColors.INFO,
+        "reaction_role": BrandColors.ACCENT,
+        "reaction": BrandColors.ACCENT,
+        "welcome": BrandColors.SUCCESS,
+        "voice": BrandColors.PRIMARY,
+        "voice-log": BrandColors.PRIMARY,
+        "timed_roles": BrandColors.WARNING,
+        "timed": BrandColors.WARNING,
+        "security": BrandColors.DANGER,
+        "profile": BrandColors.INFO,
+        "utility": BrandColors.INFO,
+        "quarantine": BrandColors.WARNING,
+        "anti-raid": BrandColors.DANGER,
+        "anti-nuke": BrandColors.DANGER,
+        "automod": BrandColors.WARNING,
+        "join-leave": BrandColors.SUCCESS,
+        "role-update": BrandColors.INFO,
+        "channel-update": BrandColors.INFO,
+        "message-delete": BrandColors.WARNING,
+        "message-edit": BrandColors.WARNING,
+        "member-ban": BrandColors.DANGER,
+        "member-kick": BrandColors.DANGER,
+        "ticket-log": BrandColors.PRIMARY,
+        "economy-log": BrandColors.SECONDARY,
+        "music-log": BrandColors.SECONDARY,
+        "command-log": BrandColors.INFO,
+        "error-log": BrandColors.DANGER,
+        "system": BrandColors.INFO
+    }
 
-    # LOCAL logging only - Discord logging removed
-    # Check for organized logging system first
+    # Try cross-server logging first
+    cross_server = server_data.get('cross_server_logging')
+    if cross_server:
+        try:
+            target_guild_id = int(cross_server.get('target_guild_id', 0))
+            log_channels = cross_server.get('log_channels', {})
+            
+            # Find matching channel in target server
+            target_channel_id = log_channels.get(log_type)
+            if target_channel_id:
+                channel = bot.get_channel(int(target_channel_id))
+                if channel:
+                    embed = discord.Embed(
+                        description=message,
+                        color=color_map.get(log_type, BrandColors.INFO),
+                        timestamp=datetime.now()
+                    )
+                    embed.set_footer(text=f"{BOT_FOOTER} • {log_type.title()}", icon_url=bot.user.display_avatar.url)
+                    try:
+                        await channel.send(embed=embed)
+                        return
+                    except Exception as e:
+                        print(f"Error sending cross-server log: {e}")
+        except Exception as e:
+            print(f"Cross-server logging error: {e}")
+
+    # Check for single log channel
+    single_log = server_data.get('log_channel')
+    if single_log:
+        channel = bot.get_channel(int(single_log))
+        if channel:
+            embed = discord.Embed(
+                description=message,
+                color=color_map.get(log_type, BrandColors.INFO),
+                timestamp=datetime.now()
+            )
+            embed.set_footer(text=f"{BOT_FOOTER} • {log_type.title()}", icon_url=bot.user.display_avatar.url)
+            try:
+                await channel.send(embed=embed)
+                return
+            except Exception as e:
+                print(f"Error sending single log: {e}")
+
+    # Check for organized logging system
     organized_logs = server_data.get('organized_log_channels', {})
     if organized_logs:
         # Map log types to organized channels
@@ -80,45 +160,50 @@ async def log_action(guild_id, log_type, message):
             "setup": "setup",
             "communication": "communication",
             "karma": "karma",
-            "tickets": "ticket",
+            "tickets": "ticket-log",
+            "ticket": "ticket-log",
             "reaction_role": "reaction",
-            "welcome": "welcome",
-            "voice": "voice",
+            "welcome": "join-leave",
+            "voice": "voice-log",
             "timed_roles": "timed",
-            "security": "moderation",  # Route RXT Security System logs to moderation
-            "profile": "general",  # Route profile logs to general
-            "utility": "general"   # Route utility logs to general
+            "security": "security",
+            "quarantine": "quarantine",
+            "anti-raid": "anti-raid",
+            "anti-nuke": "anti-nuke",
+            "automod": "automod",
+            "join-leave": "join-leave",
+            "role-update": "role-update",
+            "channel-update": "channel-update",
+            "message-delete": "message-delete",
+            "message-edit": "message-edit",
+            "member-ban": "member-ban",
+            "member-kick": "member-kick",
+            "command-log": "command-log",
+            "error-log": "error-log",
+            "music-log": "music-log",
+            "economy-log": "economy-log",
+            "system": "system",
+            "profile": "general",
+            "utility": "general"
         }
 
-        mapped_channel = log_mapping.get(log_type)
-        if mapped_channel and mapped_channel in organized_logs:
+        mapped_channel = log_mapping.get(log_type, log_type)
+        if mapped_channel in organized_logs:
             channel = bot.get_channel(int(organized_logs[mapped_channel]))
             if channel:
-                # Determine embed color based on log type
-                colors = {
-                    "general": BrandColors.INFO,
-                    "moderation": BrandColors.DANGER,
-                    "setup": BrandColors.WARNING,
-                    "communication": BrandColors.SUCCESS,
-                    "karma": BrandColors.PRIMARY,
-                    "tickets": BrandColors.INFO,
-                    "reaction_role": BrandColors.ACCENT,
-                    "welcome": BrandColors.SUCCESS,
-                    "voice": BrandColors.PRIMARY,
-                    "timed_roles": BrandColors.WARNING,
-                    "security": BrandColors.DANGER  # RXT Security System logs
-                }
-
                 embed = discord.Embed(
                     description=message,
-                    color=colors.get(log_type, BrandColors.INFO),
+                    color=color_map.get(log_type, BrandColors.INFO),
                     timestamp=datetime.now()
                 )
-                embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-                await channel.send(embed=embed)
-                return
+                embed.set_footer(text=f"{BOT_FOOTER} • {log_type.title()}", icon_url=bot.user.display_avatar.url)
+                try:
+                    await channel.send(embed=embed)
+                    return
+                except Exception as e:
+                    print(f"Error sending organized log: {e}")
 
-    # Fallback to old logging system
+    # Fallback to old logging system for backwards compatibility
     log_channels = server_data.get('log_channels', {})
 
     # Send to specific log channel if set
@@ -127,11 +212,14 @@ async def log_action(guild_id, log_type, message):
         if channel:
             embed = discord.Embed(
                 description=message,
-                color=BrandColors.INFO,
+                color=color_map.get(log_type, BrandColors.INFO),
                 timestamp=datetime.now()
             )
             embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-            await channel.send(embed=embed)
+            try:
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"Error sending legacy log: {e}")
 
     # Send to combined logs if set
     if 'all' in log_channels:
@@ -139,11 +227,14 @@ async def log_action(guild_id, log_type, message):
         if channel:
             embed = discord.Embed(
                 description=message,
-                color=BrandColors.INFO,
+                color=color_map.get(log_type, BrandColors.INFO),
                 timestamp=datetime.now()
             )
             embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-            await channel.send(embed=embed)
+            try:
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"Error sending all logs: {e}")
 
 async def has_permission(interaction, permission_level):
     """Check if user has required permission level"""
@@ -1578,6 +1669,13 @@ from security_system import *  # CAPTCHA verification only
 
 # Import timed roles system - ensure commands are loaded
 from timed_roles import *
+
+# Import advanced logging system
+try:
+    from advanced_logging import *
+    print("✅ Advanced logging system loaded")
+except ImportError as e:
+    print(f"⚠️ Advanced logging module not found: {e}")
 
 # Try to import voice commands
 try:
