@@ -241,7 +241,7 @@ async def log_guild_remove_global(guild):
     await log_to_global("bot-events", embed)
 
 async def log_global_activity(activity_type: str, guild_id: int, user_id: int, details: str):
-    """Log general bot activity to global channels"""
+    """Log general bot activity to unified per-server channel"""
     guild = bot.get_guild(guild_id) if guild_id else None
     user = bot.get_user(user_id) if user_id else None
     
@@ -254,12 +254,14 @@ async def log_global_activity(activity_type: str, guild_id: int, user_id: int, d
         timestamp=datetime.now()
     )
     
-    # Log to server-specific channel
+    # Log to unified server-specific channel
     if guild_id and guild_id != SUPPORT_SERVER_ID and guild:
-        clean_name = guild.name.lower().replace(" ", "-").replace("_", "-")
-        clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '-')[:45]
-        channel_name = f"{clean_name}-logs"
-        await log_to_global(channel_name, embed)
+        channel = await get_server_log_channel(guild_id)
+        if channel:
+            try:
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"Failed to send global activity log: {e}")
 
 async def log_bot_command_activity(guild_id: int, command_type: str, user, details: str):
     """Log ALL bot command activities to SINGLE unified per-server channel"""
@@ -402,18 +404,21 @@ async def log_bot_command_activity(guild_id: int, command_type: str, user, detai
     if guild.icon:
         embed.set_thumbnail(url=guild.icon.url)
     
-    await log_to_global(channel_name, embed)
+    try:
+        await channel.send(embed=embed)
+    except Exception as e:
+        print(f"Failed to send command activity log: {e}")
 
 async def log_bot_content_shared(guild_id: int, command_used: str, user, content: str, channel_name: str = None):
-    """Log content shared by bot through commands like /say, /announce, etc."""
+    """Log content shared by bot through commands like /say, /announce, etc. - to SINGLE unified server channel"""
     guild = bot.get_guild(guild_id)
     if not guild or guild.id == SUPPORT_SERVER_ID:
         return
     
-    # Use clean server name for channel - SINGLE CHANNEL PER SERVER
-    clean_name = guild.name.lower().replace(" ", "-").replace("_", "-")
-    clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '-')[:45]
-    log_channel_name = f"{clean_name}-logs"
+    # Get unified server log channel
+    channel = await get_server_log_channel(guild_id)
+    if not channel:
+        return
     
     embed = discord.Embed(
         title=f"📢 Bot Content Shared - {command_used.upper()}",
@@ -425,18 +430,21 @@ async def log_bot_content_shared(guild_id: int, command_used: str, user, content
     if guild.icon:
         embed.set_thumbnail(url=guild.icon.url)
     
-    await log_to_global(log_channel_name, embed)
+    try:
+        await channel.send(embed=embed)
+    except Exception as e:
+        print(f"Failed to send content shared log: {e}")
 
 async def log_all_server_activity(guild_id: int, activity_type: str, user, details: str):
-    """Log ANY server activity to the single server channel"""
+    """Log ANY server activity to the single unified server channel"""
     guild = bot.get_guild(guild_id)
     if not guild or guild.id == SUPPORT_SERVER_ID:
         return
     
-    # Use clean server name for channel - ONE CHANNEL FOR EVERYTHING
-    clean_name = guild.name.lower().replace(" ", "-").replace("_", "-")
-    clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '-')[:45]
-    channel_name = f"{clean_name}-logs"
+    # Get unified server log channel
+    channel = await get_server_log_channel(guild_id)
+    if not channel:
+        return
     
     # Simple unified log format
     embed = discord.Embed(
@@ -449,7 +457,10 @@ async def log_all_server_activity(guild_id: int, activity_type: str, user, detai
     if guild.icon:
         embed.set_thumbnail(url=guild.icon.url)
     
-    await log_to_global(channel_name, embed)
+    try:
+        await channel.send(embed=embed)
+    except Exception as e:
+        print(f"Failed to send server activity log: {e}")
 
 # Event handlers
 async def global_on_message(message):
