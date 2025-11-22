@@ -262,15 +262,15 @@ async def log_global_activity(activity_type: str, guild_id: int, user_id: int, d
         await log_to_global(channel_name, embed)
 
 async def log_bot_command_activity(guild_id: int, command_type: str, user, details: str):
-    """Log ALL bot command activities to SINGLE per-server channel"""
+    """Log ALL bot command activities to SINGLE unified per-server channel"""
     guild = bot.get_guild(guild_id)
     if not guild or guild.id == SUPPORT_SERVER_ID:
         return
     
-    # Use clean server name for channel - ONE CHANNEL PER SERVER
-    clean_name = guild.name.lower().replace(" ", "-").replace("_", "-")
-    clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '-')[:45]
-    channel_name = f"{clean_name}-logs"
+    # Get the unified server log channel (supports cross-server logging)
+    channel = await get_server_log_channel(guild_id)
+    if not channel:
+        return
     
     # Expanded color mapping for ALL command types
     colors = {
