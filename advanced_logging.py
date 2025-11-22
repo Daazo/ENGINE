@@ -297,7 +297,7 @@ async def setup_global_logging(interaction: discord.Interaction, guild_id: str, 
         global_channels = await create_global_log_channels(target_guild, global_category)
         
         # Store in database
-        if db:
+        if db is not None:
             await db.global_config.update_one(
                 {'_id': 'logging'},
                 {'$set': {
