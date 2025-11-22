@@ -278,7 +278,7 @@ async def log_dm_sent(recipient, message_content, guild=None):
                             color=BrandColors.SUCCESS,
                             timestamp=datetime.now()
                         )
-                        embed.add_field(name="📨 Sent By", value=f"{bot.user.mention}\n`{bot.user.name}`", inline=True)
+                        embed.add_field(name="📨 Sent By", value=f"{bot.user.mention}", inline=True)
                         embed.add_field(name="👤 Sent To", value=f"{recipient.mention}\n`{recipient.id}`", inline=True)
                         embed.add_field(name="📝 Message Content", value=f"```{message_content[:500]}```" if message_content else "No message content", inline=False)
                         embed.add_field(name="🏢 Server", value=f"**{guild.name}**\n`{guild.id}`", inline=True)
