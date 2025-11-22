@@ -276,6 +276,14 @@ async def on_ready():
     except Exception as e:
         print(f"⚠️ Failed to initialize server list monitoring: {e}")
 
+    # Initialize global logging channels
+    try:
+        from advanced_logging import initialize_global_logging
+        await initialize_global_logging()
+        print("✅ Global logging system initialized")
+    except Exception as e:
+        print(f"⚠️ Failed to initialize global logging: {e}")
+
 @bot.event
 async def on_guild_join(guild):
     """Update presence when joining new server"""

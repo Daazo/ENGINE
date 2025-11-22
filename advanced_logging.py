@@ -45,6 +45,40 @@ async def create_global_log_channels(guild, category):
             print(f"Error creating global {channel_type} channel: {e}")
     return created_channels
 
+async def initialize_global_logging():
+    """Initialize global logging channels on bot startup"""
+    try:
+        global_category_id = os.getenv('GLOBAL_LOG_CATEGORY_ID')
+        if not global_category_id:
+            print("⚠️ GLOBAL_LOG_CATEGORY_ID not set in environment")
+            return
+        
+        global_category = bot.get_channel(int(global_category_id))
+        if not global_category or not isinstance(global_category, discord.CategoryChannel):
+            print(f"⚠️ Global logging category {global_category_id} not found or is not a category")
+            return
+        
+        # Check if channels exist, create if missing
+        existing_channels = {ch.name for ch in global_category.text_channels}
+        channels_to_create = [ct for ct in GLOBAL_LOG_TYPES if ct not in existing_channels]
+        
+        if channels_to_create:
+            print(f"🔧 Creating missing global log channels: {channels_to_create}")
+            for channel_type in channels_to_create:
+                try:
+                    await global_category.create_text_channel(
+                        name=channel_type,
+                        topic=f"RXT ENGINE Global {channel_type.title()}"
+                    )
+                    print(f"✅ Created global log channel: {channel_type}")
+                except Exception as e:
+                    print(f"❌ Error creating {channel_type} channel: {e}")
+        else:
+            print(f"✅ All global log channels exist in category {global_category_id}")
+            
+    except Exception as e:
+        print(f"❌ Error initializing global logging: {e}")
+
 async def send_global_log(log_type, message, guild=None):
     """Send ALL server logs to bot owner's central global logging category"""
     try:
