@@ -169,7 +169,7 @@ async def log_console_event(event_type: str, message: str):
     await log_to_global("live-console", embed)
 
 async def log_command_error(interaction_or_ctx, error):
-    """Log command errors globally"""
+    """Log command errors to unified system"""
     if hasattr(interaction_or_ctx, 'guild'):
         guild = interaction_or_ctx.guild
         user = interaction_or_ctx.user if hasattr(interaction_or_ctx, 'user') else interaction_or_ctx.author
@@ -189,34 +189,61 @@ async def log_command_error(interaction_or_ctx, error):
         timestamp=datetime.now()
     )
     embed.set_footer(text=f"Error Type: {type(error).__name__}")
+    
+    # Log to unified server channel if guild available
+    if guild and guild.id != SUPPORT_SERVER_ID:
+        channel = await get_server_log_channel(guild.id)
+        if channel:
+            try:
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"Failed to send command error log to server: {e}")
+    
+    # Also log to central command-errors channel
     await log_to_global("command-errors", embed)
 
 async def log_guild_join_global(guild):
-    """Log when bot joins a server"""
-    # Create guild-specific log channel with clean name
-    clean_name = guild.name.lower().replace(" ", "-").replace("_", "-")
-    clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '-')[:45]
-    channel_name = f"{clean_name}-logs"
-    await get_or_create_global_channel(channel_name)
+    """Log when bot joins a server - to unified server channel"""
+    # Create and get the unified server log channel
+    channel = await get_server_log_channel(guild.id)
     
     # Log the join event
     embed = discord.Embed(
         title="🎉 Bot Joined New Server",
-        description=f"**Server:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}\n**Members:** {guild.member_count}\n**Log Channel:** {channel_name}",
+        description=f"**Server:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}\n**Members:** {guild.member_count}\n**Unified Log Channel:** Created",
         color=BrandColors.SUCCESS,
         timestamp=datetime.now()
     )
     if guild.icon:
         embed.set_thumbnail(url=guild.icon.url)
+    
+    if channel:
+        try:
+            await channel.send(embed=embed)
+        except Exception as e:
+            print(f"Failed to send guild join log: {e}")
+    
+    # Also log to bot-events for administrative awareness
     await log_to_global("bot-events", embed)
 
 async def log_guild_remove_global(guild):
-    """Log when bot leaves a server"""
-    # Try to delete the server's log channel
+    """Log when bot leaves a server - to unified system"""
+    # Get channel name for reference
     clean_name = guild.name.lower().replace(" ", "-").replace("_", "-")
     clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '-')[:45]
     channel_name = f"{clean_name}-logs"
     
+    # Log before deletion
+    embed = discord.Embed(
+        title="👋 Bot Left Server",
+        description=f"**Server:** {guild.name}\n**ID:** {guild.id}\n**Members:** {guild.member_count}\n**Unified Channel:** Cleanup",
+        color=BrandColors.DANGER,
+        timestamp=datetime.now()
+    )
+    if guild.icon:
+        embed.set_thumbnail(url=guild.icon.url)
+    
+    # Try to send to server channel before cleanup
     try:
         support_guild = bot.get_guild(SUPPORT_SERVER_ID)
         if support_guild:
@@ -224,20 +251,21 @@ async def log_guild_remove_global(guild):
             if category:
                 channel = discord.utils.get(category.text_channels, name=channel_name)
                 if channel:
-                    await channel.delete()
-                    if channel_name in global_log_channels:
-                        del global_log_channels[channel_name]
+                    try:
+                        await channel.send(embed=embed)
+                    except:
+                        pass
+                    # Delete the log channel
+                    try:
+                        await channel.delete()
+                        if channel_name in global_log_channels:
+                            del global_log_channels[channel_name]
+                    except Exception as e:
+                        print(f"Error deleting log channel for {guild.name}: {e}")
     except Exception as e:
-        print(f"Error deleting log channel for {guild.name}: {e}")
+        print(f"Error in guild remove handler: {e}")
     
-    embed = discord.Embed(
-        title="👋 Bot Left Server",
-        description=f"**Server:** {guild.name}\n**ID:** {guild.id}\n**Members:** {guild.member_count}\n**Log Channel:** {channel_name} (deleted)",
-        color=BrandColors.DANGER,
-        timestamp=datetime.now()
-    )
-    if guild.icon:
-        embed.set_thumbnail(url=guild.icon.url)
+    # Also log to bot-events
     await log_to_global("bot-events", embed)
 
 async def log_global_activity(activity_type: str, guild_id: int, user_id: int, details: str):
