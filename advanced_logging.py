@@ -19,7 +19,7 @@ LOG_CHANNEL_TYPES = [
     "command-log", "error-log", "karma", "system"
 ]
 
-GLOBAL_LOG_TYPES = ["live-console", "dm-received", "dm-sent", "command-errors", "system-log"]
+GLOBAL_LOG_TYPES = ["live-console", "dm-sent", "command-errors", "system-log"]
 
 async def create_log_channels(guild, category):
     """Auto-create all log channels in a category"""
