@@ -841,10 +841,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Moderation", style=discord.ButtonStyle.danger, emoji="⚔️", row=0)
-    async def moderation_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_moderation_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="⚔️ **Moderation Commands**",
             description=f"*Security enforcement protocols for maintaining server order and safety.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -877,10 +876,9 @@ class HelpSelect(discord.ui.Select):
         )
 
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Setup", style=discord.ButtonStyle.secondary, emoji="⚙️", row=0)
-    async def setup_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_setup_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="⚙️ **Setup & Configuration**",
             description=f"*Quantum core configuration protocols for system customization and automation.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -922,10 +920,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Messages", style=discord.ButtonStyle.success, emoji="💬", row=1)
-    async def communication_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_communication_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="💬 **Communication & Messaging**",
             description=f"*Quantum messaging protocols for announcements, polls, and direct communication.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -962,10 +959,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Karma", style=discord.ButtonStyle.primary, emoji="⭐", row=1)
-    async def karma_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_karma_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="⭐ **Karma System**",
             description=f"*Community recognition protocol—appreciate members and earn quantum karma points for positive contributions.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -1007,10 +1003,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🔴 = Main Moderator")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Tickets", style=discord.ButtonStyle.secondary, emoji="🎫", row=1)
-    async def ticket_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_ticket_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎫 **Tickets & Support System**",
             description=f"*Advanced support protocol for private staff assistance and issue resolution.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -1037,10 +1032,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Verification", style=discord.ButtonStyle.success, emoji="✅", row=2)
-    async def verification_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_verification_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="✅ **Verification System**",
             description=f"*CAPTCHA-based member verification system for new member screening.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -1067,10 +1061,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🔴 = Main Moderator")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Advanced", style=discord.ButtonStyle.secondary, emoji="🎭", row=2)
-    async def advanced_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_advanced_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎭 **Advanced Features & Tools**",
             description=f"*Extended capabilities—reaction roles, automation, and intelligent systems.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -1103,10 +1096,9 @@ class HelpSelect(discord.ui.Select):
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="About", style=discord.ButtonStyle.secondary, emoji="ℹ️", row=3)
-    async def bot_info_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_bot_info_help(self, interaction: discord.Interaction):
         bot_owner_id = os.getenv('BOT_OWNER_ID')
         owner_mention = f"<@{bot_owner_id}>" if bot_owner_id else "Contact via server"
         support_server = os.getenv('SUPPORT_SERVER')
@@ -1146,10 +1138,9 @@ class HelpSelect(discord.ui.Select):
         embed.set_footer(text=BOT_FOOTER)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
         
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
-    @discord.ui.button(label="Updates", style=discord.ButtonStyle.success, emoji="🆕", row=3)
-    async def recent_updates_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def show_recent_updates_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🆕 **Quantum Core Updates**",
             description=f"*Latest system enhancements and feature deployments for RXT ENGINE.*\n\n{VisualElements.CIRCUIT_LINE}",
@@ -1177,7 +1168,7 @@ class HelpSelect(discord.ui.Select):
         )
         embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
         embed.set_thumbnail(url=bot.user.display_avatar.url)
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
 # Slash Commands
 @bot.tree.command(name="help", description="📜 Show comprehensive help menu with all commands")
