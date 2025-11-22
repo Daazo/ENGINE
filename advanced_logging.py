@@ -204,7 +204,7 @@ async def log_dm_received(user, message_content, guild=None):
         print(f"DM received logging error: {e}")
 
 async def log_dm_sent(recipient, message_content, guild=None):
-    """Log DM sent by bot to user - server-wise"""
+    """Log DM sent by bot to user - always to dm-sent channel, optionally to server channel"""
     try:
         global_category_id = os.getenv('GLOBAL_LOG_CATEGORY_ID')
         if not global_category_id:
@@ -214,7 +214,24 @@ async def log_dm_sent(recipient, message_content, guild=None):
         if not global_category or not isinstance(global_category, discord.CategoryChannel):
             return
         
-        # If guild provided, send to server channel; otherwise send to dm-sent channel
+        # Always log to dm-sent channel
+        dm_channel = discord.utils.get(global_category.text_channels, name="dm-sent")
+        if dm_channel:
+            embed = discord.Embed(
+                title="💬 **DM Sent**",
+                description=f"```{message_content[:1000]}```",
+                color=BrandColors.SUCCESS,
+                timestamp=datetime.now()
+            )
+            embed.add_field(name="👤 To User", value=f"{recipient.mention}\n`{recipient.id}`", inline=False)
+            embed.set_footer(text=f"{BOT_FOOTER} • DM Sent", icon_url=bot.user.display_avatar.url)
+            
+            try:
+                await dm_channel.send(embed=embed)
+            except Exception as e:
+                print(f"Error logging DM sent to dm-sent channel: {e}")
+        
+        # Also log to server channel if guild is provided
         if guild:
             server_channel = await get_or_create_server_channel(global_category, guild)
             if server_channel:
@@ -231,23 +248,6 @@ async def log_dm_sent(recipient, message_content, guild=None):
                     await server_channel.send(embed=embed)
                 except Exception as e:
                     print(f"Error logging DM sent to server channel: {e}")
-        else:
-            # Global dm-sent channel
-            dm_channel = discord.utils.get(global_category.text_channels, name="dm-sent")
-            if dm_channel:
-                embed = discord.Embed(
-                    title="💬 **DM Sent**",
-                    description=f"```{message_content[:1000]}```",
-                    color=BrandColors.SUCCESS,
-                    timestamp=datetime.now()
-                )
-                embed.add_field(name="👤 To User", value=f"{recipient.mention}\n`{recipient.id}`", inline=False)
-                embed.set_footer(text=f"{BOT_FOOTER} • DM Sent", icon_url=bot.user.display_avatar.url)
-                
-                try:
-                    await dm_channel.send(embed=embed)
-                except Exception as e:
-                    print(f"Error logging DM sent to global channel: {e}")
             
     except Exception as e:
         print(f"DM sent logging error: {e}")
