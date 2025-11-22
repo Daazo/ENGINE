@@ -11,6 +11,39 @@ RXT ENGINE is a multi-functional Discord bot designed for community management a
 
 ## Recent Changes
 
+### November 22, 2025 - Message Logging & Advanced Logging System (PRODUCTION-READY)
+- 📝 **MESSAGE LOGGING SYSTEM**
+  - **on_message_delete**: Auto-logs deleted messages to `message-delete` channel
+  - **on_message_edit**: Auto-logs message edits to `message-edit` channel with before/after content
+  - **Dual Channel System**: Messages routed through advanced logging to appropriate per-server channels
+  - **Global Integration**: All message logs also sent to global logging system when configured
+  
+- 🌐 **ADVANCED LOGGING SYSTEM**
+  - **Single Channel Mode**: `/log-channel` - All logs in one channel
+  - **Organized Multi-Channel**: `/log-category` - Auto-creates 20+ dedicated channels for:
+    - Message Activity: `message-delete`, `message-edit`
+    - Security: `security`, `quarantine`, `anti-raid`, `anti-nuke`
+    - Moderation: `moderation`, `member-ban`, `member-kick`
+    - Server Events: `join-leave`, `role-update`, `channel-update`
+    - Systems: `automod`, `voice-log`, `ticket-log`, `karma`, `command-log`, `error-log`, etc.
+  - **Cross-Server Logging**: Redirect all logs to another server's category
+  - **Global Bot-Wide Logging**: `/setup-global-logging` - Centralized logging for all bot activity
+  
+- 📊 **Commands** (5 logging commands):
+  - `/log-channel` - Set single channel for all logs
+  - `/log-category` - Create organized multi-channel logging
+  - `/setup-global-logging` - Bot-wide logging (owner only)
+  - `/log-status` - Check logging configuration
+  - `/log-disable` - Disable all logging
+  
+- ✨ **Features**:
+  - Message delete logs capture author, channel, content, and attachments
+  - Message edit logs show before/after content for audit trails
+  - Automatic routing to correct channels based on log type
+  - Color-coded embeds with RXT ENGINE theme
+  - Fallback system for backwards compatibility
+  - MongoDB storage for persistent configuration
+
 ### November 21, 2025 - RXT SECURITY SYSTEM Implementation (PRODUCTION-READY)
 - 🔐 **COMPLETE RXT SECURITY SYSTEM ADDED**
   - **New Module**: rxt_security.py - comprehensive security protection system
@@ -78,6 +111,7 @@ The bot's functionalities are organized into distinct modules:
 - **timed_roles.py**: Manages timed role assignments.
 - **autorole.py**: Handles auto-role assignment for new members.
 - **voice_commands.py**: Voice channel moderation commands.
+- **advanced_logging.py**: Dual logging system with single-channel, organized multi-channel, cross-server, and global logging modes.
 
 **Visual Systems:**
 - **profile_cards.py**: Generates futuristic profile cards using PIL.
@@ -92,6 +126,8 @@ The bot's functionalities are organized into distinct modules:
 
 **Key Features:**
 - **RXT Security System**: Production-ready comprehensive server protection with 9 modules: anti-raid, anti-nuke, anti-spam, anti-link, webhook guard, anti-role abuse, Discord native timeout, mass mention protection, and whitelist system. ToS-compliant and architect-verified.
+- **Advanced Logging System**: Dual logging with single-channel, organized multi-channel, cross-server, and global bot-wide modes. Automatic message delete/edit logging.
+- **Message Logging**: Auto-logs all deleted and edited messages with content snapshots for audit trails.
 - **CAPTCHA Verification**: Secure, modal-based CAPTCHA challenge using PIL-generated images for user verification.
 - **Karma/XP System**: Community recognition and leveling system with custom rank cards.
 - **Ticket System**: Comprehensive support ticket management with categories and custom fields.
@@ -102,7 +138,6 @@ The bot's functionalities are organized into distinct modules:
 - **Communication Tools**: Announcements, embeds, polls, reminders, DM management.
 - **Profile Cards**: Beautiful profile cards with circular avatars, karma stats, and modern design.
 - **Global Logging**: Centralized logging for all significant server events across multiple servers.
-- **Organized Log Channels**: Automatic creation of categorized log channels for different bot activities.
 
 **Architectural Decisions:**
 - Centralized branding via `brand_config.py` for consistency.

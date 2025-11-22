@@ -706,7 +706,7 @@ async def on_message(message):
 
 @bot.event
 async def on_message_delete(message):
-    """Log deleted messages"""
+    """Log deleted messages to message-delete channel"""
     if message.author.bot:
         return
     
@@ -728,28 +728,42 @@ async def on_message_delete(message):
     embed.set_footer(text=f"{BOT_FOOTER} • User ID: {message.author.id}", icon_url=bot.user.display_avatar.url)
     embed.set_thumbnail(url=message.author.display_avatar.url)
     
-    # Log to server logs
-    await log_action(message.guild.id, "moderation", f"🗑️ [MESSAGE DELETE] Message by {message.author} deleted in {message.channel.name}")
+    # Log to message-delete log channel via advanced logging system
+    await log_action(message.guild.id, "message-delete", f"🗑️ [MESSAGE DELETE] {message.author} in {message.channel.mention}\nContent: {message.content[:100] if message.content else '(No text content)'}")
+
+@bot.event
+async def on_message_edit(before, after):
+    """Log edited messages to message-edit channel"""
+    if after.author.bot:
+        return
     
-    # Send to moderation log channel if configured
-    server_data = await get_server_data(message.guild.id)
-    organized_logs = server_data.get('organized_log_channels', {})
+    if not after.guild:
+        return
     
-    if organized_logs and 'moderation' in organized_logs:
-        channel = bot.get_channel(int(organized_logs['moderation']))
-        if channel:
-            await channel.send(embed=embed)
-    else:
-        # Fallback to old logging system
-        log_channels = server_data.get('log_channels', {})
-        if 'moderation' in log_channels:
-            channel = bot.get_channel(int(log_channels['moderation']))
-            if channel:
-                await channel.send(embed=embed)
-        elif 'all' in log_channels:
-            channel = bot.get_channel(int(log_channels['all']))
-            if channel:
-                await channel.send(embed=embed)
+    # Ignore if content didn't actually change
+    if before.content == after.content:
+        return
+    
+    # Create embed for edited message
+    embed = discord.Embed(
+        title="✏️ **Message Edited**",
+        description=f"**Author:** {after.author.mention} ({after.author})\n**Channel:** {after.channel.mention}",
+        color=BrandColors.WARNING,
+        timestamp=datetime.now()
+    )
+    
+    # Show before and after content
+    before_content = before.content[:500] if before.content else "*No previous content*"
+    after_content = after.content[:500] if after.content else "*No content*"
+    
+    embed.add_field(name="📝 Before", value=f"```{before_content}```", inline=False)
+    embed.add_field(name="✨ After", value=f"```{after_content}```", inline=False)
+    
+    embed.set_footer(text=f"{BOT_FOOTER} • User ID: {after.author.id}", icon_url=bot.user.display_avatar.url)
+    embed.set_thumbnail(url=after.author.display_avatar.url)
+    
+    # Log to message-edit log channel via advanced logging system
+    await log_action(after.guild.id, "message-edit", f"✏️ [MESSAGE EDIT] {after.author} in {after.channel.mention}")
 
 @bot.event
 async def on_voice_state_update(member, before, after):
