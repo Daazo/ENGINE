@@ -12,34 +12,36 @@ RXT ENGINE is a multi-functional Discord bot designed for community management a
 ## Recent Changes
 
 ### November 22, 2025 - GLOBAL LOGGING SYSTEM FIXED & COMPLETE (PRODUCTION-READY)
-- 🌍 **GLOBAL LOGGING FULLY OPERATIONAL**
-  - **Created**: `global_logging.py` module with complete implementation
-  - **Fixed**: Server-level logs now route to global "system-log" channel
-  - **Functions Implemented**:
-    - `log_global_activity()` - Log global activities to system-log
-    - `log_per_server_activity()` - Per-server logging with auto channel creation
-    - `on_bot_dm_send()` - Log bot DMs to dm-sent channel
-    - `log_dm_sent()` - Alternative DM logging function
-    - `log_to_global()` - Generic global logging router
+- 🌍 **DUAL LOGGING ARCHITECTURE (FIXED)**
+  - **Two Separate Logging Systems**:
+    - **`/log-category`** = Per-Server Logging (each server's own moderation/security logs)
+    - **`/setup-global-logging`** = Bot Owner's Central Command Center (ALL bot activity from ALL servers)
   
-- ✅ **GLOBAL LOGGING ARCHITECTURE**:
-  - **5 Global Log Channels**: live-console, dm-received, dm-sent, command-errors, system-log
-  - **All Server Logs Route Through**: system-log channel (automatically)
-  - **Per-Server Channels**: Auto-created for detailed per-server tracking
-  - **Proper Motor Driver**: Fixed database checks to use `is not None` instead of truthiness
+- ✅ **PER-SERVER LOGGING** (`/log-category`):
+  - Creates 18 dedicated log channels in each server
+  - Each server's logs stay within that server
+  - Includes: moderation, security, message-delete, message-edit, voice, member events, etc.
+  - Example: Server A's message logs go to Server A's channel
   
-- 🔧 **INTEGRATION FIXED**:
-  - **Fixed `send_global_log()`**: Routes server-level logs to global system-log
-  - **Message Edit Logs**: Enhanced to show before/after content with embeds
-  - **All Log Types Supported**: moderation, security, message-delete, message-edit, voice, member events, etc.
-  - **Setup Simple**: Run `/setup-global-logging guild_id:<your-bot-server-id>`
+- 🌐 **GLOBAL BOT LOGGING** (`/setup-global-logging`):
+  - Bot owner only command
+  - Creates central logging category in ONE server (the bot owner's server)
+  - ALL logs from ALL servers automatically route to that one place
+  - 5 Global Channels: live-console, dm-received, dm-sent, command-errors, system-log
+  - Example: Logs from Servers A, B, C all appear in bot owner's system-log channel
   
-- 📋 **HOW IT WORKS NOW**:
-  1. Server events trigger logs in local channels (moderation, security, etc.)
-  2. Simultaneously, ALL logs sent to global "system-log" channel
-  3. Global "system-log" shows activity from all servers bot is in
-  4. Per-server channels auto-created for detailed tracking
-  5. Complete audit trail of all bot activity across all servers
+- 🔧 **KEY FIX**:
+  - Global logging config stored in `global_config` collection (bot-wide, not per-server)
+  - Each server's per-server logs stored in `servers` collection
+  - Message edit logs show full before/after content with embeds
+  - Proper motor driver: Fixed database checks to use `is not None`
+  
+- 📋 **COMPLETE ARCHITECTURE**:
+  1. **Per-Server Logs**: Server A's moderation → Server A's channels
+  2. **Per-Server Logs**: Server B's moderation → Server B's channels
+  3. **Global Logs**: All events from ALL servers → Bot Owner's system-log
+  4. **No Mixing**: Server logs stay private, global logs are bot-wide
+  5. **Bot Owner View**: One place to see everything happening across all servers
 
 ### November 22, 2025 - Complete Logging System with Auto Event Listeners (PRODUCTION-READY)
 - 📝 **COMPLETE LOGGING SYSTEM IMPLEMENTATION**
