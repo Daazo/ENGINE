@@ -269,19 +269,19 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
     draw.text((50, features_y + 25), "✨ Advanced Karma System", fill=(200, 200, 200), font=small_font)
     draw.text((50, features_y + 40), "🎫 Professional Tickets", fill=(200, 200, 200), font=small_font)
     draw.text((50, features_y + 55), "🎭 Reaction Roles", fill=(200, 200, 200), font=small_font)
-    draw.text((50, features_y + 70), "🛡️ Smart Moderation", fill=(200, 200, 200), font=small_font)
+    draw.text((50, features_y + 70), "🛡️ Anti-Raid Protection", fill=(200, 200, 200), font=small_font)
 
     # Column 2 features
     draw.text((280, features_y + 25), "📊 Profile Cards", fill=(200, 200, 200), font=small_font)
     draw.text((280, features_y + 40), "🔔 Auto-Timeouts", fill=(200, 200, 200), font=small_font)
-    draw.text((280, features_y + 55), "🛡️ Security Suite", fill=(200, 200, 200), font=small_font)
+    draw.text((280, features_y + 55), "🚫 Quarantine System", fill=(200, 200, 200), font=small_font)
     draw.text((280, features_y + 70), "⏰ Timed Roles", fill=(200, 200, 200), font=small_font)
 
     # Column 3 features
     draw.text((500, features_y + 25), "🎨 Welcome Cards", fill=(200, 200, 200), font=small_font)
     draw.text((500, features_y + 40), "📢 Announcements", fill=(200, 200, 200), font=small_font)
-    draw.text((500, features_y + 55), "🔊 Voice Controls", fill=(200, 200, 200), font=small_font)
-    draw.text((500, features_y + 70), "📝 Custom Commands", fill=(200, 200, 200), font=small_font)
+    draw.text((500, features_y + 55), "📊 Violation Tracking", fill=(200, 200, 200), font=small_font)
+    draw.text((500, features_y + 70), "🔐 Whitelist System", fill=(200, 200, 200), font=small_font)
 
     # Build info section
     build_y = 360

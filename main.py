@@ -1189,23 +1189,28 @@ class HelpSelect(discord.ui.Select):
             color=BrandColors.SUCCESS
         )
         embed.add_field(
+            name="🛡️ **RXT Security System** (Multi-Layer Protection) - LATEST",
+            value="**9-Module Protection Suite:** Anti-raid, anti-nuke, anti-spam, anti-link, webhook guard, anti-role, mass mention blocker, timeout system, whitelist\n**🚫 Quarantine System:** Automatic containment of suspicious users with persistent violation tracking\n**⏱️ Timeout Management:** Discord native timeouts with complete communication blackout\n**📊 Violation Tracking:** Cross-session persistence tracking threat severity\n**Commands:** `/security`, `/antiraid`, `/antinuke`, `/antispam`, `/antilink`, `/webhookguard`, `/antirole`, `/massmention`, `/timeout`, `/whitelist`",
+            inline=False
+        )
+        embed.add_field(
             name="✨ **Karma System** (Community Recognition)",
             value="**🟢 `/givekarma @user [reason]`** - Give karma points to members\n**⭐ Reaction Karma** - Positive reactions (👍 ⭐ ❤️ 🔥 💯) give karma\n**📊 `/karmaboard`** - View server's top karma earners\n**🎉 Level-up celebrations** with motivational quotes and GIFs",
             inline=False
         )
         embed.add_field(
             name="🎨 **Profile & Server Cards** (Visual Stats)",
-            value="**🟢 `/profile [user]`** - Beautiful profile cards with avatar and karma\n**🏰 `/servercard`** - Generate server overview cards with statistics\n**🤖 `/botprofile`** - View bot information and status\n**🟢 `/contact`** - Get bot contact information\n**Circular avatars** with progress bars and modern theme",
+            value="**🟢 `/profile [user]`** - Beautiful profile cards with avatar and karma\n**🏰 `/servercard`** - Generate server overview cards with statistics\n**🤖 `/botprofile`** - View bot information, security features, and system specs\n**🟢 `/contact`** - Get bot contact information\n**Circular avatars** with progress bars and modern theme",
             inline=False
         )
         embed.add_field(
-            name="🛡️ **Advanced Moderation Features**",
-            value="**🎫 Ticket System** - Professional support ticket system\n**✅ Verification System** - CAPTCHA-based member verification\n**⚔️ Moderation Tools** - Kick, ban, voice moderation\n**🎭 Reaction Roles** - Easy role assignment with reactions",
+            name="🎫 **Support & Automation**",
+            value="**🎫 Ticket System** - Professional support ticket management\n**✅ Verification System** - CAPTCHA-based member verification\n**🎭 Reaction Roles** - Easy role assignment with reactions\n**⏰ Timed Roles** - Assign roles for specific durations\n**📢 Announcements** - Professional server announcements",
             inline=False
         )
         embed.add_field(
             name="🔧 **How to Get Started**",
-            value="**Step 1:** Use `/givekarma` to appreciate helpful members\n**Step 2:** Generate your `/profile` to see your beautiful stats card\n**Step 3:** Try `/ticketsetup` to create a support system\n**Step 4:** Use `/help` to explore all available commands!",
+            value="**Step 1:** `/security action:enable` - Activate security protections\n**Step 2:** `/setup main_moderator role:@moderator` - Configure permissions\n**Step 3:** Use `/help` to explore the Security section\n**Step 4:** `/givekarma` to start community recognition!\n**Advanced:** `/whitelist` to add trusted users/bots to security bypass",
             inline=False
         )
         embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
