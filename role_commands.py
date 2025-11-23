@@ -79,8 +79,8 @@ async def listrole(interaction: discord.Interaction, role: discord.Role):
 print("  ✓ /listrole command registered")
 
 @bot.tree.command(name="dm-role", description="📧 Send DM to all users in a role")
-@app_commands.describe(role="Role to send DM to", message="Message to send", media_url="Optional image or video URL")
-async def dm_role(interaction: discord.Interaction, role: discord.Role, message: str, media_url: str = None):
+@app_commands.describe(role="Role to send DM to", message="Message to send", image_url="Optional image URL (jpg, png, gif)")
+async def dm_role(interaction: discord.Interaction, role: discord.Role, message: str, image_url: str = None):
     """Send DM to all members in a role"""
     
     # Check permission: main moderator or server owner only
@@ -107,23 +107,12 @@ async def dm_role(interaction: discord.Interaction, role: discord.Role, message:
             timestamp=datetime.now()
         )
         
-        # Add media (image or video) if URL provided
-        media_type = "none"
-        if media_url:
+        # Add image if URL provided (jpg, png, gif only)
+        has_image = False
+        if image_url:
             try:
-                url_lower = media_url.lower()
-                # Check if it's a video URL
-                video_extensions = ('.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv')
-                video_domains = ('youtube.com', 'youtu.be', 'twitch.tv', 'vimeo.com')
-                
-                is_video = url_lower.endswith(video_extensions) or any(domain in url_lower for domain in video_domains)
-                
-                if is_video:
-                    dm_embed.set_video(url=media_url)
-                    media_type = "video"
-                else:
-                    dm_embed.set_image(url=media_url)
-                    media_type = "image"
+                dm_embed.set_image(url=image_url)
+                has_image = True
             except:
                 pass
         
@@ -162,15 +151,15 @@ async def dm_role(interaction: discord.Interaction, role: discord.Role, message:
         
         # Log action
         log_msg = f"📧 [DM-ROLE] {interaction.user.mention} sent DM to {sent_count} members in {role.mention}"
-        if media_type != "none":
-            log_msg += f" (with {media_type})"
+        if has_image:
+            log_msg += f" (with image)"
         await log_action(interaction.guild.id, "communication", log_msg)
         
         # Log to global logging
         try:
             from advanced_logging import send_global_log
-            media_info = 'Yes (Video)' if media_type == 'video' else ('Yes (Image)' if media_type == 'image' else 'No')
-            global_log_msg = f"**📧 DM Sent to Role**\n**Role:** {role.name}\n**Members Sent:** {sent_count}/{len(members)}\n**User:** {interaction.user}\n**Media:** {media_info}"
+            image_info = 'Yes' if has_image else 'No'
+            global_log_msg = f"**📧 DM Sent to Role**\n**Role:** {role.name}\n**Members Sent:** {sent_count}/{len(members)}\n**User:** {interaction.user}\n**Image:** {image_info}"
             await send_global_log("communication", global_log_msg, interaction.guild)
         except:
             pass
