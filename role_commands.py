@@ -214,39 +214,16 @@ async def send_image(
             await interaction.followup.send("❌ At least one image URL is required!", ephemeral=True)
             return
         
-        # Create embed with images
-        embed = discord.Embed(
-            title="🖼️ Image Gallery",
-            description=f"**Total Images:** {len(image_urls)}\n\n{VisualElements.CIRCUIT_LINE}",
-            color=BrandColors.PRIMARY,
-            timestamp=datetime.now()
-        )
-        
-        # Set first image as main image
-        embed.set_image(url=image_urls[0])
-        
-        # Add other images as fields with links
-        if len(image_urls) > 1:
-            image_links = []
-            for idx, img_url in enumerate(image_urls[1:], 2):
-                image_links.append(f"**Image {idx}:** [Click here]({img_url})")
-            
-            embed.add_field(
-                name="Additional Images",
-                value="\n".join(image_links),
-                inline=False
+        # Send each image directly as a simple embed
+        for idx, img_url in enumerate(image_urls, 1):
+            embed = discord.Embed(
+                description=f"🖼️ **Image {idx}/{len(image_urls)}**",
+                color=BrandColors.PRIMARY,
+                timestamp=datetime.now()
             )
-        
-        embed.add_field(
-            name="📤 Uploaded by",
-            value=f"{interaction.user.mention}",
-            inline=True
-        )
-        
-        embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
-        
-        # Send the embed
-        await interaction.followup.send(embed=embed)
+            embed.set_image(url=img_url)
+            embed.set_footer(text=f"{BOT_FOOTER} • Sent by {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
+            await interaction.followup.send(embed=embed)
         
         # Log action
         log_msg = f"🖼️ [SEND-IMAGE] {interaction.user.mention} sent {len(image_urls)} image(s) to {interaction.channel.mention}"
