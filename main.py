@@ -114,7 +114,8 @@ async def log_action(guild_id, log_type, message):
         "music-log": BrandColors.SECONDARY,
         "command-log": BrandColors.INFO,
         "error-log": BrandColors.DANGER,
-        "system": BrandColors.INFO
+        "system": BrandColors.INFO,
+        "events": BrandColors.PRIMARY
     }
 
     # Check for single log channel
@@ -1815,6 +1816,13 @@ try:
     print("✅ Role commands system loaded")
 except ImportError as e:
     print(f"⚠️ Role commands module not found: {e}")
+
+# Import event system
+try:
+    from event_commands import *
+    print("✅ Event system loaded")
+except ImportError as e:
+    print(f"⚠️ Event system module not found: {e}")
 
 # Music system removed due to compatibility issues
 
