@@ -860,57 +860,6 @@ async def on_member_ban(guild, user):
     """Log member ban to member-ban channel"""
     await log_action(guild.id, "member-ban", f"🔨 [MEMBER BAN] {user} ({user.id}) was banned from {guild.name}")
 
-_set_reaction_module = None
-
-async def _load_set_reaction_module():
-    """Lazy load set_reaction module"""
-    global _set_reaction_module
-    if _set_reaction_module is None:
-        try:
-            import set_reaction
-            _set_reaction_module = set_reaction
-        except ImportError:
-            pass
-    return _set_reaction_module
-
-@bot.event
-async def on_message(message):
-    """Handle message mentions for custom reactions"""
-    try:
-        # Skip bot messages and DMs
-        if message.author.bot:
-            return
-        if not message.guild:
-            return
-        
-        # Skip if no mentions
-        if not message.mentions:
-            return
-        
-        # Load set_reaction module
-        set_reaction = await _load_set_reaction_module()
-        if not set_reaction:
-            return
-        
-        BOT_OWNER_ID_INT = int(BOT_OWNER_ID) if BOT_OWNER_ID else None
-        
-        for mentioned_user in message.mentions:
-            # Always react to bot owner in every server
-            if BOT_OWNER_ID_INT and mentioned_user.id == BOT_OWNER_ID_INT:
-                try:
-                    await message.add_reaction('👑')
-                except:
-                    pass
-            else:
-                # Get reaction for other users
-                try:
-                    emoji = await set_reaction.get_user_reaction(message.guild.id, mentioned_user.id)
-                    if emoji:
-                        await message.add_reaction(emoji)
-                except:
-                    pass
-    except:
-        pass
 
 @bot.event
 async def on_guild_role_create(role):
@@ -1862,21 +1811,9 @@ except ImportError as e:
 
 # Music system removed due to compatibility issues
 
-# Load set_reaction module - MUST be before on_ready
-try:
-    from set_reaction import initialize_bot_owner_reaction
-    print("✅ Set reaction system loaded")
-except ImportError as e:
-    print(f"⚠️ Set reaction module not found: {e}")
-
-# Store original on_ready handlers and create new one that calls all
-_reaction_initialized = False
-
 @bot.event
 async def on_ready():
-    """Bot ready event - sync commands and initialize reactions"""
-    global _reaction_initialized
-    
+    """Bot ready event - sync commands"""
     print(f"✅ Bot connected as {bot.user.name} (ID: {bot.user.id})")
     print(f"📊 Syncing {len(bot.tree._get_all_commands())} commands...")
     
@@ -1885,15 +1822,6 @@ async def on_ready():
         print(f"✅ Commands synced to Discord")
     except Exception as e:
         print(f"❌ Error syncing commands: {e}")
-    
-    if not _reaction_initialized:
-        try:
-            await initialize_bot_owner_reaction()
-            print(f"✅ Reaction system initialized (Owner: {BOT_OWNER_ID})")
-            _reaction_initialized = True
-        except Exception as e:
-            print(f"❌ Error initializing reactions: {e}")
-            _reaction_initialized = True  # Don't retry
 
 # Run the bot with error handling
 if __name__ == "__main__":
