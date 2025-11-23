@@ -9,6 +9,74 @@ from datetime import datetime, timedelta
 
 print("✅ Event system module loading...")
 
+# Event Entry View with Button
+class EventEntryView(discord.ui.View):
+    def __init__(self, event_name: str, guild_id: int):
+        super().__init__(timeout=None)
+        self.event_name = event_name
+        self.guild_id = guild_id
+    
+    @discord.ui.button(label="👑 Enter Event", style=discord.ButtonStyle.primary, custom_id="event_entry_button")
+    async def enter_event(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Handle event entry button click"""
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            if db is None:
+                await interaction.followup.send("❌ Database unavailable!", ephemeral=True)
+                return
+            
+            # Get the event
+            event = await db.events.find_one({
+                'guild_id': str(self.guild_id),
+                'event_name': self.event_name.lower()
+            })
+            
+            if not event:
+                await interaction.followup.send("❌ Event not found!", ephemeral=True)
+                return
+            
+            # Check if user already entered
+            if interaction.user.id in event.get('participants', []):
+                await interaction.followup.send(
+                    f"⚠️ You already entered this event!\n\n**Event:** {self.event_name}\n**Your Status:** Already Registered",
+                    ephemeral=True
+                )
+                return
+            
+            # Add user to participants
+            await db.events.update_one(
+                {'_id': event['_id']},
+                {'$push': {'participants': interaction.user.id}}
+            )
+            
+            # Get updated participant count
+            updated_event = await db.events.find_one({'_id': event['_id']})
+            participant_count = len(updated_event.get('participants', []))
+            
+            # Create success embed
+            success_embed = discord.Embed(
+                title="✅ Event Entry Confirmed",
+                description=f"**Event:** {self.event_name}",
+                color=BrandColors.SUCCESS,
+                timestamp=datetime.now()
+            )
+            success_embed.add_field(name="📋 Type", value=updated_event.get('event_type', 'Unknown'), inline=True)
+            success_embed.add_field(name="👥 Total Participants", value=str(participant_count), inline=True)
+            success_embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
+            
+            await interaction.followup.send(embed=success_embed, ephemeral=True)
+            
+            # Log the entry
+            guild = bot.get_guild(self.guild_id)
+            if guild:
+                log_msg = f"👑 [EVENT-ENTRY] {interaction.user.mention} entered event **{self.event_name}** (Total: {participant_count})"
+                await log_action(self.guild_id, "events", log_msg)
+        
+        except Exception as e:
+            await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
+            print(f"Event entry error: {e}")
+
 # Helper functions for event role permissions
 async def has_event_role_permission(interaction):
     """Check if user has event role or higher permissions"""
@@ -108,6 +176,8 @@ async def event_role(interaction: discord.Interaction, role: discord.Role):
             color=BrandColors.SUCCESS,
             timestamp=datetime.now()
         )
+        embed.add_field(name="🎯 Authorized Actions", value="• Create Events\n• Announce Winners", inline=False)
+        embed.add_field(name=f"{VisualElements.CIRCUIT_LINE}", value="", inline=False)
         embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
         await interaction.followup.send(embed=embed)
         
@@ -115,11 +185,19 @@ async def event_role(interaction: discord.Interaction, role: discord.Role):
         log_msg = f"🎯 [EVENT-ROLE] {interaction.user.mention} set event role to {role.mention}"
         await log_action(interaction.guild.id, "events", log_msg)
         
+        # Log to global
+        try:
+            from advanced_logging import send_global_log
+            global_log_msg = f"**🎯 Event Role Set**\n**Role:** {role.name}\n**User:** {interaction.user}"
+            await send_global_log("events", global_log_msg, interaction.guild)
+        except:
+            pass
+        
     except Exception as e:
         await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
         await log_action(interaction.guild.id, "error-log", f"⚠️ [EVENT-ROLE ERROR] {interaction.user}: {str(e)}")
 
-@bot.tree.command(name="create-event", description="🎊 Create a new event")
+@bot.tree.command(name="create-event", description="🎊 Create a new event with button entry")
 @app_commands.describe(
     event_name="Name of the event (unique per server)",
     event_type="Type of event (giveaway, contest, raffle, etc)",
@@ -181,23 +259,46 @@ async def create_event(
         else:
             end_time = datetime.now() + timedelta(days=duration_value)
         
-        # Create announcement embed
+        # Create beautiful announcement embed
         embed = discord.Embed(
             title=f"🎊 {event_name}",
             description=description,
             color=BrandColors.PRIMARY,
             timestamp=datetime.now()
         )
-        embed.add_field(name="📋 Type", value=event_type, inline=True)
-        embed.add_field(name="⏱️ Duration", value=f"{duration_value} {duration_unit}", inline=True)
-        embed.add_field(name="⏰ Ends at", value=f"<t:{int(end_time.timestamp())}:f>", inline=False)
-        embed.add_field(name="👥 Participants", value="0", inline=True)
-        embed.add_field(name="📝 React to enter!", value=f"React with 👑 to participate in this {event_type}!", inline=False)
-        embed.set_footer(text=f"{BOT_FOOTER} • Event ID: {event_name}", icon_url=interaction.client.user.display_avatar.url)
+        embed.add_field(
+            name="━━━━━━━━━━━━━━━━━",
+            value=f"{VisualElements.CIRCUIT_LINE}",
+            inline=False
+        )
+        embed.add_field(name="📋 Event Type", value=f"**{event_type}**", inline=True)
+        embed.add_field(name="⏱️ Duration", value=f"**{duration_value} {duration_unit}**", inline=True)
+        embed.add_field(name="⏰ Event Ends", value=f"<t:{int(end_time.timestamp())}:f>", inline=False)
+        embed.add_field(
+            name="━━━━━━━━━━━━━━━━━",
+            value=f"{VisualElements.CIRCUIT_LINE}",
+            inline=False
+        )
+        embed.add_field(name="👥 Participants", value="**0 Entered**", inline=True)
+        embed.add_field(name="🎯 Status", value="**OPEN**", inline=True)
+        embed.add_field(
+            name="━━━━━━━━━━━━━━━━━",
+            value=f"{VisualElements.CIRCUIT_LINE}",
+            inline=False
+        )
+        embed.add_field(
+            name="📝 How to Enter",
+            value="Click the **👑 Enter Event** button below to participate.\n*One entry per user - duplicate entries are not allowed.*",
+            inline=False
+        )
+        embed.set_footer(text=f"{BOT_FOOTER} • Event: {event_name}", icon_url=interaction.client.user.display_avatar.url)
         
-        # Send announcement
-        event_msg = await channel.send(embed=embed)
-        await event_msg.add_reaction("👑")
+        # Create view and send announcement
+        view = EventEntryView(event_name, interaction.guild.id)
+        event_msg = await channel.send(embed=embed, view=view)
+        
+        # Add persistent view to bot
+        bot.add_view(view)
         
         # Update event with message ID
         if db is not None:
@@ -206,13 +307,17 @@ async def create_event(
                 {'$set': {'message_id': str(event_msg.id), 'message_channel': str(channel.id)}}
             )
         
-        # Send confirmation
+        # Send confirmation to creator
         confirm_embed = discord.Embed(
-            title="✅ Event Created",
-            description=f"**Event:** {event_name}\n**Type:** {event_type}\n**Channel:** {channel.mention}",
+            title="✅ Event Created Successfully",
+            description=f"Your event has been posted!",
             color=BrandColors.SUCCESS,
             timestamp=datetime.now()
         )
+        confirm_embed.add_field(name="🎊 Event Name", value=f"**{event_name}**", inline=True)
+        confirm_embed.add_field(name="📋 Type", value=f"**{event_type}**", inline=True)
+        confirm_embed.add_field(name="📢 Channel", value=f"{channel.mention}", inline=False)
+        confirm_embed.add_field(name="⏰ Ends", value=f"<t:{int(end_time.timestamp())}:R>", inline=False)
         confirm_embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
         await interaction.followup.send(embed=confirm_embed)
         
@@ -231,91 +336,6 @@ async def create_event(
     except Exception as e:
         await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
         await log_action(interaction.guild.id, "error-log", f"⚠️ [CREATE-EVENT ERROR] {interaction.user}: {str(e)}")
-
-@bot.tree.command(name="announce-winner", description="🏆 Announce event winner (random or custom)")
-async def announce_winner(interaction: discord.Interaction):
-    """Announce event winner - Server owner, main moderator, or junior moderator only"""
-    
-    # Check permissions - HIDDEN from help menu, only these users see it
-    if interaction.user.id != interaction.guild.owner_id:
-        if not await has_permission(interaction, "main_moderator"):
-            # Don't show this command was attempted
-            await interaction.response.send_message("This command doesn't exist or you don't have access.", ephemeral=True)
-            return
-    
-    await interaction.response.send_modal(AnnounceWinnerModal())
-
-class AnnounceWinnerModal(discord.ui.Modal, title="Announce Winner"):
-    """Modal to select winner type"""
-    event_name_input = discord.ui.TextInput(
-        label="Event Name",
-        placeholder="Enter the event name",
-        required=True
-    )
-    winner_type_input = discord.ui.TextInput(
-        label="Winner Type (random/custom)",
-        placeholder="Type 'random' or 'custom'",
-        required=True
-    )
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        
-        try:
-            event_name = self.event_name_input.value
-            winner_type = self.winner_type_input.value.lower()
-            
-            # Get event from database
-            event = await get_event(interaction.guild.id, event_name)
-            
-            if not event:
-                await interaction.followup.send(f"❌ Event **{event_name}** not found!", ephemeral=True)
-                return
-            
-            if winner_type == "random":
-                if not event.get('participants'):
-                    await interaction.followup.send("❌ No participants in this event!", ephemeral=True)
-                    return
-                
-                # Select random winner
-                winner_id = random.choice(event['participants'])
-                guild = bot.get_guild(int(event['guild_id']))
-                winner = guild.get_member(winner_id)
-                
-                if not winner:
-                    await interaction.followup.send("❌ Could not find winner member!", ephemeral=True)
-                    return
-                
-                # Request other info
-                await interaction.followup.send(
-                    f"🏆 Selected winner: **{winner.mention}**\n\nPlease provide: channel, description, image_url",
-                    ephemeral=True
-                )
-                
-                # Store winner temporarily
-                if db is not None:
-                    await db.events.update_one(
-                        {'_id': event['_id']},
-                        {'$set': {'winner': winner_id, 'winner_type': 'random'}}
-                    )
-                
-            elif winner_type == "custom":
-                # Request winner details
-                await interaction.followup.send(
-                    f"🎯 Custom winner mode\n\nPlease provide: winner_name/id, channel, description, image_url",
-                    ephemeral=True
-                )
-                
-                if db is not None:
-                    await db.events.update_one(
-                        {'_id': event['_id']},
-                        {'$set': {'winner_type': 'custom'}}
-                    )
-            else:
-                await interaction.followup.send("❌ Invalid winner type! Use 'random' or 'custom'", ephemeral=True)
-        
-        except Exception as e:
-            await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
 
 @bot.tree.command(name="announce-random-winner", description="🏆 Announce random winner from event")
 @app_commands.describe(
@@ -359,16 +379,20 @@ async def announce_random_winner(
             await interaction.followup.send("❌ Could not find winner member!", ephemeral=True)
             return
         
-        # Create winner announcement
+        # Create beautiful winner announcement
         embed = discord.Embed(
-            title="🏆 Winner Announced!",
+            title="🏆 WINNER ANNOUNCED! 🏆",
             description=description,
             color=BrandColors.PRIMARY,
             timestamp=datetime.now()
         )
-        embed.add_field(name="🎉 Winner", value=f"{winner.mention}", inline=False)
-        embed.add_field(name="📋 Event", value=event_name, inline=True)
-        embed.add_field(name="👥 Total Participants", value=str(len(event['participants'])), inline=True)
+        embed.add_field(name="━━━━━━━━━━━━━━━━━", value=f"{VisualElements.CIRCUIT_LINE}", inline=False)
+        embed.add_field(name="🎉 WINNER", value=f">>> # {winner.mention}", inline=False)
+        embed.add_field(name="━━━━━━━━━━━━━━━━━", value=f"{VisualElements.CIRCUIT_LINE}", inline=False)
+        embed.add_field(name="📋 Event", value=f"**{event_name}**", inline=True)
+        embed.add_field(name="👥 Participants", value=f"**{len(event['participants'])}**", inline=True)
+        embed.add_field(name="🎯 Method", value="**Random Selection**", inline=True)
+        embed.add_field(name="━━━━━━━━━━━━━━━━━", value=f"{VisualElements.CIRCUIT_LINE}", inline=False)
         
         if image_url:
             embed.set_image(url=image_url)
@@ -385,13 +409,15 @@ async def announce_random_winner(
                 {'$set': {'winner': winner_id, 'winner_type': 'random', 'announced': True}}
             )
         
-        # Confirm
+        # Confirm to caller
         confirm_embed = discord.Embed(
             title="✅ Winner Announced",
-            description=f"**Winner:** {winner.mention}\n**Event:** {event_name}",
+            description=f"🏆 **{winner.mention}** has been announced as the winner!",
             color=BrandColors.SUCCESS,
             timestamp=datetime.now()
         )
+        confirm_embed.add_field(name="📋 Event", value=f"**{event_name}**", inline=False)
+        confirm_embed.add_field(name="📢 Announced in", value=f"{channel.mention}", inline=False)
         confirm_embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
         await interaction.followup.send(embed=confirm_embed)
         
@@ -427,7 +453,7 @@ async def announce_custom_winner(
     description: str,
     image_url: str = None
 ):
-    """Announce custom winner - Server owner, main moderator, junior moderator only"""
+    """Announce custom winner - Server owner, main moderator, junior moderator only (HIDDEN FROM HELP)"""
     
     if interaction.user.id != interaction.guild.owner_id:
         if not await has_permission(interaction, "main_moderator"):
@@ -443,15 +469,19 @@ async def announce_custom_winner(
             await interaction.followup.send(f"❌ Event **{event_name}** not found!", ephemeral=True)
             return
         
-        # Create winner announcement
+        # Create beautiful winner announcement
         embed = discord.Embed(
-            title="🎯 Winner Announced!",
+            title="🎯 WINNER ANNOUNCED! 🎯",
             description=description,
             color=BrandColors.PRIMARY,
             timestamp=datetime.now()
         )
-        embed.add_field(name="🎉 Winner", value=f"{winner.mention}", inline=False)
-        embed.add_field(name="📋 Event", value=event_name, inline=True)
+        embed.add_field(name="━━━━━━━━━━━━━━━━━", value=f"{VisualElements.CIRCUIT_LINE}", inline=False)
+        embed.add_field(name="🎉 WINNER", value=f">>> # {winner.mention}", inline=False)
+        embed.add_field(name="━━━━━━━━━━━━━━━━━", value=f"{VisualElements.CIRCUIT_LINE}", inline=False)
+        embed.add_field(name="📋 Event", value=f"**{event_name}**", inline=True)
+        embed.add_field(name="🎯 Method", value="**Custom Selection**", inline=True)
+        embed.add_field(name="━━━━━━━━━━━━━━━━━", value=f"{VisualElements.CIRCUIT_LINE}", inline=False)
         
         if image_url:
             embed.set_image(url=image_url)
@@ -468,13 +498,15 @@ async def announce_custom_winner(
                 {'$set': {'winner': winner.id, 'winner_type': 'custom', 'announced': True}}
             )
         
-        # Confirm
+        # Confirm to caller
         confirm_embed = discord.Embed(
             title="✅ Custom Winner Announced",
-            description=f"**Winner:** {winner.mention}\n**Event:** {event_name}",
+            description=f"🎯 **{winner.mention}** has been announced as the winner!",
             color=BrandColors.SUCCESS,
             timestamp=datetime.now()
         )
+        confirm_embed.add_field(name="📋 Event", value=f"**{event_name}**", inline=False)
+        confirm_embed.add_field(name="📢 Announced in", value=f"{channel.mention}", inline=False)
         confirm_embed.set_footer(text=BOT_FOOTER, icon_url=interaction.client.user.display_avatar.url)
         await interaction.followup.send(embed=confirm_embed)
         
@@ -494,40 +526,8 @@ async def announce_custom_winner(
         await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
         await log_action(interaction.guild.id, "error-log", f"⚠️ [CUSTOM-WINNER ERROR] {interaction.user}: {str(e)}")
 
-# Add reaction listener for event participation
-@bot.event
-async def on_reaction_add(reaction, user):
-    """Handle reaction to participate in events"""
-    if user.bot:
-        return
-    
-    if reaction.emoji != "👑":
-        return
-    
-    try:
-        # Check if this is an event message
-        if db is None:
-            return
-        
-        event = await db.events.find_one({
-            'message_id': str(reaction.message.id),
-            'message_channel': str(reaction.message.channel.id)
-        })
-        
-        if not event:
-            return
-        
-        # Add user to participants if not already there
-        if user.id not in event.get('participants', []):
-            await db.events.update_one(
-                {'_id': event['_id']},
-                {'$push': {'participants': user.id}}
-            )
-    except Exception as e:
-        print(f"Error handling event reaction: {e}")
-
 print("  ✓ /event-role command registered")
 print("  ✓ /create-event command registered")
 print("  ✓ /announce-random-winner command registered")
 print("  ✓ /announce-custom-winner command registered (hidden from menu)")
-print("✅ Event system loaded successfully with MongoDB persistence")
+print("✅ Event system loaded with button entry & MongoDB persistence")
