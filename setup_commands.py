@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot
-from brand_config import BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
 from main import has_permission, get_server_data, update_server_data, log_action
 
 @bot.tree.command(name="setup", description="Configure bot settings")
@@ -34,11 +34,11 @@ async def setup(
     # Check permissions
     if action == "main_moderator":
         if interaction.user.id != interaction.guild.owner_id:
-            await interaction.response.send_message("❌ Only the server owner can set main moderator role!", ephemeral=True)
+            await interaction.response.send_message(embed=create_owner_only_embed(), ephemeral=True, ephemeral=True)
             return
     else:
         if not await has_permission(interaction, "main_moderator"):
-            await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+            await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
             return
 
     server_data = await get_server_data(interaction.guild.id)

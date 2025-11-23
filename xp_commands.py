@@ -4,7 +4,7 @@ from discord import app_commands
 import time
 import random
 from main import bot
-from brand_config import BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
 from main import db, has_permission, log_action, get_server_data, update_server_data
 
 # Karma cooldown tracking (user_id -> {target_user_id: last_time})
@@ -25,7 +25,7 @@ KARMA_QUOTES = [
 ]
 
 # Define karma levels with quantum purple gradient theme - using BrandColors
-from brand_config import BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BrandColors
 
 KARMA_LEVELS = [
     {"milestone": 0, "title": "◇ Quantum Initiate", "color": BrandColors.GRADIENT_1},
@@ -408,7 +408,7 @@ async def karma_leaderboard(interaction: discord.Interaction):
 ])
 async def reset_karma(interaction: discord.Interaction, scope: str, user: discord.Member = None):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     if db is None:
@@ -512,7 +512,7 @@ async def send_karma_levelup(guild, user, karma):
                 inline=False
             )
             embed.set_image(url=selected_gif)
-            from brand_config import BOT_FOOTER
+            from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER
             embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
 
             # Send announcement

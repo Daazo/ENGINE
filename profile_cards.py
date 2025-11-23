@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot, db, has_permission, get_server_data, log_action
-from brand_config import BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
 from xp_commands import get_karma_level_info
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -12,7 +12,7 @@ import asyncio
 import io
 
 # Import brand colors
-from brand_config import BrandColorsRGB, BOT_NAME, BOT_VERSION, BOT_FOOTER
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BrandColorsRGB, BOT_NAME, BOT_VERSION, BOT_FOOTER
 
 # Default template colors and settings - RXT ENGINE Theme
 CARD_WIDTH = 800
@@ -180,7 +180,7 @@ async def create_profile_card(user, guild, karma_data):
     draw.text((400, status_y), f"{status_emoji} {str(user.status).title()}", fill=TEXT_COLOR, font=text_font)
 
     # Footer
-    from brand_config import BOT_FOOTER
+    from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER
     draw.text((50, CARD_HEIGHT - 30), BOT_FOOTER, fill=(100, 100, 100), font=small_font)
 
     return card
@@ -188,7 +188,7 @@ async def create_profile_card(user, guild, karma_data):
 async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_str, server_count):
     """Create a profile card for the bot with information"""
     from main import BOT_OWNER_NAME, BOT_TAGLINE
-    from brand_config import BOT_NAME, BOT_VERSION
+    from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_NAME, BOT_VERSION
     import time
 
     # Create base image with more height to avoid overlap
@@ -361,7 +361,7 @@ async def profile_card(interaction: discord.Interaction, user: discord.Member = 
 @bot.tree.command(name="servercard", description="🏰 Generate a beautiful server overview card")
 async def server_card(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
         return
 
     await interaction.response.defer()
@@ -470,7 +470,7 @@ async def bot_profile(interaction: discord.Interaction):
 
             file = discord.File(img_bytes, filename="bot_profile.png")
 
-            from brand_config import BOT_FOOTER
+            from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER
             embed = discord.Embed(
                 title=f"🤖 **{bot.user.name}'s Profile Card**",
                 description="*Here's a glimpse into RXT ENGINE's quantum core!*",

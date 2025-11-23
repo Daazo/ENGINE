@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot
-from brand_config import BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
 from main import has_permission, get_server_data, update_server_data, log_action
 
 @bot.tree.command(name="reactionrole", description="🎭 Setup reaction roles with multiple emoji/role pairs")
@@ -21,7 +21,7 @@ async def reaction_role_setup(
     auto_remove_role: discord.Role = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     # Create the setup modal
@@ -176,7 +176,7 @@ async def quick_reaction_role_setup(
     auto_remove_role: discord.Role = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     try:
@@ -341,7 +341,7 @@ async def on_raw_reaction_remove(payload):
 @bot.tree.command(name="listreactionroles", description="📋 List all active reaction role setups")
 async def list_reaction_roles(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
         return
 
     server_data = await get_server_data(interaction.guild.id)

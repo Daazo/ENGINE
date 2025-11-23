@@ -3,14 +3,14 @@ from discord.ext import commands
 from discord import app_commands
 import asyncio
 from main import bot
-from brand_config import BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
 from main import has_permission, log_action
 
 @bot.tree.command(name="kick", description="⚔️ Kick a user from the server")
 @app_commands.describe(user="User to kick", reason="Reason for kick")
 async def kick(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
@@ -58,7 +58,7 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
 @app_commands.describe(user="User to ban", reason="Reason for ban")
 async def ban(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
@@ -103,7 +103,7 @@ async def ban(interaction: discord.Interaction, user: discord.Member, reason: st
 @bot.tree.command(name="nuke", description="💥 Delete all messages in current channel")
 async def nuke(interaction: discord.Interaction):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     # Confirmation embed

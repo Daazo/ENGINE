@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import asyncio
 from main import bot
-from brand_config import BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
 from main import has_permission, log_action
 import os
 from datetime import datetime, timedelta
@@ -18,7 +18,7 @@ import time
 )
 async def say(interaction: discord.Interaction, message: str, channel: discord.TextChannel = None, image: str = None, heading: str = None):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
         return
 
     target_channel = channel or interaction.channel
@@ -70,7 +70,7 @@ async def embed_command(
     image: str = None
 ):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
         return
 
     target_channel = channel or interaction.channel
@@ -141,7 +141,7 @@ async def announce(
     heading: str = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     announcement_content = ""
@@ -203,7 +203,7 @@ async def poll(
     option4: str = None
 ):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
         return
 
     options = [option1, option2]
@@ -235,7 +235,7 @@ async def poll(
 )
 async def reminder(interaction: discord.Interaction, message: str, time: str):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message("❌ You need Junior Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
         return
 
     # Parse time
@@ -298,7 +298,7 @@ async def reminder(interaction: discord.Interaction, message: str, time: str):
 @app_commands.describe(user="User to send DM to", message="Message to send")
 async def dm_command(interaction: discord.Interaction, user: discord.Member, message: str):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message("❌ You need Main Moderator permissions to use this command!", ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
         return
 
     try:
@@ -339,7 +339,7 @@ async def on_message(message):
     # Reaction Role Setup Command
     if message.content.startswith("reaction role setup"):
         if not await has_permission(message, "main_moderator"):
-            await message.channel.send("❌ You need Main Moderator permissions to use this command!")
+            await message.channel.send("Main Moderator")
             return
 
         await message.channel.send("Please provide the message, emoji, role, and channel for the reaction role.")

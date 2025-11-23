@@ -254,3 +254,30 @@ class SystemMessages:
 ◆ Error handlers active
 ◆ Attempting auto-recovery...
     """
+
+# Permission Denied Embed Helpers
+def create_permission_denied_embed(required_role: str):
+    """Create a themed permission denied embed for Discord"""
+    import discord
+    error_embed = discord.Embed(
+        title="◆ ACCESS DENIED",
+        description=f"You don't have permission to use this command.\n**Required:** {required_role}",
+        color=BrandColors.DANGER,
+        timestamp=__import__('datetime').datetime.now()
+    )
+    error_embed.add_field(name=f"{VisualElements.CIRCUIT_LINE}", value="", inline=False)
+    error_embed.set_footer(text=BOT_FOOTER)
+    return error_embed
+
+def create_owner_only_embed():
+    """Create a themed owner-only embed"""
+    import discord
+    error_embed = discord.Embed(
+        title="◆ OWNER ONLY",
+        description="Only the server owner can perform this action.",
+        color=BrandColors.DANGER,
+        timestamp=__import__('datetime').datetime.now()
+    )
+    error_embed.add_field(name=f"{VisualElements.CIRCUIT_LINE}", value="", inline=False)
+    error_embed.set_footer(text=BOT_FOOTER)
+    return error_embed
