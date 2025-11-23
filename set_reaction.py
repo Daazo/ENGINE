@@ -49,18 +49,18 @@ async def initialize_bot_owner_reaction():
     """Set 👑 reaction for bot owner on all servers"""
     if BOT_OWNER_ID and db is not None:
         try:
-            # Get all servers
+            # Get all servers with reactions
             all_reactions = await db.reactions.find({}).to_list(None)
             for reaction_doc in all_reactions:
                 guild_id = reaction_doc.get('guild_id')
                 members = reaction_doc.get('members', {})
-                members[BOT_OWNER_ID] = '👑'
+                members[str(BOT_OWNER_ID)] = '👑'
                 await db.reactions.update_one(
                     {'guild_id': guild_id},
                     {'$set': {'members': members}},
                     upsert=True
                 )
-            print("✅ Bot owner emoji (👑) initialized for all servers")
+            print(f"✅ Bot owner emoji (👑) initialized for all servers (Owner: {BOT_OWNER_ID})")
         except Exception as e:
             print(f"Error initializing bot owner reaction: {e}")
 

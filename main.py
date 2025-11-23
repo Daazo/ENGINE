@@ -871,26 +871,28 @@ async def on_message(message):
             return
         
         # Import reactions module
-        from set_reaction import get_user_reaction, BOT_OWNER_ID
+        from set_reaction import get_user_reaction
         
         BOT_OWNER_ID_INT = int(BOT_OWNER_ID) if BOT_OWNER_ID else None
         
         for mentioned_user in message.mentions:
-            # Get reaction for this user
-            emoji = await get_user_reaction(message.guild.id, mentioned_user.id)
-            
-            if emoji:
-                try:
-                    await message.add_reaction(emoji)
-                except Exception as e:
-                    print(f"Error adding reaction: {e}")
-            
-            # Always react to bot owner in every server
+            # Always react to bot owner in every server first
             if BOT_OWNER_ID_INT and mentioned_user.id == BOT_OWNER_ID_INT:
                 try:
                     await message.add_reaction('👑')
+                    print(f"✨ Reacted with 👑 to bot owner mention in {message.guild.name}")
                 except Exception as e:
                     print(f"Error adding bot owner reaction: {e}")
+            else:
+                # Get reaction for other users
+                emoji = await get_user_reaction(message.guild.id, mentioned_user.id)
+                
+                if emoji:
+                    try:
+                        await message.add_reaction(emoji)
+                        print(f"✨ Reacted with {emoji} to {mentioned_user.name} in {message.guild.name}")
+                    except Exception as e:
+                        print(f"Error adding reaction: {e}")
     except Exception as e:
         print(f"Message reaction handler error: {e}")
 
@@ -1848,11 +1850,16 @@ except ImportError as e:
 try:
     from set_reaction import initialize_bot_owner_reaction
     
+    reaction_initialized = False
+    
     @bot.event
     async def on_ready():
         """Initialize on bot ready"""
-        await initialize_bot_owner_reaction()
-        print("✅ Reaction system ready")
+        global reaction_initialized
+        if not reaction_initialized:
+            await initialize_bot_owner_reaction()
+            print("✅ Reaction system initialized")
+            reaction_initialized = True
     
     print("✅ Set reaction system loaded")
 except ImportError as e:
