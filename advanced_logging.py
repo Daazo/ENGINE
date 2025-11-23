@@ -13,7 +13,7 @@ import asyncio
 console_output_queue = asyncio.Queue() if asyncio.get_event_loop() else None
 
 LOG_CHANNEL_TYPES = [
-    "general", "moderation", "security", "quarantine", "anti-raid", "anti-nuke",
+    "general", "moderation", "security",
     "automod", "join-leave", "role-update", "channel-update", "message-delete",
     "message-edit", "member-ban", "member-kick", "voice-log", "ticket-log",
     "command-log", "error-log", "karma", "system", "communication", "setup",
