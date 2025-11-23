@@ -127,7 +127,7 @@ async def give_timed_role(
     duration: str = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     # Parse duration (optional for permanent roles)
@@ -243,7 +243,7 @@ async def remove_role(
     role: discord.Role
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     # Check if user has the role
@@ -307,7 +307,7 @@ async def remove_role(
 @bot.tree.command(name="timedroles", description="📋 View all active timed roles in the server")
 async def view_timed_roles(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
 
     if db is None:

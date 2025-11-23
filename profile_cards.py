@@ -361,7 +361,7 @@ async def profile_card(interaction: discord.Interaction, user: discord.Member = 
 @bot.tree.command(name="servercard", description="🏰 Generate a beautiful server overview card")
 async def server_card(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
 
     await interaction.response.defer()

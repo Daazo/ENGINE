@@ -34,11 +34,11 @@ async def setup(
     # Check permissions
     if action == "main_moderator":
         if interaction.user.id != interaction.guild.owner_id:
-            await interaction.response.send_message(embed=create_owner_only_embed(), ephemeral=True, ephemeral=True)
+            await interaction.response.send_message(embed=create_owner_only_embed(), ephemeral=True)
             return
     else:
         if not await has_permission(interaction, "main_moderator"):
-            await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+            await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
             return
 
     server_data = await get_server_data(interaction.guild.id)

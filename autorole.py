@@ -21,7 +21,7 @@ async def autorole_setup(
     role: discord.Role = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
     
     server_data = await get_server_data(interaction.guild.id)

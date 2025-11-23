@@ -10,7 +10,7 @@ from main import has_permission, log_action
 @app_commands.describe(user="User to kick", reason="Reason for kick")
 async def kick(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
@@ -58,7 +58,7 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
 @app_commands.describe(user="User to ban", reason="Reason for ban")
 async def ban(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
@@ -103,7 +103,7 @@ async def ban(interaction: discord.Interaction, user: discord.Member, reason: st
 @bot.tree.command(name="nuke", description="💥 Delete all messages in current channel")
 async def nuke(interaction: discord.Interaction):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     # Confirmation embed

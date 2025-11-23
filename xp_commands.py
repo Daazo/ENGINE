@@ -408,7 +408,7 @@ async def karma_leaderboard(interaction: discord.Interaction):
 ])
 async def reset_karma(interaction: discord.Interaction, scope: str, user: discord.Member = None):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     if db is None:

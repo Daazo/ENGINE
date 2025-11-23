@@ -10,7 +10,7 @@ from main import has_permission, log_action
 @app_commands.describe(user="User to mute")
 async def mute(interaction: discord.Interaction, user: discord.Member):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not user.voice:
@@ -45,7 +45,7 @@ async def mute(interaction: discord.Interaction, user: discord.Member):
 @app_commands.describe(user="User to unmute")
 async def unmute(interaction: discord.Interaction, user: discord.Member):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not user.voice:
@@ -80,7 +80,7 @@ async def unmute(interaction: discord.Interaction, user: discord.Member):
 @app_commands.describe(user="User to move", channel="Voice channel to move to")
 async def movevc(interaction: discord.Interaction, user: discord.Member, channel: discord.VoiceChannel):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not user.voice:
@@ -115,7 +115,7 @@ async def movevc(interaction: discord.Interaction, user: discord.Member, channel
 @app_commands.describe(user="User to kick from voice")
 async def vckick(interaction: discord.Interaction, user: discord.Member):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not user.voice:
@@ -149,7 +149,7 @@ async def vckick(interaction: discord.Interaction, user: discord.Member):
 @bot.tree.command(name="vclock", description="Lock current voice channel")
 async def vclock(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not interaction.user.voice:
@@ -185,7 +185,7 @@ async def vclock(interaction: discord.Interaction):
 @bot.tree.command(name="vcunlock", description="Unlock current voice channel")
 async def vcunlock(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not interaction.user.voice:
@@ -222,7 +222,7 @@ async def vcunlock(interaction: discord.Interaction):
 @app_commands.describe(limit="User limit (0-99, 0 = unlimited)")
 async def vclimit(interaction: discord.Interaction, limit: int):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
     
     if not interaction.user.voice:

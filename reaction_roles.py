@@ -21,7 +21,7 @@ async def reaction_role_setup(
     auto_remove_role: discord.Role = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     # Create the setup modal
@@ -176,7 +176,7 @@ async def quick_reaction_role_setup(
     auto_remove_role: discord.Role = None
 ):
     if not await has_permission(interaction, "main_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Main Moderator"), ephemeral=True)
         return
 
     try:
@@ -341,7 +341,7 @@ async def on_raw_reaction_remove(payload):
 @bot.tree.command(name="listreactionroles", description="📋 List all active reaction role setups")
 async def list_reaction_roles(interaction: discord.Interaction):
     if not await has_permission(interaction, "junior_moderator"):
-        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True, ephemeral=True)
+        await interaction.response.send_message(embed=create_permission_denied_embed("Junior Moderator"), ephemeral=True)
         return
 
     server_data = await get_server_data(interaction.guild.id)
