@@ -256,10 +256,9 @@ async def cleanup_empty_custom_vcs():
                 
                 if len(channel.members) == 0:
                     await channel.delete(reason="Auto-cleanup - 5 min inactivity")
+                    await db.custom_vcs.delete_one({'_id': vc_data['_id']})
                     print(f"✅ [CLEANUP] Deleted {channel_name}")
                     await log_action(guild_id, "custom_vc", f"🗑️ [VC DELETED] {channel_name} - auto cleanup")
-                
-                await db.custom_vcs.delete_one({'_id': vc_data['_id']})
             except Exception as e:
                 print(f"❌ [CLEANUP ERROR] {e}")
                 try:
