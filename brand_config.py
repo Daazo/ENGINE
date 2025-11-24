@@ -281,3 +281,84 @@ def create_owner_only_embed():
     error_embed.add_field(name=f"{VisualElements.CIRCUIT_LINE}", value="", inline=False)
     error_embed.set_footer(text=BOT_FOOTER)
     return error_embed
+
+# COMPREHENSIVE MESSAGE HELPERS - ALL MESSAGE TYPES THEMED
+def create_success_embed(title: str, description: str = "", fields: dict = None):
+    """Success embed - Hologram Green with circuit lines"""
+    import discord
+    from datetime import datetime
+    embed = discord.Embed(
+        title=f"✓ {title}",
+        description=description + f"\n{VisualElements.CIRCUIT_LINE}" if description else f"{VisualElements.CIRCUIT_LINE}",
+        color=BrandColors.SUCCESS,
+        timestamp=datetime.now()
+    )
+    if fields:
+        for field_name, field_value in fields.items():
+            embed.add_field(name=field_name, value=field_value, inline=False)
+    embed.set_footer(text=BOT_FOOTER)
+    return embed
+
+def create_error_embed(title: str, description: str = "", fields: dict = None):
+    """Error embed - Neon Red with circuit lines"""
+    import discord
+    from datetime import datetime
+    embed = discord.Embed(
+        title=f"✗ {title}",
+        description=description + f"\n{VisualElements.CIRCUIT_LINE}" if description else f"{VisualElements.CIRCUIT_LINE}",
+        color=BrandColors.DANGER,
+        timestamp=datetime.now()
+    )
+    if fields:
+        for field_name, field_value in fields.items():
+            embed.add_field(name=field_name, value=field_value, inline=False)
+    embed.set_footer(text=BOT_FOOTER)
+    return embed
+
+def create_info_embed(title: str, description: str = "", fields: dict = None):
+    """Info embed - Quantum Purple with circuit lines"""
+    import discord
+    from datetime import datetime
+    embed = discord.Embed(
+        title=f"◆ {title}",
+        description=description + f"\n{VisualElements.CIRCUIT_LINE}" if description else f"{VisualElements.CIRCUIT_LINE}",
+        color=BrandColors.PRIMARY,
+        timestamp=datetime.now()
+    )
+    if fields:
+        for field_name, field_value in fields.items():
+            embed.add_field(name=field_name, value=field_value, inline=False)
+    embed.set_footer(text=BOT_FOOTER)
+    return embed
+
+def create_command_embed(title: str, description: str = "", fields: dict = None):
+    """Command execution embed - Quantum Purple with lightning bolt"""
+    import discord
+    from datetime import datetime
+    embed = discord.Embed(
+        title=f"⚡ {title}",
+        description=description + f"\n{VisualElements.CIRCUIT_LINE}" if description else f"{VisualElements.CIRCUIT_LINE}",
+        color=BrandColors.PRIMARY,
+        timestamp=datetime.now()
+    )
+    if fields:
+        for field_name, field_value in fields.items():
+            embed.add_field(name=field_name, value=field_value, inline=False)
+    embed.set_footer(text=BOT_FOOTER)
+    return embed
+
+def create_warning_embed(title: str, description: str = "", fields: dict = None):
+    """Warning embed - Neon Amber with circuit lines"""
+    import discord
+    from datetime import datetime
+    embed = discord.Embed(
+        title=f"⚠ {title}",
+        description=description + f"\n{VisualElements.CIRCUIT_LINE}" if description else f"{VisualElements.CIRCUIT_LINE}",
+        color=BrandColors.WARNING,
+        timestamp=datetime.now()
+    )
+    if fields:
+        for field_name, field_value in fields.items():
+            embed.add_field(name=field_name, value=field_value, inline=False)
+    embed.set_footer(text=BOT_FOOTER)
+    return embed

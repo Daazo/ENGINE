@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot
-from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors, create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed
 from main import has_permission, get_server_data, update_server_data, log_action
 
 @bot.tree.command(name="reactionrole", description="🎭 Setup reaction roles with multiple emoji/role pairs")
@@ -35,7 +35,10 @@ async def reaction_role_setup(
 
         emoji_role_pairs = discord.ui.TextInput(
             label="Emoji:Role Pairs (one per line)",
-            placeholder="🎯:@Role1\n⭐:@Role2\n🎮:@Role3\n(Max 10 pairs)",
+            placeholder="🎯:@Role1
+⭐:@Role2
+🎮:@Role3
+(Max 10 pairs)",
             style=discord.TextStyle.paragraph,
             max_length=1000,
             required=True
@@ -47,7 +50,8 @@ async def reaction_role_setup(
             try:
                 # Parse emoji:role pairs
                 pairs = []
-                lines = self.emoji_role_pairs.value.strip().split('\n')
+                lines = self.emoji_role_pairs.value.strip().split('
+')
                 
                 for line in lines:
                     if ':' not in line:
@@ -96,7 +100,8 @@ async def reaction_role_setup(
 
                 embed.add_field(
                     name="📋 Available Roles",
-                    value="\n".join(role_list),
+                    value="
+".join(role_list),
                     inline=False
                 )
 
@@ -136,13 +141,16 @@ async def reaction_role_setup(
                 # Success response
                 success_embed = discord.Embed(
                     title="✅ Reaction Role Setup Complete",
-                    description=f"**Message:** {self.channel.mention}\n**Emoji/Role Pairs:** {len(pairs)}\n**Auto-Remove Role:** {self.auto_remove_role.mention if self.auto_remove_role else 'None'}",
+                    description=f"**Message:** {self.channel.mention}
+**Emoji/Role Pairs:** {len(pairs)}
+**Auto-Remove Role:** {self.auto_remove_role.mention if self.auto_remove_role else 'None'}",
                     color=BrandColors.SUCCESS
                 )
 
                 success_embed.add_field(
                     name="🎭 Configured Pairs",
-                    value="\n".join([f"{emoji} → {role.mention}" for emoji, role in pairs]),
+                    value="
+".join([f"{emoji} → {role.mention}" for emoji, role in pairs]),
                     inline=False
                 )
 
@@ -217,7 +225,10 @@ async def quick_reaction_role_setup(
 
         response_embed = discord.Embed(
             title="✅ Quick Reaction Role Setup Complete",
-            description=f"**Message:** {channel.mention}\n**Emoji:** {emoji}\n**Role:** {role.mention}\n**Auto-Remove Role:** {auto_remove_role.mention if auto_remove_role else 'None'}",
+            description=f"**Message:** {channel.mention}
+**Emoji:** {emoji}
+**Role:** {role.mention}
+**Auto-Remove Role:** {auto_remove_role.mention if auto_remove_role else 'None'}",
             color=BrandColors.SUCCESS
         )
         response_embed.set_footer(text=BOT_FOOTER)
@@ -226,7 +237,7 @@ async def quick_reaction_role_setup(
         await log_action(interaction.guild.id, "reaction_role", f"🎭 [QUICK REACTION ROLE] Setup by {interaction.user} - {emoji} → {role.name}")
 
     except Exception as e:
-        await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed(f"An error occurred: {str(e)}"), ephemeral=True)
 
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -350,7 +361,9 @@ async def list_reaction_roles(interaction: discord.Interaction):
     if not reaction_roles:
         embed = discord.Embed(
             title="📋 No Reaction Roles Found",
-            description="No reaction role setups are currently active in this server.\n\nUse `/reactionrole` or `/quickreactionrole` to create one!",
+            description="No reaction role setups are currently active in this server.
+
+Use `/reactionrole` or `/quickreactionrole` to create one!",
             color=BrandColors.WARNING
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -359,7 +372,9 @@ async def list_reaction_roles(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="📋 **Active Reaction Role Setups**",
-        description=f"*Found {len(reaction_roles)} reaction role setup(s)*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        description=f"*Found {len(reaction_roles)} reaction role setup(s)*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
         color=BrandColors.PRIMARY
     )
 
@@ -382,9 +397,11 @@ async def list_reaction_roles(interaction: discord.Interaction):
         if len(pairs) > 3:
             pair_text.append(f"... +{len(pairs)-3} more")
 
-        field_value = f"**Channel:** {channel_name}\n**Pairs:** {', '.join(pair_text) if pair_text else 'None'}"
+        field_value = f"**Channel:** {channel_name}
+**Pairs:** {', '.join(pair_text) if pair_text else 'None'}"
         if auto_remove_role:
-            field_value += f"\n**Auto-Remove:** {auto_remove_role.mention}"
+            field_value += f"
+**Auto-Remove:** {auto_remove_role.mention}"
 
         embed.add_field(
             name=f"#{count} Message ID: {message_id}",
@@ -400,4 +417,4 @@ async def list_reaction_roles(interaction: discord.Interaction):
         )
 
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed

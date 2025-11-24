@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot
-from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors, create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed
 from main import has_permission, get_server_data, update_server_data, log_action
 from captcha_generator import CaptchaGenerator
 
@@ -54,7 +54,16 @@ async def verification_setup(
     # Create verification embed and button - RXT ENGINE Quantum Purple Theme
     embed = discord.Embed(
         title="🔐 **Server Verification Required**",
-        description=f"**{message}**\n\n⚡ **Quantum Security Protocol Active**\n\n◆ **What verification grants you:**\n• Full server channel access\n• Participation in community\n• Complete member privileges\n\n🔒 Complete CAPTCHA to verify",
+        description=f"**{message}**
+
+⚡ **Quantum Security Protocol Active**
+
+◆ **What verification grants you:**
+• Full server channel access
+• Participation in community
+• Complete member privileges
+
+🔒 Complete CAPTCHA to verify",
         color=BrandColors.PRIMARY
     )
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -62,10 +71,15 @@ async def verification_setup(
     view = VerificationView()  # Database-driven verification
     await channel.send(embed=embed, view=view)
 
-    description = f"**Channel:** {channel.mention}\n**Verified Role:** {verified_role.mention}"
+    description = f"**Channel:** {channel.mention}
+**Verified Role:** {verified_role.mention}"
     if remove_role:
-        description += f"\n**Remove Role:** {remove_role.mention}"
-    description += f"\n**Status:** Active\n\n*New members will need to verify before accessing the server.*"
+        description += f"
+**Remove Role:** {remove_role.mention}"
+    description += f"
+**Status:** Active
+
+*New members will need to verify before accessing the server.*"
     
     response_embed = discord.Embed(
         title="⚡ **Verification System Setup Complete**",
@@ -111,7 +125,13 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
                 
                 embed = discord.Embed(
                     title="⚡ **Verification Successful!**",
-                    description="**Welcome to the server!**\n\n✓ CAPTCHA solved correctly\n✓ Quantum security check passed\n✓ Full server access granted\n\n◆ You are now a verified member!",
+                    description="**Welcome to the server!**
+
+✓ CAPTCHA solved correctly
+✓ Quantum security check passed
+✓ Full server access granted
+
+◆ You are now a verified member!",
                     color=BrandColors.PRIMARY
                 )
                 embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -120,14 +140,19 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
                 await log_action(interaction.guild.id, "security", f"✅ [CAPTCHA VERIFICATION] {interaction.user} verified successfully")
                 
             except discord.Forbidden:
-                await interaction.response.send_message("❌ I don't have permission to assign the verified role. Contact administrators.", ephemeral=True)
+                await interaction.response.send_message(embed=create_error_embed("I don't have permission to assign the verified role. Contact administrators."), ephemeral=True)
             except Exception as e:
-                await interaction.response.send_message(f"❌ Verification failed: {str(e)}", ephemeral=True)
+                await interaction.response.send_message(embed=create_error_embed(f"Verification failed: {str(e)}"), ephemeral=True)
         else:
             # Incorrect CAPTCHA - RXT ENGINE Theme
             embed = discord.Embed(
                 title="✗ **Verification Failed**",
-                description=f"**◆ Incorrect CAPTCHA code**\n\n**You entered:** `{user_input}`\n\n⚡ Click the **Verify Me** button to get a new CAPTCHA\n💠 Each attempt generates a unique code",
+                description=f"**◆ Incorrect CAPTCHA code**
+
+**You entered:** `{user_input}`
+
+⚡ Click the **Verify Me** button to get a new CAPTCHA
+💠 Each attempt generates a unique code",
                 color=BrandColors.DANGER
             )
             embed.set_footer(text="◆ Quantum security active", icon_url=bot.user.display_avatar.url)
@@ -148,19 +173,19 @@ class VerificationView(discord.ui.View):
         verification_config = security_settings.get('verification_system', {})
         
         if not verification_config.get('enabled', False):
-            await interaction.response.send_message("❌ Verification system is not enabled! Contact administrators.", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Verification system is not enabled! Contact administrators."), ephemeral=True)
             return
         
         verified_role_id = verification_config.get('verified_role')
         remove_role_id = verification_config.get('remove_role')
         
         if not verified_role_id:
-            await interaction.response.send_message("❌ Verification role not configured! Contact administrators.", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Verification role not configured! Contact administrators."), ephemeral=True)
             return
         
         verified_role = interaction.guild.get_role(int(verified_role_id))
         if not verified_role:
-            await interaction.response.send_message("❌ Verification role not found! Contact administrators.", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Verification role not found! Contact administrators."), ephemeral=True)
             return
 
         if verified_role in interaction.user.roles:
@@ -185,7 +210,13 @@ class VerificationView(discord.ui.View):
             # Send CAPTCHA image with button in ONE message - RXT ENGINE Theme
             embed = discord.Embed(
                 title="🔐 **Quantum Security Verification**",
-                description="**◆ Solve the CAPTCHA to verify:**\n\n**1.** Analyze the code in the image below\n**2.** Click the button to enter the code\n\n⚡ Code is case-insensitive\n💠 Quantum encryption active",
+                description="**◆ Solve the CAPTCHA to verify:**
+
+**1.** Analyze the code in the image below
+**2.** Click the button to enter the code
+
+⚡ Code is case-insensitive
+💠 Quantum encryption active",
                 color=BrandColors.PRIMARY
             )
             embed.set_image(url="attachment://captcha.png")
@@ -199,7 +230,7 @@ class VerificationView(discord.ui.View):
             )
             
         except Exception as e:
-            await interaction.response.send_message(f"❌ CAPTCHA generation failed: {str(e)}", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed(f"CAPTCHA generation failed: {str(e)}"), ephemeral=True)
 
 class CaptchaInputView(discord.ui.View):
     """View with button to open CAPTCHA input modal"""
@@ -209,4 +240,4 @@ class CaptchaInputView(discord.ui.View):
     
     @discord.ui.button(label='Enter CAPTCHA Code', style=discord.ButtonStyle.success, emoji='✍️')
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(self.modal)
+        await interaction.response.send_modal(self.modal), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed

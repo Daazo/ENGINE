@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot
-from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors, create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed
 from main import has_permission, get_server_data, update_server_data, log_action
 
 @bot.tree.command(name="setup", description="Configure bot settings")
@@ -45,14 +45,15 @@ async def setup(
 
     if action == "main_moderator":
         if not role:
-            await interaction.response.send_message("❌ Please specify a role!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a role!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'main_moderator_role': str(role.id)})
 
         embed = discord.Embed(
             title="⚡ **Main Moderator Role Set**",
-            description=f"**◆ Role:** {role.mention}\n**◆ Set by:** {interaction.user.mention}",
+            description=f"**◆ Role:** {role.mention}
+**◆ Set by:** {interaction.user.mention}",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -61,14 +62,15 @@ async def setup(
 
     elif action == "junior_moderator":
         if not role:
-            await interaction.response.send_message("❌ Please specify a role!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a role!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'junior_moderator_role': str(role.id)})
 
         embed = discord.Embed(
             title="⚡ **Junior Moderator Role Set**",
-            description=f"**◆ Role:** {role.mention}\n**◆ Set by:** {interaction.user.mention}",
+            description=f"**◆ Role:** {role.mention}
+**◆ Set by:** {interaction.user.mention}",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -77,7 +79,7 @@ async def setup(
 
     elif action == "welcome":
         if not channel:
-            await interaction.response.send_message("❌ Please specify a welcome channel!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a welcome channel!"), ephemeral=True)
             return
 
         # Store welcome settings
@@ -101,7 +103,9 @@ async def setup(
         # Test welcome functionality
         test_embed = discord.Embed(
             title="💠 **Welcome System Test**",
-            description=f"**◆ Channel:** {channel.mention}\n**◆ Message:** {welcome_data['welcome_message']}\n" + 
+            description=f"**◆ Channel:** {channel.mention}
+**◆ Message:** {welcome_data['welcome_message']}
+" + 
                        (f"**◆ Image/GIF:** ✓ Working properly" if welcome_data.get('welcome_image') else "**◆ Image/GIF:** None set"),
             color=BrandColors.PRIMARY
         )
@@ -113,14 +117,17 @@ async def setup(
 
     elif action == "welcome_title":
         if not value:
-            await interaction.response.send_message("❌ Please specify a welcome title!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a welcome title!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'welcome_title': value})
 
         embed = discord.Embed(
             title="💠 **Welcome Title Set**",
-            description=f"**◆ Title:** {value}\n**◆ Set by:** {interaction.user.mention}\n\n*Use {{user}} and {{server}} placeholders*",
+            description=f"**◆ Title:** {value}
+**◆ Set by:** {interaction.user.mention}
+
+*Use {{user}} and {{server}} placeholders*",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -129,19 +136,20 @@ async def setup(
 
     elif action == "welcome_image":
         if not value:
-            await interaction.response.send_message("❌ Please specify an image URL for welcome messages!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify an image URL for welcome messages!"), ephemeral=True)
             return
 
         # Basic URL validation
         if not (value.startswith('http://') or value.startswith('https://')):
-            await interaction.response.send_message("❌ Please provide a valid image URL (starting with http:// or https://)", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please provide a valid image URL (starting with http:// or https://)"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'welcome_image': value})
 
         embed = discord.Embed(
             title="💠 **Welcome Image Set**",
-            description=f"**◆ Image URL:** {value}\n**◆ Set by:** {interaction.user.mention}",
+            description=f"**◆ Image URL:** {value}
+**◆ Set by:** {interaction.user.mention}",
             color=BrandColors.PRIMARY
         )
         embed.set_image(url=value)
@@ -151,18 +159,19 @@ async def setup(
 
     elif action == "prefix":
         if not value:
-            await interaction.response.send_message("❌ Please specify a prefix!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a prefix!"), ephemeral=True)
             return
 
         if len(value) > 5:
-            await interaction.response.send_message("❌ Prefix must be 5 characters or less!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Prefix must be 5 characters or less!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'prefix': value})
 
         embed = discord.Embed(
             title="⚡ **Prefix Updated**",
-            description=f"**◆ New Prefix:** `{value}`\n**◆ Set by:** {interaction.user.mention}",
+            description=f"**◆ New Prefix:** `{value}`
+**◆ Set by:** {interaction.user.mention}",
             color=BrandColors.PRIMARY
         )
         await interaction.response.send_message(embed=embed)
@@ -170,7 +179,7 @@ async def setup(
 
     elif action == "karma_channel":
         if not channel:
-            await interaction.response.send_message("❌ Please specify a channel for karma announcements!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a channel for karma announcements!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'karma_channel': str(channel.id)})
@@ -187,14 +196,17 @@ async def setup(
 
     elif action == "auto_role":
         if not role:
-            await interaction.response.send_message("❌ Please specify a role for auto assignment!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a role for auto assignment!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'auto_role': str(role.id)})
 
         embed = discord.Embed(
             title="⚡ **Auto Role Set**",
-            description=f"**◆ Role:** {role.mention}\n**◆ Set by:** {interaction.user.mention}\n\n*This role will be automatically assigned to new members.*",
+            description=f"**◆ Role:** {role.mention}
+**◆ Set by:** {interaction.user.mention}
+
+*This role will be automatically assigned to new members.*",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -203,17 +215,19 @@ async def setup(
 
     elif action == "ticket_support_role":
         if not role:
-            await interaction.response.send_message("❌ Please specify a role for ticket support!", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Please specify a role for ticket support!"), ephemeral=True)
             return
 
         await update_server_data(interaction.guild.id, {'ticket_support_role': str(role.id)})
 
         embed = discord.Embed(
             title="🎫 **Ticket Support Role Set**",
-            description=f"**◆ Role:** {role.mention}\n**◆ Set by:** {interaction.user.mention}\n\n*This role will be mentioned when tickets are created.*",
+            description=f"**◆ Role:** {role.mention}
+**◆ Set by:** {interaction.user.mention}
+
+*This role will be mentioned when tickets are created.*",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
         await interaction.response.send_message(embed=embed)
-        await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Ticket support role set to {role.name} by {interaction.user}")
-
+        await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Ticket support role set to {role.name} by {interaction.user}"), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed

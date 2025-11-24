@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from main import bot, db, has_permission, get_server_data, log_action
-from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors
+from brand_config import create_permission_denied_embed, create_owner_only_embed,  BOT_FOOTER, BrandColors, create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed
 from xp_commands import get_karma_level_info
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -301,7 +301,7 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
 @app_commands.describe(user="User to show profile for (optional)")
 async def profile_card(interaction: discord.Interaction, user: discord.Member = None):
     if not interaction.guild:
-        await interaction.response.send_message("❌ This command can only be used in servers!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("This command can only be used in servers!"), ephemeral=True)
         return
 
     target_user = user or interaction.user
@@ -438,7 +438,7 @@ async def server_card(interaction: discord.Interaction):
 async def bot_profile(interaction: discord.Interaction):
     """Shows the bot's profile card."""
     if not interaction.guild:
-        await interaction.response.send_message("❌ This command can only be used in servers!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("This command can only be used in servers!"), ephemeral=True)
         return
 
     await interaction.response.defer()
@@ -487,4 +487,4 @@ async def bot_profile(interaction: discord.Interaction):
 
     except Exception as e:
         print(f"Error generating bot profile card: {e}")
-        await interaction.followup.send("❌ An error occurred while generating the bot profile card. Please try again later.", ephemeral=True)
+        await interaction.followup.send("❌ An error occurred while generating the bot profile card. Please try again later.", ephemeral=True), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed
