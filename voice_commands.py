@@ -22,8 +22,7 @@ async def mute(interaction: discord.Interaction, user: discord.Member):
 
         embed = discord.Embed(
             title="🔇 User Muted",
-            description=f"**User:** {user.mention}
-**Moderator:** {interaction.user.mention}",
+            description=f"**User:** {user.mention}\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.WARNING
         )
         await interaction.response.send_message(embed=embed)
@@ -33,9 +32,7 @@ async def mute(interaction: discord.Interaction, user: discord.Member):
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**🔇 Mute**
-**User:** {user}
-**Moderator:** {interaction.user}", interaction.guild)
+            await send_global_log("moderation", f"**🔇 Mute**\n**User:** {user}\n**Moderator:** {interaction.user}", interaction.guild)
         except:
             pass
 
@@ -60,8 +57,7 @@ async def unmute(interaction: discord.Interaction, user: discord.Member):
 
         embed = discord.Embed(
             title="🔊 User Unmuted",
-            description=f"**User:** {user.mention}
-**Moderator:** {interaction.user.mention}",
+            description=f"**User:** {user.mention}\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.SUCCESS
         )
         await interaction.response.send_message(embed=embed)
@@ -71,9 +67,7 @@ async def unmute(interaction: discord.Interaction, user: discord.Member):
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**🔊 Unmute**
-**User:** {user}
-**Moderator:** {interaction.user}", interaction.guild)
+            await send_global_log("moderation", f"**🔊 Unmute**\n**User:** {user}\n**Moderator:** {interaction.user}", interaction.guild)
         except:
             pass
 
@@ -98,9 +92,7 @@ async def movevc(interaction: discord.Interaction, user: discord.Member, channel
 
         embed = discord.Embed(
             title="🔀 User Moved",
-            description=f"**User:** {user.mention}
-**Moved to:** {channel.mention}
-**Moderator:** {interaction.user.mention}",
+            description=f"**User:** {user.mention}\n**Moved to:** {channel.mention}\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.SUCCESS
         )
         await interaction.response.send_message(embed=embed)
@@ -110,10 +102,7 @@ async def movevc(interaction: discord.Interaction, user: discord.Member, channel
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**🔀 Move VC**
-**User:** {user}
-**Moved to:** {channel.mention}
-**Moderator:** {interaction.user}", interaction.guild)
+            await send_global_log("moderation", f"**🔀 Move VC**\n**User:** {user}\n**Moved to:** {channel.mention}\n**Moderator:** {interaction.user}", interaction.guild)
         except:
             pass
 
@@ -138,8 +127,7 @@ async def vckick(interaction: discord.Interaction, user: discord.Member):
 
         embed = discord.Embed(
             title="👢 User Kicked from VC",
-            description=f"**User:** {user.mention}
-**Moderator:** {interaction.user.mention}",
+            description=f"**User:** {user.mention}\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.WARNING
         )
         await interaction.response.send_message(embed=embed)
@@ -149,9 +137,7 @@ async def vckick(interaction: discord.Interaction, user: discord.Member):
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**👢 VC Kick**
-**User:** {user}
-**Moderator:** {interaction.user}", interaction.guild)
+            await send_global_log("moderation", f"**👢 VC Kick**\n**User:** {user}\n**Moderator:** {interaction.user}", interaction.guild)
         except:
             pass
 
@@ -177,8 +163,7 @@ async def vclock(interaction: discord.Interaction):
 
         embed = discord.Embed(
             title="🔒 Voice Channel Locked",
-            description=f"**Channel:** {channel.mention}
-**Moderator:** {interaction.user.mention}",
+            description=f"**Channel:** {channel.mention}\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.DANGER
         )
         await interaction.response.send_message(embed=embed)
@@ -188,9 +173,7 @@ async def vclock(interaction: discord.Interaction):
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**🔒 VC Lock**
-**Channel:** {channel.mention}
-**Moderator:** {interaction.user}", interaction.guild)
+            await send_global_log("moderation", f"**🔒 VC Lock**\n**Channel:** {channel.mention}\n**Moderator:** {interaction.user}", interaction.guild)
         except:
             pass
 
@@ -216,8 +199,7 @@ async def vcunlock(interaction: discord.Interaction):
 
         embed = discord.Embed(
             title="🔓 Voice Channel Unlocked",
-            description=f"**Channel:** {channel.mention}
-**Moderator:** {interaction.user.mention}",
+            description=f"**Channel:** {channel.mention}\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.SUCCESS
         )
         await interaction.response.send_message(embed=embed)
@@ -227,9 +209,7 @@ async def vcunlock(interaction: discord.Interaction):
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**🔓 VC Unlock**
-**Channel:** {channel.mention}
-**Moderator:** {interaction.user}", interaction.guild)
+            await send_global_log("moderation", f"**🔓 VC Unlock**\n**Channel:** {channel.mention}\n**Moderator:** {interaction.user}", interaction.guild)
         except:
             pass
 
@@ -261,9 +241,7 @@ async def vclimit(interaction: discord.Interaction, limit: int):
         limit_text = "Unlimited" if limit == 0 else str(limit)
         embed = discord.Embed(
             title="🔢 Voice Channel Limit Set",
-            description=f"**Channel:** {channel.mention}
-**Limit:** {limit_text} users
-**Moderator:** {interaction.user.mention}",
+            description=f"**Channel:** {channel.mention}\n**Limit:** {limit_text} users\n**Moderator:** {interaction.user.mention}",
             color=BrandColors.INFO
         )
         await interaction.response.send_message(embed=embed)
