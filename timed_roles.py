@@ -140,7 +140,7 @@ async def give_timed_role(
 
     # Check if bot can assign this role
     if role >= interaction.guild.me.top_role:
-        await interaction.response.send_message("❌ I cannot assign this role! Please make sure my role is higher than the target role.", ephemeral=True)
+        await interaction.response.send_message(create_error_embed("I cannot assign this role! Please make sure my role is higher than the target role.", ephemeral=True)
         return
 
     # Check if user already has the role

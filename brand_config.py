@@ -283,7 +283,7 @@ def create_owner_only_embed():
     return error_embed
 
 # COMPREHENSIVE MESSAGE HELPERS - ALL MESSAGE TYPES THEMED
-def create_success_embed(title: str, description: str = "", fields: dict = None):
+def create_success_embed(title: str, description: str = "", fields = None):
     """Success embed - Hologram Green with circuit lines"""
     import discord
     from datetime import datetime
@@ -299,7 +299,7 @@ def create_success_embed(title: str, description: str = "", fields: dict = None)
     embed.set_footer(text=BOT_FOOTER)
     return embed
 
-def create_error_embed(title: str, description: str = "", fields: dict = None):
+def create_error_embed(title: str, description: str = "", fields = None):
     """Error embed - Neon Red with circuit lines"""
     import discord
     from datetime import datetime
@@ -315,7 +315,7 @@ def create_error_embed(title: str, description: str = "", fields: dict = None):
     embed.set_footer(text=BOT_FOOTER)
     return embed
 
-def create_info_embed(title: str, description: str = "", fields: dict = None):
+def create_info_embed(title: str, description: str = "", fields = None):
     """Info embed - Quantum Purple with circuit lines"""
     import discord
     from datetime import datetime
@@ -331,7 +331,7 @@ def create_info_embed(title: str, description: str = "", fields: dict = None):
     embed.set_footer(text=BOT_FOOTER)
     return embed
 
-def create_command_embed(title: str, description: str = "", fields: dict = None):
+def create_command_embed(title: str, description: str = "", fields = None):
     """Command execution embed - Quantum Purple with lightning bolt"""
     import discord
     from datetime import datetime
@@ -347,7 +347,7 @@ def create_command_embed(title: str, description: str = "", fields: dict = None)
     embed.set_footer(text=BOT_FOOTER)
     return embed
 
-def create_warning_embed(title: str, description: str = "", fields: dict = None):
+def create_warning_embed(title: str, description: str = "", fields = None):
     """Warning embed - Neon Amber with circuit lines"""
     import discord
     from datetime import datetime

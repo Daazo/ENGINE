@@ -14,7 +14,7 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
-        await interaction.response.send_message("❌ You cannot kick someone with equal or higher role!", ephemeral=True)
+        await interaction.response.send_message(create_error_embed("You cannot kick someone with equal or higher role!", ephemeral=True)
         return
 
     try:
@@ -50,7 +50,7 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
             pass
 
     except discord.Forbidden:
-        await interaction.response.send_message("❌ I don't have permission to kick this user!", ephemeral=True)
+        await interaction.response.send_message(create_error_embed("I don't have permission to kick this user!", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
@@ -62,7 +62,7 @@ async def ban(interaction: discord.Interaction, user: discord.Member, reason: st
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
-        await interaction.response.send_message("❌ You cannot ban someone with equal or higher role!", ephemeral=True)
+        await interaction.response.send_message(create_error_embed("You cannot ban someone with equal or higher role!", ephemeral=True)
         return
 
     try:
@@ -96,7 +96,7 @@ async def ban(interaction: discord.Interaction, user: discord.Member, reason: st
             pass
 
     except discord.Forbidden:
-        await interaction.response.send_message("❌ I don't have permission to ban this user!", ephemeral=True)
+        await interaction.response.send_message(create_error_embed("I don't have permission to ban this user!", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
