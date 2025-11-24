@@ -656,11 +656,16 @@ async def on_message(message):
     print(f"🔍 [ON_MESSAGE] Message from {message.author} in {message.guild.name if message.guild else 'DM'}: {message.content[:100]}")
     
     # Handle AI chat in designated channels (must be before DM check)
-    if message.guild and handle_ai_message:
-        try:
-            await handle_ai_message(message)
-        except Exception as e:
-            print(f"❌ [AI CHAT ERROR] {e}")
+    if message.guild:
+        print(f"📤 [AI HANDLER] handle_ai_message is: {handle_ai_message}")
+        if handle_ai_message:
+            try:
+                print(f"🚀 [AI HANDLER] Calling handle_ai_message for: {message.content[:50]}")
+                await handle_ai_message(message)
+            except Exception as e:
+                print(f"❌ [AI CHAT ERROR] {e}")
+        else:
+            print(f"⚠️ [AI HANDLER] handle_ai_message is None!")
     
     # Handle DM mentions
     if not message.guild:  # This is a DM
@@ -1894,16 +1899,19 @@ except ImportError as e:
     print(f"⚠️ Event system module not found: {e}")
 
 # Import and setup AI chat system
+handle_ai_message = None
 try:
     import ai_chat
     ai_chat.setup(bot, db, has_permission, log_action, create_error_embed, create_permission_denied_embed)
     handle_ai_message = ai_chat.handle_ai_message
     print("✅ AI Chat system loaded (Gemini)")
+    print(f"✅ handle_ai_message assigned: {handle_ai_message}")
 except ImportError as e:
     print(f"⚠️ AI Chat module not found: {e}")
     handle_ai_message = None
 except Exception as e:
     print(f"⚠️ AI Chat setup failed: {e}")
+    print(f"Exception details: {type(e).__name__}: {e}")
     handle_ai_message = None
 
 # Music system removed due to compatibility issues
