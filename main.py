@@ -306,12 +306,17 @@ async def on_ready():
     print("✅ Persistent views added for ticket system")
     
     # Start custom VC cleanup task - startup verification
-    if not cleanup_empty_custom_vcs.is_running():
-        cleanup_empty_custom_vcs.start()
-        print("✅ Custom VC cleanup task STARTED (30s interval)")
-        print("✅ Empty VCs will auto-delete after 5 minutes of inactivity")
-    else:
-        print("⚠️ Custom VC cleanup task already running")
+    try:
+        if not cleanup_empty_custom_vcs.is_running():
+            cleanup_empty_custom_vcs.start()
+            print("✅ Custom VC cleanup task STARTED (30s interval)")
+            print("✅ Empty VCs will auto-delete after 5 minutes of inactivity")
+        else:
+            print("⚠️ Custom VC cleanup task already running")
+    except Exception as e:
+        print(f"❌ CRITICAL: Cleanup task startup failed: {e}")
+        import traceback
+        traceback.print_exc()
 
     # Add persistent views for security system
     from security_system import VerificationView
