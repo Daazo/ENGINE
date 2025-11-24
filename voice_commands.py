@@ -31,7 +31,6 @@ async def mute(interaction: discord.Interaction, user: discord.Member):
         
         await log_action(interaction.guild.id, "moderation", f"🔇 [MUTE] {user} muted by {interaction.user}")
 
-        # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
             await send_global_log("moderation", f"**🔇 Mute**\n**User:** {user}\n**Moderator:** {interaction.user}", interaction.guild)
@@ -66,7 +65,6 @@ async def unmute(interaction: discord.Interaction, user: discord.Member):
         
         await log_action(interaction.guild.id, "moderation", f"🔊 [UNMUTE] {user} unmuted by {interaction.user}")
 
-        # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
             await send_global_log("moderation", f"**🔊 Unmute**\n**User:** {user}\n**Moderator:** {interaction.user}", interaction.guild)
@@ -101,7 +99,6 @@ async def movevc(interaction: discord.Interaction, user: discord.Member, channel
         
         await log_action(interaction.guild.id, "moderation", f"🛡 [MOVE VC] {user} moved to {channel.name} by {interaction.user}")
 
-        # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
             await send_global_log("moderation", f"**🔀 Move VC**\n**User:** {user}\n**Moved to:** {channel.mention}\n**Moderator:** {interaction.user}", interaction.guild)
@@ -136,7 +133,6 @@ async def vckick(interaction: discord.Interaction, user: discord.Member):
         
         await log_action(interaction.guild.id, "moderation", f"🛡 [VC KICK] {user} kicked from voice by {interaction.user}")
 
-        # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
             await send_global_log("moderation", f"**👢 VC Kick**\n**User:** {user}\n**Moderator:** {interaction.user}", interaction.guild)
@@ -172,7 +168,6 @@ async def vclock(interaction: discord.Interaction):
         
         await log_action(interaction.guild.id, "moderation", f"🛡 [VC LOCK] {channel.name} locked by {interaction.user}")
 
-        # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
             await send_global_log("moderation", f"**🔒 VC Lock**\n**Channel:** {channel.mention}\n**Moderator:** {interaction.user}", interaction.guild)
@@ -208,7 +203,6 @@ async def vcunlock(interaction: discord.Interaction):
         
         await log_action(interaction.guild.id, "moderation", f"🛡 [VC UNLOCK] {channel.name} unlocked by {interaction.user}")
 
-        # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
             await send_global_log("moderation", f"**🔓 VC Unlock**\n**Channel:** {channel.mention}\n**Moderator:** {interaction.user}", interaction.guild)
@@ -256,64 +250,8 @@ async def vclimit(interaction: discord.Interaction, limit: int):
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CUSTOM VOICE CHANNEL SYSTEM - DYNAMIC VC ON DEMAND
+# CUSTOM VOICE CHANNEL SYSTEM - FULLY AUTOMATIC
 # ═══════════════════════════════════════════════════════════════════════════
-
-class CustomVCNameModal(discord.ui.Modal):
-    def __init__(self, hub_channel, category, guild):
-        super().__init__(title="🔊 Create Custom Voice Channel")
-        self.hub_channel = hub_channel
-        self.category = category
-        self.guild = guild
-        
-    vc_name = discord.ui.TextInput(
-        label="Channel Name",
-        placeholder="Enter your custom voice channel name (max 100 chars)",
-        required=True,
-        max_length=100,
-        min_length=1
-    )
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        
-        try:
-            custom_name = self.vc_name.value.strip()
-            new_vc = await self.category.create_voice_channel(
-                name=custom_name,
-                reason=f"Custom VC created by {interaction.user}"
-            )
-            
-            await interaction.user.move_to(new_vc)
-            
-            if db is not None:
-                await db.custom_vcs.insert_one({
-                    'guild_id': str(self.guild.id),
-                    'channel_id': str(new_vc.id),
-                    'creator_id': str(interaction.user.id),
-                    'created_at': datetime.utcnow(),
-                    'last_activity': datetime.utcnow()
-                })
-            
-            embed = discord.Embed(
-                title="✅ **Custom VC Created**",
-                description=f"**🔊 Channel:** {new_vc.mention}\n**Created by:** {interaction.user.mention}\n**Name:** {custom_name}",
-                color=BrandColors.SUCCESS
-            )
-            embed.set_footer(text=f"{BOT_FOOTER} • Auto-deletes after 5 minutes of inactivity")
-            
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            
-            await log_action(self.guild.id, "custom_vc", f"🔊 [CUSTOM VC] Created by {interaction.user}: {custom_name}")
-            
-            try:
-                from advanced_logging import send_global_log
-                await send_global_log("custom_vc", f"**🔊 Custom VC Created**\n**Creator:** {interaction.user}\n**Channel:** {new_vc.mention}\n**Name:** {custom_name}", self.guild)
-            except:
-                pass
-        
-        except Exception as e:
-            await interaction.followup.send(embed=create_error_embed(f"Failed to create VC: {str(e)}"), ephemeral=True)
 
 @bot.tree.command(name="custom-vc", description="🔊 Setup dynamic custom voice channel system")
 @app_commands.describe(category="Category to create custom VCs in")
@@ -347,7 +285,7 @@ async def custom_vc_setup(interaction: discord.Interaction, category: discord.Ca
         )
         embed.add_field(
             name="🎯 How It Works",
-            value="✓ Users join 🔊 CUSTOM VC\n✓ Modal popup appears automatically\n✓ Enter custom channel name\n✓ Auto-deletes after 5 min inactivity",
+            value="✓ Users join 🔊 CUSTOM VC\n✓ Bot automatically creates personal channel\n✓ User auto-moved to their VC\n✓ Auto-deletes after 5 min inactivity",
             inline=False
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -360,34 +298,52 @@ async def custom_vc_setup(interaction: discord.Interaction, category: discord.Ca
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    """Handle custom VC hub joins and activity tracking"""
+    """Auto-create VC when user joins hub and track activity"""
     if after.channel is None:
         return
     
     try:
         if db is not None:
-            # Check if this is a hub channel
+            # Check if user joined a hub channel
             hub_data = await db.custom_vc_hubs.find_one({'hub_channel_id': str(after.channel.id)})
             
-            if hub_data:
-                # User joined hub channel - show modal
+            if hub_data and before.channel != after.channel:
+                # User just joined the hub - auto-create personal VC
                 category = after.channel.category
-                modal = CustomVCNameModal(after.channel, category, after.channel.guild)
+                guild = after.channel.guild
                 
-                # Create a dummy interaction to show the modal
-                # Since we can't directly show modal in event, send DM instead
                 try:
-                    embed = discord.Embed(
-                        title="🔊 **Create Your Custom VC**",
-                        description="A modal popup should appear asking for your channel name.\n\nIf it doesn't appear, please try rejoining the 🔊 CUSTOM VC channel.",
-                        color=BrandColors.PRIMARY
+                    # Create personal VC with user's name
+                    vc_name = f"🔊 {member.display_name}"
+                    new_vc = await category.create_voice_channel(
+                        name=vc_name,
+                        reason=f"Auto-created VC for {member}"
                     )
-                    embed.set_footer(text=BOT_FOOTER)
-                    # Try to show modal by having them rejoin
-                except:
-                    pass
+                    
+                    # Move user to their new channel
+                    await member.move_to(new_vc)
+                    
+                    # Store in database
+                    await db.custom_vcs.insert_one({
+                        'guild_id': str(guild.id),
+                        'channel_id': str(new_vc.id),
+                        'creator_id': str(member.id),
+                        'created_at': datetime.utcnow(),
+                        'last_activity': datetime.utcnow()
+                    })
+                    
+                    await log_action(guild.id, "custom_vc", f"🔊 [AUTO VC] Created for {member}: {vc_name}")
+                    
+                    try:
+                        from advanced_logging import send_global_log
+                        await send_global_log("custom_vc", f"**🔊 Auto VC Created**\n**User:** {member}\n**Channel:** {new_vc.mention}", guild)
+                    except:
+                        pass
+                    
+                except Exception as e:
+                    print(f"Error creating auto VC: {e}")
             
-            # Track activity for all custom VCs
+            # Track activity for any custom VC
             custom_vc = await db.custom_vcs.find_one({'channel_id': str(after.channel.id)})
             if custom_vc:
                 await db.custom_vcs.update_one(
@@ -398,65 +354,7 @@ async def on_voice_state_update(member, before, after):
     except Exception as e:
         print(f"Error in on_voice_state_update: {e}")
 
-# Alternative approach: Use app command with modal that users can invoke when in hub
-@bot.tree.command(name="create-vc", description="🔊 Create custom voice channel (use when in hub)")
-@app_commands.describe(name="Name for your custom voice channel")
-async def create_vc_command(interaction: discord.Interaction, name: str):
-    """Fallback command - shows modal style response"""
-    try:
-        if not interaction.user.voice:
-            await interaction.response.send_message(embed=create_error_embed("❌ You must be in the 🔊 CUSTOM VC hub first!"), ephemeral=True)
-            return
-        
-        if db is not None:
-            hub_data = await db.custom_vc_hubs.find_one({'guild_id': str(interaction.guild.id)})
-            if not hub_data:
-                await interaction.response.send_message(embed=create_error_embed("❌ Custom VC system not setup!"), ephemeral=True)
-                return
-            
-            hub_id = int(hub_data['hub_channel_id'])
-            
-            if interaction.user.voice.channel.id == hub_id:
-                category = interaction.user.voice.channel.category
-                
-                custom_name = name.strip()[:100]
-                new_vc = await category.create_voice_channel(
-                    name=custom_name,
-                    reason=f"Custom VC by {interaction.user}"
-                )
-                
-                await interaction.user.move_to(new_vc)
-                
-                await db.custom_vcs.insert_one({
-                    'guild_id': str(interaction.guild.id),
-                    'channel_id': str(new_vc.id),
-                    'creator_id': str(interaction.user.id),
-                    'created_at': datetime.utcnow(),
-                    'last_activity': datetime.utcnow()
-                })
-                
-                embed = discord.Embed(
-                    title="✅ **Custom VC Created**",
-                    description=f"**🔊 Channel:** {new_vc.mention}\n**Name:** {custom_name}",
-                    color=BrandColors.SUCCESS
-                )
-                embed.set_footer(text=f"{BOT_FOOTER} • Auto-deletes after 5 minutes of inactivity")
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                
-                await log_action(interaction.guild.id, "custom_vc", f"🔊 [CUSTOM VC] {interaction.user} created: {custom_name}")
-                
-                try:
-                    from advanced_logging import send_global_log
-                    await send_global_log("custom_vc", f"**🔊 Custom VC Created**\n**Creator:** {interaction.user}\n**Channel:** {new_vc.mention}\n**Name:** {custom_name}", interaction.guild)
-                except:
-                    pass
-            else:
-                await interaction.response.send_message(embed=create_error_embed("❌ You must be in the 🔊 CUSTOM VC hub!"), ephemeral=True)
-    
-    except Exception as e:
-        await interaction.response.send_message(embed=create_error_embed(f"Error: {str(e)}"), ephemeral=True)
-
-@tasks.loop(minutes=1)
+@tasks.loop(seconds=30)
 async def cleanup_empty_custom_vcs():
     """Auto-delete empty custom VCs after 5 minutes"""
     if db is None:
@@ -464,7 +362,11 @@ async def cleanup_empty_custom_vcs():
     
     try:
         cutoff_time = datetime.utcnow() - timedelta(minutes=5)
-        expired_vcs = await db.custom_vcs.find({'last_activity': {'$lt': cutoff_time}}).to_list(length=None)
+        
+        # Find all VCs that have been inactive for 5+ minutes
+        expired_vcs = await db.custom_vcs.find({
+            'last_activity': {'$lt': cutoff_time}
+        }).to_list(length=None)
         
         for vc_data in expired_vcs:
             try:
@@ -472,22 +374,37 @@ async def cleanup_empty_custom_vcs():
                 channel_id = int(vc_data['channel_id'])
                 
                 guild = bot.get_guild(guild_id)
-                if guild:
-                    channel = guild.get_channel(channel_id)
-                    if channel and len(channel.members) == 0:
+                if not guild:
+                    await db.custom_vcs.delete_one({'_id': vc_data['_id']})
+                    continue
+                
+                channel = guild.get_channel(channel_id)
+                
+                # Check if channel exists and is empty
+                if channel:
+                    if len(channel.members) == 0:
                         vc_name = channel.name
-                        await channel.delete(reason="Custom VC auto-cleanup - inactivity")
-                        await log_action(guild_id, "custom_vc", f"🗑️ [CUSTOM VC DELETED] {vc_name} - inactivity")
-                        
                         try:
-                            from advanced_logging import send_global_log
-                            await send_global_log("custom_vc", f"**🗑️ Custom VC Deleted**\n**Channel:** {vc_name}\n**Reason:** Inactivity (5 mins)", guild)
+                            await channel.delete(reason="Auto-cleanup - 5 min inactivity")
+                            await log_action(guild_id, "custom_vc", f"🗑️ [VC DELETED] {vc_name} - auto cleanup")
+                            
+                            try:
+                                from advanced_logging import send_global_log
+                                await send_global_log("custom_vc", f"**🗑️ Auto VC Deleted**\n**Channel:** {vc_name}\n**Reason:** Inactivity", guild)
+                            except:
+                                pass
                         except:
                             pass
                 
+                # Remove from database
                 await db.custom_vcs.delete_one({'_id': vc_data['_id']})
+            
             except Exception as e:
-                print(f"Error cleaning up custom VC: {e}")
+                print(f"Error cleaning up VC {vc_data.get('channel_id')}: {e}")
+                try:
+                    await db.custom_vcs.delete_one({'_id': vc_data['_id']})
+                except:
+                    pass
     
     except Exception as e:
         print(f"Error in cleanup_empty_custom_vcs: {e}")
@@ -497,6 +414,6 @@ def start_custom_vc_cleanup():
     try:
         if not cleanup_empty_custom_vcs.is_running():
             cleanup_empty_custom_vcs.start()
-            print("✅ Custom VC cleanup task started")
+            print("✅ Custom VC cleanup task started (30s interval)")
     except Exception as e:
         print(f"⚠️ Custom VC cleanup task failed to start: {e}")
