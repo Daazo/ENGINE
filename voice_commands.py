@@ -298,58 +298,67 @@ async def custom_vc_setup(interaction: discord.Interaction, category: discord.Ca
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    """Auto-create VC when user joins hub and track activity"""
-    if after.channel is None:
-        return
-    
+    """Auto-create VC when user joins hub and track activity for all VCs"""
     try:
         if db is not None:
-            # Check if user joined a hub channel
-            hub_data = await db.custom_vc_hubs.find_one({'hub_channel_id': str(after.channel.id)})
-            
-            if hub_data and before.channel != after.channel:
-                # User just joined the hub - auto-create personal VC
-                category = after.channel.category
-                guild = after.channel.guild
+            # Handle joining a channel
+            if after.channel is not None:
+                # Check if user joined a hub channel
+                hub_data = await db.custom_vc_hubs.find_one({'hub_channel_id': str(after.channel.id)})
                 
-                try:
-                    # Create personal VC with user's name
-                    vc_name = f"🔊 {member.display_name}"
-                    new_vc = await category.create_voice_channel(
-                        name=vc_name,
-                        reason=f"Auto-created VC for {member}"
-                    )
-                    
-                    # Move user to their new channel
-                    await member.move_to(new_vc)
-                    
-                    # Store in database
-                    await db.custom_vcs.insert_one({
-                        'guild_id': str(guild.id),
-                        'channel_id': str(new_vc.id),
-                        'creator_id': str(member.id),
-                        'created_at': datetime.utcnow(),
-                        'last_activity': datetime.utcnow()
-                    })
-                    
-                    await log_action(guild.id, "custom_vc", f"🔊 [AUTO VC] Created for {member}: {vc_name}")
+                if hub_data and before.channel != after.channel:
+                    # User just joined the hub - auto-create personal VC
+                    category = after.channel.category
+                    guild = after.channel.guild
                     
                     try:
-                        from advanced_logging import send_global_log
-                        await send_global_log("custom_vc", f"**🔊 Auto VC Created**\n**User:** {member}\n**Channel:** {new_vc.mention}", guild)
-                    except:
-                        pass
-                    
-                except Exception as e:
-                    print(f"Error creating auto VC: {e}")
+                        # Create personal VC with user's name
+                        vc_name = f"🔊 {member.display_name}"
+                        new_vc = await category.create_voice_channel(
+                            name=vc_name,
+                            reason=f"Auto-created VC for {member}"
+                        )
+                        
+                        # Move user to their new channel
+                        await member.move_to(new_vc)
+                        
+                        # Store in database
+                        await db.custom_vcs.insert_one({
+                            'guild_id': str(guild.id),
+                            'channel_id': str(new_vc.id),
+                            'creator_id': str(member.id),
+                            'created_at': datetime.utcnow(),
+                            'last_activity': datetime.utcnow()
+                        })
+                        
+                        await log_action(guild.id, "custom_vc", f"🔊 [AUTO VC] Created for {member}: {vc_name}")
+                        
+                        try:
+                            from advanced_logging import send_global_log
+                            await send_global_log("custom_vc", f"**🔊 Auto VC Created**\n**User:** {member}\n**Channel:** {new_vc.mention}", guild)
+                        except:
+                            pass
+                        
+                    except Exception as e:
+                        print(f"Error creating auto VC: {e}")
+                
+                # Track activity for joining any custom VC
+                custom_vc = await db.custom_vcs.find_one({'channel_id': str(after.channel.id)})
+                if custom_vc:
+                    await db.custom_vcs.update_one(
+                        {'channel_id': str(after.channel.id)},
+                        {'$set': {'last_activity': datetime.utcnow()}}
+                    )
             
-            # Track activity for any custom VC
-            custom_vc = await db.custom_vcs.find_one({'channel_id': str(after.channel.id)})
-            if custom_vc:
-                await db.custom_vcs.update_one(
-                    {'channel_id': str(after.channel.id)},
-                    {'$set': {'last_activity': datetime.utcnow()}}
-                )
+            # Handle leaving a channel - update activity when users leave custom VCs
+            if before.channel is not None:
+                custom_vc = await db.custom_vcs.find_one({'channel_id': str(before.channel.id)})
+                if custom_vc:
+                    # Update last_activity when member leaves
+                    await db.custom_vcs.update_one(
+                        {'channel_id': str(before.channel.id)},
+                        {'$set': {'last_activity': datetime.utcnow()}}
+                    )
     
     except Exception as e:
         print(f"Error in on_voice_state_update: {e}")
@@ -368,10 +377,14 @@ async def cleanup_empty_custom_vcs():
             'last_activity': {'$lt': cutoff_time}
         }).to_list(length=None)
         
+        if expired_vcs:
+            print(f"[CLEANUP] Found {len(expired_vcs)} expired VCs to check...")
+        
         for vc_data in expired_vcs:
             try:
                 guild_id = int(vc_data['guild_id'])
                 channel_id = int(vc_data['channel_id'])
+                vc_name = vc_data.get('channel_name', 'Unknown')
                 
                 guild = bot.get_guild(guild_id)
                 if not guild:
@@ -382,32 +395,39 @@ async def cleanup_empty_custom_vcs():
                 
                 # Check if channel exists and is empty
                 if channel:
-                    if len(channel.members) == 0:
-                        vc_name = channel.name
+                    member_count = len(channel.members)
+                    print(f"[CLEANUP] Checking {channel.name} (ID: {channel_id}): {member_count} members, last activity: {vc_data.get('last_activity')}")
+                    
+                    if member_count == 0:
                         try:
                             await channel.delete(reason="Auto-cleanup - 5 min inactivity")
-                            await log_action(guild_id, "custom_vc", f"🗑️ [VC DELETED] {vc_name} - auto cleanup")
+                            print(f"[CLEANUP] ✅ Deleted {channel.name}")
+                            await log_action(guild_id, "custom_vc", f"🗑️ [VC DELETED] {channel.name} - auto cleanup")
                             
                             try:
                                 from advanced_logging import send_global_log
-                                await send_global_log("custom_vc", f"**🗑️ Auto VC Deleted**\n**Channel:** {vc_name}\n**Reason:** Inactivity", guild)
+                                await send_global_log("custom_vc", f"**🗑️ Auto VC Deleted**\n**Channel:** {channel.name}\n**Reason:** Inactivity", guild)
                             except:
                                 pass
-                        except:
-                            pass
+                        except Exception as e:
+                            print(f"[CLEANUP] ❌ Failed to delete {channel.name}: {e}")
+                    else:
+                        print(f"[CLEANUP] ⏭️ Skipped {channel.name} - still has {member_count} members")
+                else:
+                    print(f"[CLEANUP] Channel {channel_id} not found in guild {guild_id}")
                 
                 # Remove from database
                 await db.custom_vcs.delete_one({'_id': vc_data['_id']})
             
             except Exception as e:
-                print(f"Error cleaning up VC {vc_data.get('channel_id')}: {e}")
+                print(f"[CLEANUP] Error processing VC {vc_data.get('channel_id')}: {e}")
                 try:
                     await db.custom_vcs.delete_one({'_id': vc_data['_id']})
                 except:
                     pass
     
     except Exception as e:
-        print(f"Error in cleanup_empty_custom_vcs: {e}")
+        print(f"[CLEANUP] Error in cleanup_empty_custom_vcs: {e}")
 
 def start_custom_vc_cleanup():
     """Start the custom VC cleanup task"""
@@ -415,5 +435,7 @@ def start_custom_vc_cleanup():
         if not cleanup_empty_custom_vcs.is_running():
             cleanup_empty_custom_vcs.start()
             print("✅ Custom VC cleanup task started (30s interval)")
+        else:
+            print("⚠️ Custom VC cleanup task already running")
     except Exception as e:
         print(f"⚠️ Custom VC cleanup task failed to start: {e}")
