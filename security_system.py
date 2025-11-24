@@ -54,15 +54,7 @@ async def verification_setup(
     # Create verification embed and button - RXT ENGINE Quantum Purple Theme
     embed = discord.Embed(
         title="🔐 **Server Verification Required**",
-        description=f"**{message}**
-
-⚡ **Quantum Security Protocol Active**
-
-◆ **What verification grants you:**
-• Full server channel access
-• Participation in community
-• Complete member privileges
-\n🔒 Complete CAPTCHA to verify",
+        description=f"**{message}**\n\n⚡ **Quantum Security Protocol Active**\n\n◆ **What verification grants you:**\n• Full server channel access\n• Participation in community\n• Complete member privileges\n\n🔒 Complete CAPTCHA to verify",
         color=BrandColors.PRIMARY
     )
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -146,11 +138,7 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
             # Incorrect CAPTCHA - RXT ENGINE Theme
             embed = discord.Embed(
                 title="✗ **Verification Failed**",
-                description=f"**◆ Incorrect CAPTCHA code**
-
-**You entered:** `{user_input}`
-
-⚡ Click the **Verify Me** button to get a new CAPTCHA\n💠 Each attempt generates a unique code",
+                description=f"**◆ Incorrect CAPTCHA code**\n\n**You entered:** `{user_input}`\n\n⚡ Click the **Verify Me** button to get a new CAPTCHA\n💠 Each attempt generates a unique code",
                 color=BrandColors.DANGER
             )
             embed.set_footer(text="◆ Quantum security active", icon_url=bot.user.display_avatar.url)

@@ -141,8 +141,7 @@ async def reaction_role_setup(
                 # Success response
                 success_embed = discord.Embed(
                     title="✅ Reaction Role Setup Complete",
-                    description=f"**Message:** {self.channel.mention}
-**Emoji/Role Pairs:** {len(pairs)}\n**Auto-Remove Role:** {self.auto_remove_role.mention if self.auto_remove_role else 'None'}",
+                    description=f"**Message:** {self.channel.mention}\n**Emoji/Role Pairs:** {len(pairs)}\n**Auto-Remove Role:** {self.auto_remove_role.mention if self.auto_remove_role else 'None'}",
                     color=BrandColors.SUCCESS
                 )
 
@@ -224,9 +223,7 @@ async def quick_reaction_role_setup(
 
         response_embed = discord.Embed(
             title="✅ Quick Reaction Role Setup Complete",
-            description=f"**Message:** {channel.mention}
-**Emoji:** {emoji}
-**Role:** {role.mention}\n**Auto-Remove Role:** {auto_remove_role.mention if auto_remove_role else 'None'}",
+            description=f"**Message:** {channel.mention}\n**Emoji:** {emoji}\n**Role:** {role.mention}\n**Auto-Remove Role:** {auto_remove_role.mention if auto_remove_role else 'None'}",
             color=BrandColors.SUCCESS
         )
         response_embed.set_footer(text=BOT_FOOTER)
@@ -370,8 +367,7 @@ Use `/reactionrole` or `/quickreactionrole` to create one!",
 
     embed = discord.Embed(
         title="📋 **Active Reaction Role Setups**",
-        description=f"*Found {len(reaction_roles)} reaction role setup(s)*
-\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        description=f"*Found {len(reaction_roles)} reaction role setup(s)*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
         color=BrandColors.PRIMARY
     )
 

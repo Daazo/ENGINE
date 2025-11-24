@@ -214,23 +214,7 @@ async def poll(
 
     embed = discord.Embed(
         title="📊 Poll",
-        description=f"**{question}**\n\n" + "\n".join([f"{chr(0x1f1e6 + i)} {option}" for i, option in enumerate(options)]),
-        color=BrandColors.INFO
-    )
-    embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-
-    await interaction.response.send_message(embed=embed)
-    message = await interaction.original_response()
-
-    # Add reactions
-    for i in range(len(options)):
-        await message.add_reaction(chr(0x1f1e6 + i))
-
-    await log_action(interaction.guild.id, "communication", f"📊 [POLL] Poll created by {interaction.user}: {question}")
-
-@bot.tree.command(name="reminder", description="Set a reminder")
-@app_commands.describe(
-    message="Reminder message",
+        description=f"**{question}**\n\n" + "\n".join([f"{chr(0x1f1e6 + i)} {option}" for i, option in enumerate(options)]),\n        color=BrandColors.INFO\n    )\n    embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)\n\n    await interaction.response.send_message(embed=embed)\n    message = await interaction.original_response()\n\n    # Add reactions\n    for i in range(len(options)):\n        await message.add_reaction(chr(0x1f1e6 + i))\n\n    await log_action(interaction.guild.id, "communication", f"📊 [POLL] Poll created by {interaction.user}: {question}")\n\n@bot.tree.command(name="reminder", description="Set a reminder")\n@app_commands.describe(\n    message="Reminder message",
     time="Time (e.g., 1h30m, 45s, 2h)"
 )
 async def reminder(interaction: discord.Interaction, message: str, time: str):

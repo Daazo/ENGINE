@@ -274,15 +274,7 @@ async def remove_role(
         # Send confirmation
         embed = discord.Embed(
             title="✅ **Role Removed**",
-            description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Removed by:** {interaction.user.mention}" + (f"\n**Note:** This was a timed role that has been cancelled." if was_timed else ""),
-            color=BrandColors.WARNING
-        )
-        embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-        await interaction.response.send_message(embed=embed)
-
-        # Send DM to user
-        try:
-            dm_content = f"Your **{role.name}** role has been removed from **{interaction.guild.name}**" + (f" (timed role cancelled)" if was_timed else "") + f".\n\n**Removed by:** {interaction.user}"
+            description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Removed by:** {interaction.user.mention}" + (f"\n**Note:** This was a timed role that has been cancelled." if was_timed else ""),\n            color=BrandColors.WARNING\n        )\n        embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)\n        await interaction.response.send_message(embed=embed)\n\n        # Send DM to user\n        try:\n            dm_content = f"Your **{role.name}** role has been removed from **{interaction.guild.name}**" + (f" (timed role cancelled)" if was_timed else "") + f".\n\n**Removed by:** {interaction.user}"
             dm_embed = discord.Embed(
                 title="🗑️ **Role Removed**",
                 description=dm_content,

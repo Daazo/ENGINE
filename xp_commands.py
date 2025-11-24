@@ -172,8 +172,7 @@ async def give_karma(interaction: discord.Interaction, user: discord.Member, amo
 
     embed = discord.Embed(
         title="⚡ **Quantum Karma Transferred**",
-        description=f"**{interaction.user.mention}** ({role_text}) transmitted **+{karma_points} karma** to **{user.mention}**{reason_text}
-\n*◆ Neural network updated*",
+        description=f"**{interaction.user.mention}** ({role_text}) transmitted **+{karma_points} karma** to **{user.mention}**{reason_text}\n\n*◆ Neural network updated*",
         color=BrandColors.PRIMARY
     )
     embed.add_field(name="◆ New Karma Index", value=f"{new_karma} points", inline=True)
@@ -431,8 +430,7 @@ async def reset_karma(interaction: discord.Interaction, scope: str, user: discor
         if result.deleted_count > 0:
             embed = discord.Embed(
                 title="⚡ **User Karma Reset**",
-                description=f"**◆ User:** {user.mention}
-**◆ Action:** Karma data has been reset\n**◆ Reset by:** {interaction.user.mention}",
+                description=f"**◆ User:** {user.mention}\n**◆ Action:** Karma data has been reset\n**◆ Reset by:** {interaction.user.mention}",
                 color=BrandColors.PRIMARY
             )
         else:
@@ -447,8 +445,7 @@ async def reset_karma(interaction: discord.Interaction, scope: str, user: discor
 
         embed = discord.Embed(
             title="⚡ **Server Karma Reset**",
-            description=f"**◆ Action:** All karma data has been reset
-**◆ Users affected:** {result.deleted_count}\n**◆ Reset by:** {interaction.user.mention}",
+            description=f"**◆ Action:** All karma data has been reset\n**◆ Users affected:** {result.deleted_count}\n**◆ Reset by:** {interaction.user.mention}",
             color=BrandColors.PRIMARY
         )
 
@@ -507,10 +504,7 @@ async def send_karma_levelup(guild, user, karma):
 
             embed = discord.Embed(
                 title="⚡ **QUANTUM MILESTONE ACHIEVED!** 💠",
-                description=f"**{user.mention} neural index elevated to {karma} karma points!**
-
-**◆ Neural Rank:** {current_level['title']}
-\n*{quote}*",
+                description=f"**{user.mention} neural index elevated to {karma} karma points!**\n\n**◆ Neural Rank:** {current_level['title']}\n\n*{quote}*",
                 color=current_level["color"] if current_level else BrandColors.WARNING
             )
             embed.set_thumbnail(url=user.display_avatar.url)

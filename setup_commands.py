@@ -101,29 +101,8 @@ async def setup(
         # Test welcome functionality
         test_embed = discord.Embed(
             title="💠 **Welcome System Test**",
-            description=f"**◆ Channel:** {channel.mention}
-**◆ Message:** {welcome_data['welcome_message']}\n" +
-                       (f"**◆ Image/GIF:** ✓ Working properly" if welcome_data.get('welcome_image') else "**◆ Image/GIF:** None set"),
-            color=BrandColors.PRIMARY
-        )
-        if welcome_data.get('welcome_image'):
-            test_embed.set_image(url=welcome_data['welcome_image'])
-
-        test_embed.set_footer(text=f"{BOT_FOOTER} • Welcome system is ready!")
-        await interaction.response.send_message(embed=test_embed)
-
-    elif action == "welcome_title":
-        if not value:
-            await interaction.response.send_message(embed=create_error_embed("Please specify a welcome title!"), ephemeral=True)
-            return
-
-        await update_server_data(interaction.guild.id, {'welcome_title': value})
-
-        embed = discord.Embed(
-            title="💠 **Welcome Title Set**",
-            description=f"**◆ Title:** {value}
-**◆ Set by:** {interaction.user.mention}
-\n*Use {{user}} and {{server}} placeholders*",
+            description=f"**◆ Channel:** {channel.mention}\n**◆ Message:** {welcome_data['welcome_message']}\n" +\n                       (f"**◆ Image/GIF:** ✓ Working properly" if welcome_data.get('welcome_image') else "**◆ Image/GIF:** None set"),\n            color=BrandColors.PRIMARY\n        )\n        if welcome_data.get('welcome_image'):\n            test_embed.set_image(url=welcome_data['welcome_image'])\n\n        test_embed.set_footer(text=f"{BOT_FOOTER} • Welcome system is ready!")\n        await interaction.response.send_message(embed=test_embed)\n\n    elif action == "welcome_title":\n        if not value:\n            await interaction.response.send_message(embed=create_error_embed("Please specify a welcome title!"), ephemeral=True)\n            return\n\n        await update_server_data(interaction.guild.id, {'welcome_title': value})\n\n        embed = discord.Embed(\n            title="💠 **Welcome Title Set**",
+            description=f"**◆ Title:** {value}\n**◆ Set by:** {interaction.user.mention}\n\n*Use {{user}} and {{server}} placeholders*",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -197,9 +176,7 @@ async def setup(
 
         embed = discord.Embed(
             title="⚡ **Auto Role Set**",
-            description=f"**◆ Role:** {role.mention}
-**◆ Set by:** {interaction.user.mention}
-\n*This role will be automatically assigned to new members.*",
+            description=f"**◆ Role:** {role.mention}\n**◆ Set by:** {interaction.user.mention}\n\n*This role will be automatically assigned to new members.*",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -215,9 +192,7 @@ async def setup(
 
         embed = discord.Embed(
             title="🎫 **Ticket Support Role Set**",
-            description=f"**◆ Role:** {role.mention}
-**◆ Set by:** {interaction.user.mention}
-\n*This role will be mentioned when tickets are created.*",
+            description=f"**◆ Role:** {role.mention}\n**◆ Set by:** {interaction.user.mention}\n\n*This role will be mentioned when tickets are created.*",
             color=BrandColors.PRIMARY
         )
         embed.set_footer(text=BOT_FOOTER)
