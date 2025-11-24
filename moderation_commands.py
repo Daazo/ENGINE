@@ -14,7 +14,7 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
-        await interaction.response.send_message(create_error_embed("You cannot kick someone with equal or higher role!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("You cannot kick someone with equal or higher role!"), ephemeral=True)
         return
 
     try:
@@ -45,15 +45,12 @@ async def kick(interaction: discord.Interaction, user: discord.Member, reason: s
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**⚔️ Kick**
-**User:** {user}
-**Moderator:** {interaction.user}
-**Reason:** {reason}", interaction.guild)
+            await send_global_log("moderation", f"**⚔️ Kick**\n**User:** {user}\n**Moderator:** {interaction.user}\n**Reason:** {reason}", interaction.guild)
         except:
             pass
 
     except discord.Forbidden:
-        await interaction.response.send_message(create_error_embed("I don't have permission to kick this user!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("I don't have permission to kick this user!"), ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
@@ -65,7 +62,7 @@ async def ban(interaction: discord.Interaction, user: discord.Member, reason: st
         return
 
     if user.top_role >= interaction.user.top_role and interaction.user.id != interaction.guild.owner_id:
-        await interaction.response.send_message(create_error_embed("You cannot ban someone with equal or higher role!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("You cannot ban someone with equal or higher role!"), ephemeral=True)
         return
 
     try:
@@ -94,15 +91,12 @@ async def ban(interaction: discord.Interaction, user: discord.Member, reason: st
         # Log to global per-server channel
         try:
             from advanced_logging import send_global_log
-            await send_global_log("moderation", f"**🔨 Ban**
-**User:** {user}
-**Moderator:** {interaction.user}
-**Reason:** {reason}", interaction.guild)
+            await send_global_log("moderation", f"**🔨 Ban**\n**User:** {user}\n**Moderator:** {interaction.user}\n**Reason:** {reason}", interaction.guild)
         except:
             pass
 
     except discord.Forbidden:
-        await interaction.response.send_message(create_error_embed("I don't have permission to ban this user!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("I don't have permission to ban this user!"), ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 
@@ -167,9 +161,7 @@ class NukeConfirmView(discord.ui.View):
             # Log to global per-server channel
             try:
                 from advanced_logging import send_global_log
-                await send_global_log("moderation", f"**💥 Channel Nuke**
-**Channel:** #{channel_name}
-**Moderator:** {interaction.user}", interaction.guild)
+                await send_global_log("moderation", f"**💥 Channel Nuke**\n**Channel:** #{channel_name}\n**Moderator:** {interaction.user}", interaction.guild)
             except:
                 pass
 

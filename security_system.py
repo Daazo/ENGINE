@@ -111,13 +111,7 @@ class CaptchaModal(discord.ui.Modal, title='🔐 CAPTCHA Verification'):
 
                 embed = discord.Embed(
                     title="⚡ **Verification Successful!**",
-                    description="**Welcome to the server!**
-
-✓ CAPTCHA solved correctly
-✓ Quantum security check passed
-✓ Full server access granted
-
-◆ You are now a verified member!",
+                    description="**Welcome to the server!**\n\n✓ CAPTCHA solved correctly\n✓ Quantum security check passed\n✓ Full server access granted\n\n◆ You are now a verified member!",
                     color=BrandColors.PRIMARY
                 )
                 embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -191,13 +185,7 @@ class VerificationView(discord.ui.View):
             # Send CAPTCHA image with button in ONE message - RXT ENGINE Theme
             embed = discord.Embed(
                 title="🔐 **Quantum Security Verification**",
-                description="**◆ Solve the CAPTCHA to verify:**
-
-**1.** Analyze the code in the image below
-**2.** Click the button to enter the code
-
-⚡ Code is case-insensitive
-💠 Quantum encryption active",
+                description="**◆ Solve the CAPTCHA to verify:**\n\n**1.** Analyze the code in the image below\n**2.** Click the button to enter the code\n\n⚡ Code is case-insensitive\n💠 Quantum encryption active",
                 color=BrandColors.PRIMARY
             )
             embed.set_image(url="attachment://captcha.png")
@@ -221,4 +209,4 @@ class CaptchaInputView(discord.ui.View):
     
     @discord.ui.button(label='Enter CAPTCHA Code', style=discord.ButtonStyle.success, emoji='✍️')
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(self.modal), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed
+        await interaction.response.send_modal(self.modal)

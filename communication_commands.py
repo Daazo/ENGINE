@@ -35,7 +35,7 @@ async def say(interaction: discord.Interaction, message: str, channel: discord.T
             if image.startswith(('http://', 'https://')) and any(ext in image.lower() for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']):
                 embed.set_image(url=image)
             else:
-                await interaction.response.send_message(create_error_embed("Invalid image URL! Please provide a valid image URL.", ephemeral=True)
+                await interaction.response.send_message(embed=create_error_embed("Invalid image URL! Please provide a valid image URL."), ephemeral=True)
                 return
 
         embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -107,7 +107,7 @@ async def embed_command(
         if image.startswith(('http://', 'https://')) and any(ext in image.lower() for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']):
             embed.set_image(url=image)
         else:
-            await interaction.response.send_message(create_error_embed("Invalid image URL! Please provide a valid image URL.", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Invalid image URL! Please provide a valid image URL."), ephemeral=True)
             return
 
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -148,8 +148,7 @@ async def announce(
 
     if mention:
         if mention.lower() == "@everyone":
-            announcement_content = "@everyone
-"
+            announcement_content = "@everyone\n"
         else:
             # Try to find role by name
             role = discord.utils.get(interaction.guild.roles, name=mention)
@@ -170,7 +169,7 @@ async def announce(
         if image.startswith(('http://', 'https://')) and any(ext in image.lower() for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']):
             embed.set_image(url=image)
         else:
-            await interaction.response.send_message(create_error_embed("Invalid image URL! Please provide a valid image URL.", ephemeral=True)
+            await interaction.response.send_message(embed=create_error_embed("Invalid image URL! Please provide a valid image URL."), ephemeral=True)
             return
 
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -215,8 +214,7 @@ async def poll(
 
     embed = discord.Embed(
         title="📊 Poll",
-        description=f"**{question}**\n" + "
-".join([f"{chr(0x1f1e6 + i)} {option}" for i, option in enumerate(options)]),
+        description=f"**{question}**\n" + "\n".join([f"{chr(0x1f1e6 + i)} {option}" for i, option in enumerate(options)]),
         color=BrandColors.INFO
     )
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -246,7 +244,7 @@ async def reminder(interaction: discord.Interaction, message: str, time: str):
     matches = time_regex.findall(time.lower())
 
     if not matches:
-        await interaction.response.send_message(create_error_embed("Invalid time format! Use format like: 1h30m, 45s, 2h", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("Invalid time format! Use format like: 1h30m, 45s, 2h"), ephemeral=True)
         return
 
     total_seconds = 0
@@ -262,7 +260,7 @@ async def reminder(interaction: discord.Interaction, message: str, time: str):
             total_seconds += amount * 86400
 
     if total_seconds > 86400 * 7:  # Max 7 days
-        await interaction.response.send_message(create_error_embed("Maximum reminder time is 7 days!", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("Maximum reminder time is 7 days!"), ephemeral=True)
         return
 
     embed = discord.Embed(
@@ -327,7 +325,7 @@ async def dm_command(interaction: discord.Interaction, user: discord.Member, mes
         await log_action(interaction.guild.id, "communication", f"📨 [DM] DM sent to {user} by {interaction.user}")
 
     except discord.Forbidden:
-        await interaction.response.send_message(create_error_embed("Cannot send DM to this user (DMs might be disabled)", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("Cannot send DM to this user (DMs might be disabled)"), ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"❌ An error occurred: {str(e)}", ephemeral=True)
 

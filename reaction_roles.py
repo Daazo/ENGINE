@@ -35,10 +35,7 @@ async def reaction_role_setup(
 
         emoji_role_pairs = discord.ui.TextInput(
             label="Emoji:Role Pairs (one per line)",
-            placeholder="🎯:@Role1
-⭐:@Role2
-🎮:@Role3
-(Max 10 pairs)",
+            placeholder="🎯:@Role1\n⭐:@Role2\n🎮:@Role3\n(Max 10 pairs)",
             style=discord.TextStyle.paragraph,
             max_length=1000,
             required=True
@@ -50,8 +47,7 @@ async def reaction_role_setup(
             try:
                 # Parse emoji:role pairs
                 pairs = []
-                lines = self.emoji_role_pairs.value.strip().split('
-')
+                lines = self.emoji_role_pairs.value.strip().split('\n')
                 
                 for line in lines:
                     if ':' not in line:
@@ -100,8 +96,7 @@ async def reaction_role_setup(
 
                 embed.add_field(
                     name="📋 Available Roles",
-                    value="
-".join(role_list),
+                    value="\n".join(role_list),
                     inline=False
                 )
 
@@ -147,8 +142,7 @@ async def reaction_role_setup(
 
                 success_embed.add_field(
                     name="🎭 Configured Pairs",
-                    value="
-".join([f"{emoji} → {role.mention}" for emoji, role in pairs]),
+                    value="\n".join([f"{emoji} → {role.mention}" for emoji, role in pairs]),
                     inline=False
                 )
 
@@ -356,9 +350,7 @@ async def list_reaction_roles(interaction: discord.Interaction):
     if not reaction_roles:
         embed = discord.Embed(
             title="📋 No Reaction Roles Found",
-            description="No reaction role setups are currently active in this server.
-
-Use `/reactionrole` or `/quickreactionrole` to create one!",
+            description="No reaction role setups are currently active in this server.\n\nUse `/reactionrole` or `/quickreactionrole` to create one!",
             color=BrandColors.WARNING
         )
         embed.set_footer(text=BOT_FOOTER)
@@ -408,4 +400,4 @@ Use `/reactionrole` or `/quickreactionrole` to create one!",
         )
 
     embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
-    await interaction.response.send_message(embed=embed), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed
+    await interaction.response.send_message(embed=embed)

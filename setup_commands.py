@@ -101,7 +101,24 @@ async def setup(
         # Test welcome functionality
         test_embed = discord.Embed(
             title="💠 **Welcome System Test**",
-            description=f"**◆ Channel:** {channel.mention}\n**◆ Message:** {welcome_data['welcome_message']}\n" +\n(f"**◆ Image/GIF:** ✓ Working properly" if welcome_data.get('welcome_image') else "**◆ Image/GIF:** None set"),\ncolor=BrandColors.PRIMARY\n)\nif welcome_data.get('welcome_image'):\ntest_embed.set_image(url=welcome_data['welcome_image'])\n\ntest_embed.set_footer(text=f"{BOT_FOOTER} • Welcome system is ready!")\nawait interaction.response.send_message(embed=test_embed)\n\nelif action == "welcome_title":\nif not value:\nawait interaction.response.send_message(embed=create_error_embed("Please specify a welcome title!"), ephemeral=True)\nreturn\n\nawait update_server_data(interaction.guild.id, {'welcome_title': value})\n\nembed = discord.Embed(\ntitle="💠 **Welcome Title Set**",
+            description=f"**◆ Channel:** {channel.mention}\n**◆ Message:** {welcome_data['welcome_message']}\n" + (f"**◆ Image/GIF:** ✓ Working properly" if welcome_data.get('welcome_image') else "**◆ Image/GIF:** None set"),
+            color=BrandColors.PRIMARY
+        )
+        if welcome_data.get('welcome_image'):
+            test_embed.set_image(url=welcome_data['welcome_image'])
+
+        test_embed.set_footer(text=f"{BOT_FOOTER} • Welcome system is ready!")
+        await interaction.response.send_message(embed=test_embed)
+
+    elif action == "welcome_title":
+        if not value:
+            await interaction.response.send_message(embed=create_error_embed("Please specify a welcome title!"), ephemeral=True)
+            return
+
+        await update_server_data(interaction.guild.id, {'welcome_title': value})
+
+        embed = discord.Embed(
+            title="💠 **Welcome Title Set**",
             description=f"**◆ Title:** {value}\n**◆ Set by:** {interaction.user.mention}\n\n*Use {{user}} and {{server}} placeholders*",
             color=BrandColors.PRIMARY
         )
@@ -197,4 +214,4 @@ async def setup(
         )
         embed.set_footer(text=BOT_FOOTER)
         await interaction.response.send_message(embed=embed)
-        await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Ticket support role set to {role.name} by {interaction.user}"), create_success_embed, create_error_embed, create_info_embed, create_command_embed, create_warning_embed, create_permission_denied_embed, create_owner_only_embed
+        await log_action(interaction.guild.id, "setup", f"⚙️ [SETUP] Ticket support role set to {role.name} by {interaction.user}")

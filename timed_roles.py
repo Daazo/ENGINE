@@ -140,7 +140,7 @@ async def give_timed_role(
 
     # Check if bot can assign this role
     if role >= interaction.guild.me.top_role:
-        await interaction.response.send_message(create_error_embed("I cannot assign this role! Please make sure my role is higher than the target role.", ephemeral=True)
+        await interaction.response.send_message(embed=create_error_embed("I cannot assign this role! Please make sure my role is higher than the target role."), ephemeral=True)
         return
 
     # Check if user already has the role
@@ -274,8 +274,7 @@ async def remove_role(
         # Send confirmation
         embed = discord.Embed(
             title="✅ **Role Removed**",
-            description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Removed by:** {interaction.user.mention}" + (f"
-**Note:** This was a timed role that has been cancelled." if was_timed else ""),
+            description=f"**User:** {user.mention}\n**Role:** {role.mention}\n**Removed by:** {interaction.user.mention}" + (f"\n**Note:** This was a timed role that has been cancelled." if was_timed else ""),
             color=BrandColors.WARNING
         )
         embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -283,9 +282,7 @@ async def remove_role(
 
         # Send DM to user
         try:
-            dm_content = f"Your **{role.name}** role has been removed from **{interaction.guild.name}**" + (f" (timed role cancelled)" if was_timed else "") + f".
-
-**Removed by:** {interaction.user}"
+            dm_content = f"Your **{role.name}** role has been removed from **{interaction.guild.name}**" + (f" (timed role cancelled)" if was_timed else "") + f".\n\n**Removed by:** {interaction.user}"
             dm_embed = discord.Embed(
                 title="🗑️ **Role Removed**",
                 description=dm_content,

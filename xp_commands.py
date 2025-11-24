@@ -238,8 +238,7 @@ async def check_karma(interaction: discord.Interaction, user: discord.Member = N
         progress_bar = "█" * filled_segments + "░" * (progress_segments - filled_segments)
         progress_text = f"`{progress_bar}` {progress}/{max_progress}\n*Next level: {next_level['title']} at {next_milestone} karma*"
     else:
-        progress_text = "⚡ **QUANTUM MAXIMUM ACHIEVED** ⚡
-*Holographic Master — peak neural resonance!*"
+        progress_text = "⚡ **QUANTUM MAXIMUM ACHIEVED** ⚡\n*Holographic Master — peak neural resonance!*"
 
     # Use current level color or default
     embed_color = current_level["color"] if current_level else BrandColors.NEUTRAL
@@ -311,8 +310,7 @@ async def my_karma(interaction: discord.Interaction):
         progress_bar = "█" * filled_segments + "░" * (progress_segments - filled_segments)
         progress_text = f"`{progress_bar}` {progress}/{max_progress}\n*Next level: {next_level['title']} at {next_milestone} karma*"
     else:
-        progress_text = "⚡ **QUANTUM MAXIMUM ACHIEVED** ⚡
-*Holographic Master — peak neural resonance!*"
+        progress_text = "⚡ **QUANTUM MAXIMUM ACHIEVED** ⚡\n*Holographic Master — peak neural resonance!*"
 
     # Use current level color or default
     embed_color = current_level["color"] if current_level else BrandColors.NEUTRAL
@@ -481,8 +479,7 @@ async def send_karma_levelup(guild, user, karma):
                 progress_bar = "█" * filled_segments + "░" * (progress_segments - filled_segments)
                 progress_text = f"`{progress_bar}` {progress}/{max_progress}\n*Next level: {next_level['title']} at {next_milestone} karma*"
             else:
-                progress_text = "🎆 **MAXIMUM LEVEL ACHIEVED!** 🎆
-*You are a Transcendent Master!*"
+                progress_text = "🎆 **MAXIMUM LEVEL ACHIEVED!** 🎆\n*You are a Transcendent Master!*"
 
             # Select celebration GIF based on milestone level (can be expanded)
             celebration_gifs = [
