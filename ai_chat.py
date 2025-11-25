@@ -82,49 +82,75 @@ async def generate_ai_image(prompt: str, temp_path: str) -> bool:
     """Generate image using Gemini"""
     try:
         if not gemini_client:
+            print(f"❌ [AI IMAGE ERROR] Gemini client is None")
             return False
         
+        print(f"🎨 [AI IMAGE] Calling Gemini API for image generation...")
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash-preview-image-generation",
+            model="gemini-2.5-flash-image",
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_modalities=['TEXT', 'IMAGE']
+                response_modalities=['IMAGE']
             )
         )
         
         if not response.candidates:
+            print(f"❌ [AI IMAGE ERROR] No candidates in response")
             return False
         
         content = response.candidates[0].content
         if not content or not content.parts:
+            print(f"❌ [AI IMAGE ERROR] No content or parts in response")
             return False
         
         for part in content.parts:
             if part.inline_data and part.inline_data.data:
                 with open(temp_path, 'wb') as f:
                     f.write(part.inline_data.data)
+                print(f"✅ [AI IMAGE] Image saved to {temp_path}")
                 return True
         
+        print(f"❌ [AI IMAGE ERROR] No inline_data found in response parts")
         return False
     except Exception as e:
-        print(f"❌ [AI IMAGE ERROR] {e}")
+        error_str = str(e)
+        print(f"❌ [AI IMAGE ERROR] {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Check if it's a quota error
+        if "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+            print(f"⚠️ [AI IMAGE] Quota exceeded - user needs to wait or upgrade their plan")
+        
         return False
 
 async def get_ai_response(prompt: str) -> str:
     """Get AI text response from Gemini"""
     try:
         if not gemini_client:
+            print(f"❌ [AI TEXT ERROR] Gemini client is None")
             return "❌ AI service is currently unavailable. Please check the API key configuration."
         
+        print(f"💬 [AI TEXT] Calling Gemini API for text generation...")
         response = gemini_client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt
         )
         
-        return response.text or "I couldn't generate a response. Please try again."
+        result = response.text or "I couldn't generate a response. Please try again."
+        print(f"✅ [AI TEXT] Got response: {result[:100]}...")
+        return result
     except Exception as e:
-        print(f"❌ [AI ERROR] {e}")
-        return f"❌ An error occurred: {str(e)}"
+        error_str = str(e)
+        print(f"❌ [AI TEXT ERROR] {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Check if it's a quota error
+        if "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+            return "❌ AI quota limit reached. Please try again later or contact the server admin to upgrade the API plan."
+        
+        return f"❌ An error occurred while processing your request. Please try again."
 
 async def set_ai_channel_command(interaction: discord.Interaction, channel: discord.TextChannel):
     """Set the AI chat channel for the server (registered dynamically during setup)"""
@@ -213,9 +239,11 @@ async def handle_ai_message(message):
             return
         
         print(f"✅ [AI CHAT] Processing message in AI channel: {message.content[:100]}")
+        print(f"🔍 [AI CHAT] Gemini client status: {gemini_client is not None}")
         
         # Check if Gemini client is initialized
         if not gemini_client:
+            print(f"❌ [AI CHAT] Gemini client is None!")
             await message.channel.send("❌ AI service is currently unavailable. Please ask an admin to configure the API key.")
             return
         
@@ -223,10 +251,12 @@ async def handle_ai_message(message):
         async with message.channel.typing():
             # Check if this is an image generation request
             if is_image_request(message.content):
+                print(f"🎨 [AI CHAT] Detected image request: {message.content[:50]}")
                 # Generate image
                 temp_image_path = f"/tmp/ai_generated_{message.id}.png"
                 
                 success = await generate_ai_image(message.content, temp_image_path)
+                print(f"🎨 [AI CHAT] Image generation result: {success}")
                 
                 if success:
                     # Send the generated image
@@ -240,7 +270,9 @@ async def handle_ai_message(message):
                     file = discord.File(temp_image_path, filename="generated_image.png")
                     embed.set_image(url="attachment://generated_image.png")
                     
+                    print(f"🎨 [AI CHAT] Sending image response...")
                     await message.reply(embed=embed, file=file)
+                    print(f"✅ [AI CHAT] Image sent successfully")
                     
                     # Clean up temp file
                     try:
@@ -266,10 +298,13 @@ async def handle_ai_message(message):
                     except:
                         pass
                 else:
-                    await message.reply("❌ Failed to generate image. Please try again with a different prompt.")
+                    # Check if it was a quota error
+                    await message.reply("❌ Failed to generate image. This might be due to API quota limits. Please try again later or contact the server admin.")
             else:
                 # Generate text response
+                print(f"💬 [AI CHAT] Generating text response for: {message.content[:50]}")
                 response_text = await get_ai_response(message.content)
+                print(f"💬 [AI CHAT] Got response ({len(response_text)} chars): {response_text[:100]}...")
                 
                 # Split response if too long (Discord limit is 2000 chars)
                 if len(response_text) > 2000:
@@ -277,8 +312,10 @@ async def handle_ai_message(message):
                     chunks = [response_text[i:i+2000] for i in range(0, len(response_text), 2000)]
                     for chunk in chunks:
                         await message.reply(chunk)
+                    print(f"✅ [AI CHAT] Sent {len(chunks)} message chunks")
                 else:
                     await message.reply(response_text)
+                    print(f"✅ [AI CHAT] Sent text response")
                 
                 # Log the interaction
                 await log_action(
