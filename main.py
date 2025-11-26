@@ -613,15 +613,18 @@ async def on_member_join(member):
                 # Check if rejoin
                 is_rejoin = await check_rejoin(member.guild.id, member.id)
                 
+                # Get previous invites and find inviter only on first join
+                inviter = None
+                invite = None
+                invite_count = 0
+                
+                if not is_rejoin:
+                    before_invites = await get_previous_invites(str(member.guild.id))
+                    inviter, invite = await find_inviter(str(member.guild.id), before_invites)
+                    invite_count = invite.uses if invite else 0
+                
                 # Record the join
                 await record_member_join(member.guild.id, member.id)
-                
-                # Get previous invites and find inviter
-                before_invites = await get_previous_invites(str(member.guild.id))
-                inviter, invite = await find_inviter(str(member.guild.id), before_invites)
-                
-                # Get inviter's total invite count
-                invite_count = invite.uses if invite else 0
                 
                 # Render and send tracker message
                 tracker_embed = await render_tracker_message(member, inviter, invite_count, tracker_config)
