@@ -86,13 +86,13 @@ async def generate_ai_image(prompt: str, temp_path: str) -> bool:
             return False
         
         print(f"🎨 [AI IMAGE] Calling Gemini API for image generation...")
-        # IMPORTANT: Use gemini-2.0-flash-preview-image-generation for image generation
+        # IMPORTANT: Use gemini-2.5-flash-image for image generation (production model)
         # Integration: blueprint:python_gemini
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash-preview-image-generation",
+            model="gemini-2.5-flash-image",
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_modalities=['TEXT', 'IMAGE']
+                response_modalities=['IMAGE']
             )
         )
         
