@@ -34,10 +34,10 @@ The bot's architecture is modular, with `main.py` serving as the entry point. Ke
 - **RXT ENGINE Quantum Purple Theme**: Consistent color scheme (`#8A4FFF`, `#4F8CFF`, `#00E68A`, `#FFD700`, `#FF4444`, `#0A0A0F`, `#E0E0E0`) across all embeds and notifications, centralized in `brand_config.py`.
 
 **Key Features:**
-- **AI Chat with Gemini**: Natural conversations, automatic image generation, dual logging. Uses `gemini-2.5-flash` for text and `gemini-2.5-flash-image` for images.
+- **AI Chat with Gemini**: Natural conversations, automatic image generation, dual logging. Uses `gemini-2.5-flash` for text and `gemini-2.0-flash-preview-image-generation` for images.
 - **RXT Security System**: Production-ready, ToS-compliant server protection with 9 modules, integrated with Discord's native timeout API.
 - **Advanced Logging System**: Dual logging capabilities (per-server and global bot-wide) with auto-event listeners for message edits/deletions, member events, role/channel updates, and voice activity.
-- **CAPTCHA Verification**: Secure, modal-based verification using PIL-generated images.
+- **Verification System**: Dual-mode verification supporting both CAPTCHA (solve image code) and Button (one-click) verification types, configurable per-server.
 - **Karma/XP System**: Community leveling with custom rank cards.
 - **Ticket System**: Comprehensive support ticket management.
 - **Reaction Roles & Timed/Auto Roles**: Flexible role assignment.
