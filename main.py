@@ -1579,9 +1579,9 @@ async def ping(interaction: discord.Interaction):
         status = "Good"
         emoji = "◆"
     else:
-        color = BrandColors.DANGER
-        status = "Degraded"
-        emoji = "⚠"
+        color = BrandColors.WARNING
+        status = "High Latency"
+        emoji = "◆"
 
     embed = discord.Embed(
         title=f"{emoji} **Quantum Network Diagnostic**",
