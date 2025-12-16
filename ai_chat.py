@@ -7,7 +7,7 @@ from datetime import datetime
 from google import genai
 from google.genai import types
 
-from brand_config import BrandColors, BOT_FOOTER
+from brand_config import BrandColors, BOT_FOOTER, VisualElements, create_info_embed, create_error_embed as brand_error_embed, create_warning_embed
 
 # IMPORTANT: KEEP THIS COMMENT
 # Integration: blueprint:python_gemini
@@ -133,7 +133,7 @@ async def get_ai_response(prompt: str) -> str:
     try:
         if not gemini_client:
             print(f"❌ [AI TEXT ERROR] Gemini client is None")
-            return "❌ AI service is currently unavailable. Please check the API key configuration."
+            return "**✗ AI CORE OFFLINE**\nThe quantum AI core is currently unavailable. Please contact a server admin."
         
         print(f"💬 [AI TEXT] Calling Gemini API for text generation...")
         response = gemini_client.models.generate_content(
@@ -152,9 +152,9 @@ async def get_ai_response(prompt: str) -> str:
         
         # Check if it's a quota error
         if "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
-            return "❌ AI quota limit reached. Please try again later or contact the server admin to upgrade the API plan."
+            return "**⚠ QUANTUM CORE LIMIT REACHED**\nAI quota temporarily exhausted. Please try again in a few moments."
         
-        return f"❌ An error occurred while processing your request. Please try again."
+        return "**✗ PROCESSING ERROR**\nThe quantum core encountered an anomaly. Please try again."
 
 async def set_ai_channel_command(interaction: discord.Interaction, channel: discord.TextChannel):
     """Set the AI chat channel for the server (registered dynamically during setup)"""
@@ -248,7 +248,13 @@ async def handle_ai_message(message):
         # Check if Gemini client is initialized
         if not gemini_client:
             print(f"❌ [AI CHAT] Gemini client is None!")
-            await message.channel.send("❌ AI service is currently unavailable. Please ask an admin to configure the API key.")
+            embed = discord.Embed(
+                title="✗ AI SERVICE OFFLINE",
+                description=f"The AI core is currently unavailable.\n\n**Action Required:** Server admin needs to configure the API key.\n{VisualElements.CIRCUIT_LINE}",
+                color=BrandColors.DANGER
+            )
+            embed.set_footer(text=BOT_FOOTER)
+            await message.channel.send(embed=embed)
             return
         
         # Show typing indicator
@@ -256,54 +262,20 @@ async def handle_ai_message(message):
             # Check if this is an image generation request
             if is_image_request(message.content):
                 print(f"🎨 [AI CHAT] Detected image request: {message.content[:50]}")
-                # Generate image
-                temp_image_path = f"/tmp/ai_generated_{message.id}.png"
-                
-                success = await generate_ai_image(message.content, temp_image_path)
-                print(f"🎨 [AI CHAT] Image generation result: {success}")
-                
-                if success:
-                    # Send the generated image
-                    embed = discord.Embed(
-                        title="🎨 Generated Image",
-                        description=f"**Prompt:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}",
-                        color=BrandColors.PRIMARY
-                    )
-                    embed.set_footer(text=f"Generated for {message.author.display_name}")
-                    
-                    file = discord.File(temp_image_path, filename="generated_image.png")
-                    embed.set_image(url="attachment://generated_image.png")
-                    
-                    print(f"🎨 [AI CHAT] Sending image response...")
-                    await message.reply(embed=embed, file=file)
-                    print(f"✅ [AI CHAT] Image sent successfully")
-                    
-                    # Clean up temp file
-                    try:
-                        os.remove(temp_image_path)
-                    except:
-                        pass
-                    
-                    # Log the interaction
-                    await log_action(
-                        message.guild.id,
-                        "ai_chat",
-                        f"🎨 [AI IMAGE] {message.author} generated image: {message.content[:50]}"
-                    )
-                    
-                    # Global logging
-                    try:
-                        from advanced_logging import send_global_log
-                        await send_global_log(
-                            "ai_chat",
-                            f"**🎨 AI Image Generated**\n**User:** {message.author.mention}\n**Prompt:** {message.content[:100]}",
-                            message.guild
-                        )
-                    except:
-                        pass
-                else:
-                    # Check if it was a quota error
-                    await message.reply("❌ Failed to generate image. This might be due to API quota limits. Please try again later or contact the server admin.")
+                # Image generation disabled - show themed message
+                embed = discord.Embed(
+                    title="◆ IMAGE GENERATION UNAVAILABLE",
+                    description=f"**Requested:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}\n\n**Status:** RXT ENGINE is currently operating on the **Free Plan**.\n\nImage generation requires a premium API subscription. Text-based AI chat is fully available!\n{VisualElements.CIRCUIT_LINE}",
+                    color=BrandColors.PRIMARY
+                )
+                embed.add_field(
+                    name="💬 What You Can Do",
+                    value="◆ Ask questions\n◆ Get information\n◆ Have conversations\n◆ Get help with tasks",
+                    inline=False
+                )
+                embed.set_footer(text=BOT_FOOTER)
+                await message.reply(embed=embed)
+                print(f"🎨 [AI CHAT] Sent free plan message for image request")
             else:
                 # Generate text response
                 print(f"💬 [AI CHAT] Generating text response for: {message.content[:50]}")
@@ -341,6 +313,12 @@ async def handle_ai_message(message):
                     
     except Exception as e:
         print(f"❌ [AI CHAT ERROR] {e}")
-        await message.reply("❌ An error occurred while processing your request. Please try again.")
+        embed = discord.Embed(
+            title="✗ PROCESSING ERROR",
+            description=f"The quantum core encountered an anomaly while processing your request.\n\nPlease try again.\n{VisualElements.CIRCUIT_LINE}",
+            color=BrandColors.DANGER
+        )
+        embed.set_footer(text=BOT_FOOTER)
+        await message.reply(embed=embed)
 
 print("✅ AI Chat system loaded (Gemini 1.5 Flash)")
