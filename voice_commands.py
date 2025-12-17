@@ -485,3 +485,10 @@ async def on_voice_state_update(member, before, after):
     
     except Exception as e:
         print(f"❌ [VC EVENT ERROR] {e}")
+    
+    # Call voice tracker handler for time tracking
+    try:
+        from voice_tracker import handle_voice_update
+        await handle_voice_update(member, before, after)
+    except Exception as e:
+        pass  # Voice tracker not loaded or error

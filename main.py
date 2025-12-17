@@ -2082,6 +2082,16 @@ except ImportError as e:
 except Exception as e:
     print(f"⚠️ YouTube Notifier setup failed: {e}")
 
+# Import and setup Voice Tracker system
+try:
+    import voice_tracker
+    voice_tracker.setup(bot, db, has_permission, log_action)
+    print("✅ Voice Tracker system loaded")
+except ImportError as e:
+    print(f"⚠️ Voice Tracker module not found: {e}")
+except Exception as e:
+    print(f"⚠️ Voice Tracker setup failed: {e}")
+
 # Import and setup invite tracker system
 try:
     import invite_tracker
