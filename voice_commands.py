@@ -290,7 +290,7 @@ async def custom_vc_setup(interaction: discord.Interaction, category: discord.Ca
                 'created_at': datetime.utcnow()
             })
         
-        hub_count = await db.custom_vc_hubs.count_documents({'guild_id': str(interaction.guild.id)}) if db else 1
+        hub_count = await db.custom_vc_hubs.count_documents({'guild_id': str(interaction.guild.id)}) if db is not None else 1
         
         embed = discord.Embed(
             title="⚡ **Custom VC System Setup Complete**",
