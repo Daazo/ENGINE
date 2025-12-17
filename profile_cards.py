@@ -273,7 +273,7 @@ async def create_bot_profile_card(bot, owner_status, owner_status_emoji, uptime_
 
     # Column 2 features
     draw.text((280, features_y + 25), "📊 Profile Cards", fill=(200, 200, 200), font=small_font)
-    draw.text((280, features_y + 40), "🔔 Auto-Timeouts", fill=(200, 200, 200), font=small_font)
+    draw.text((280, features_y + 40), "🔔 YouTube Notifier", fill=(200, 200, 200), font=small_font)
     draw.text((280, features_y + 55), "🚫 Quarantine System", fill=(200, 200, 200), font=small_font)
     draw.text((280, features_y + 70), "⏰ Timed Roles", fill=(200, 200, 200), font=small_font)
 

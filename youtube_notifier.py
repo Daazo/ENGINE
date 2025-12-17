@@ -594,6 +594,16 @@ async def check_youtube_feeds():
                                         "youtube",
                                         f"🔔 [YOUTUBE] New video detected: **{latest_video['title']}** from {feed['channel_name']}"
                                     )
+                                    
+                                    try:
+                                        from advanced_logging import send_global_log
+                                        await send_global_log(
+                                            "youtube",
+                                            f"**🔔 New Video Detected**\n**Server:** {guild.name}\n**Channel:** {feed['channel_name']}\n**Video:** {latest_video['title']}\n**URL:** {latest_video['url']}",
+                                            guild
+                                        )
+                                    except:
+                                        pass
                             except:
                                 pass
                 

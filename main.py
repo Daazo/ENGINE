@@ -349,6 +349,14 @@ async def on_ready():
     except Exception as e:
         print(f"⚠️ Failed to initialize global logging: {e}")
     
+    # Start YouTube Notifier background task
+    try:
+        from youtube_notifier import start_youtube_task
+        start_youtube_task()
+        print("✅ YouTube Notifier task started (5 min interval)")
+    except Exception as e:
+        print(f"⚠️ Failed to start YouTube Notifier task: {e}")
+    
     # Enable console output capture for live console logging
     try:
         if not isinstance(sys.stdout, ConsoleCapture):
@@ -1113,6 +1121,7 @@ class HelpSelect(discord.ui.Select):
             discord.SelectOption(label="Security", value="security", emoji="🛡️", description="Anti-raid, anti-nuke, quarantine system"),
             discord.SelectOption(label="Setup", value="setup", emoji="⚙️", description="Configuration and customization"),
             discord.SelectOption(label="Messages", value="messages", emoji="💬", description="Communication and announcements"),
+            discord.SelectOption(label="YouTube", value="youtube", emoji="🔔", description="YouTube video notifications"),
             discord.SelectOption(label="Karma", value="karma", emoji="⭐", description="Community recognition system"),
             discord.SelectOption(label="Tickets", value="tickets", emoji="🎫", description="Support and issue tracking"),
             discord.SelectOption(label="Verification", value="verification", emoji="✅", description="CAPTCHA verification system"),
@@ -1135,6 +1144,8 @@ class HelpSelect(discord.ui.Select):
             await self.show_setup_help(interaction)
         elif selection == "messages":
             await self.show_communication_help(interaction)
+        elif selection == "youtube":
+            await self.show_youtube_help(interaction)
         elif selection == "karma":
             await self.show_karma_help(interaction)
         elif selection == "tickets":
@@ -1339,6 +1350,45 @@ class HelpSelect(discord.ui.Select):
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
         await interaction.response.edit_message(embed=embed, view=HelpView())
 
+    async def show_youtube_help(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title="🔔 **YouTube Notifier System**",
+            description=f"*RSS-based video notification system for automatic upload alerts from YouTube channels.*\n\n{VisualElements.CIRCUIT_LINE}",
+            color=BrandColors.DANGER
+        )
+        embed.add_field(
+            name="🟡 `/yt add channel:<ID or URL>`",
+            value="**Usage:** `/yt add channel:UC... or https://youtube.com/@channel`\n**Description:** Start tracking a YouTube channel for new video uploads\n**Process:** Interactive setup with channel selection and role mention options",
+            inline=False
+        )
+        embed.add_field(
+            name="🟡 `/yt remove`",
+            value="**Usage:** `/yt remove`\n**Description:** Remove a YouTube channel from notifications\n**Features:** Dropdown menu to select which channel to remove",
+            inline=False
+        )
+        embed.add_field(
+            name="🟡 `/yt list`",
+            value="**Usage:** `/yt list`\n**Description:** View all currently tracked YouTube channels for this server\n**Shows:** Channel name, notification channel, and role mention settings",
+            inline=False
+        )
+        embed.add_field(
+            name="⚡ **System Features**",
+            value="**📡 RSS-Based:** No YouTube API required\n**⏱️ 5-Minute Polling:** Checks for new videos every 5 minutes\n**🔄 Restart-Safe:** Resumes automatically after bot restarts\n**💾 Persistent Storage:** All settings saved to database\n**🚫 No Duplicates:** Smart tracking prevents repeated notifications\n\u200b",
+            inline=False
+        )
+        embed.add_field(
+            name="🔔 **Notification Details**",
+            value="**📺 Video Title** - Full title of uploaded video\n**📺 Channel Name** - YouTube channel that uploaded\n**🔗 Video URL** - Direct link to watch\n**🖼️ Thumbnail** - Video thumbnail preview\n**⏰ Upload Time** - When the video was posted\n**📢 Role Mention** - Optional role ping on new uploads\n\u200b",
+            inline=False
+        )
+        embed.add_field(
+            name="📊 **Limits & Permissions**",
+            value="**📌 Max Channels:** 10 YouTube channels per server\n**🔐 Permissions:** Junior Moderator+ can manage\n**📝 Logging:** All actions logged to server logs\n**🌐 Global Logging:** Major events logged centrally",
+            inline=False
+        )
+        embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
+        await interaction.response.edit_message(embed=embed, view=HelpView())
+
     async def show_karma_help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="⭐ **Karma System**",
@@ -1509,7 +1559,7 @@ class HelpSelect(discord.ui.Select):
         )
         embed.add_field(
             name="💠 **Quantum Capabilities**",
-            value="◆ **Holographic UI** — Advanced quantum purple interface\n◆ **AI Moderation** — Intelligent enforcement protocols\n◆ **Karma Matrix** — Community recognition system\n◆ **Support Grid** — Multi-channel ticket resolution\n◆ **Neural Storage** — Persistent data architecture\n◆ **Security Core** — Multi-layer protection systems",
+            value="◆ **Holographic UI** — Advanced quantum purple interface\n◆ **AI Moderation** — Intelligent enforcement protocols\n◆ **Karma Matrix** — Community recognition system\n◆ **Support Grid** — Multi-channel ticket resolution\n◆ **YouTube Notifier** — RSS-based video upload alerts\n◆ **Neural Storage** — Persistent data architecture\n◆ **Security Core** — Multi-layer protection systems",
             inline=False
         )
         embed.add_field(
@@ -1529,8 +1579,13 @@ class HelpSelect(discord.ui.Select):
             color=BrandColors.SUCCESS
         )
         embed.add_field(
-            name="🛡️ **RXT Security System** (Multi-Layer Protection) - LATEST",
-            value="**9-Module Protection Suite:** Anti-raid, anti-nuke, anti-spam, anti-link, webhook guard, anti-role, mass mention blocker, timeout system, whitelist\n**🚫 Quarantine System:** Automatic containment of suspicious users with persistent violation tracking\n**⏱️ Timeout Management:** Discord native timeouts with complete communication blackout\n**📊 Violation Tracking:** Cross-session persistence tracking threat severity\n**Commands:** `/security`, `/antiraid`, `/antinuke`, `/antispam`, `/antilink`, `/webhookguard`, `/antirole`, `/massmention`, `/timeout`, `/whitelist`",
+            name="🔔 **YouTube Notifier System** (RSS-Based Alerts) - LATEST",
+            value="**📺 RSS Feed Monitoring:** No YouTube API required\n**⏱️ 5-Minute Polling:** Automatic checks for new video uploads\n**🔄 Restart-Safe:** Resumes automatically after bot restarts\n**📢 Role Mentions:** Optional ping when new videos are detected\n**📊 Multi-Server Support:** Same channel tracked across servers efficiently\n**Commands:** `/yt add`, `/yt remove`, `/yt list` (10 channels per server)",
+            inline=False
+        )
+        embed.add_field(
+            name="🛡️ **RXT Security System** (Multi-Layer Protection)",
+            value="**9-Module Protection Suite:** Anti-raid, anti-nuke, anti-spam, anti-link, webhook guard, anti-role, mass mention blocker, timeout system, whitelist\n**🚫 Quarantine System:** Automatic containment of suspicious users with persistent violation tracking\n**Commands:** `/security`, `/antiraid`, `/antinuke`, `/antispam`, `/antilink`, `/webhookguard`, `/antirole`, `/massmention`, `/timeout`, `/whitelist`",
             inline=False
         )
         embed.add_field(
@@ -1540,7 +1595,7 @@ class HelpSelect(discord.ui.Select):
         )
         embed.add_field(
             name="🎨 **Profile & Server Cards** (Visual Stats)",
-            value="**🟢 `/profile [user]`** - Beautiful profile cards with avatar and karma\n**🏰 `/servercard`** - Generate server overview cards with statistics\n**🤖 `/botprofile`** - View bot information, security features, and system specs\n**🟢 `/contact`** - Get bot contact information\n**Circular avatars** with progress bars and modern theme",
+            value="**🟢 `/profile [user]`** - Beautiful profile cards with avatar and karma\n**🏰 `/servercard`** - Generate server overview cards with statistics\n**🤖 `/botprofile`** - View bot information, security features, and system specs\n**Circular avatars** with progress bars and modern theme",
             inline=False
         )
         embed.add_field(
@@ -1550,7 +1605,7 @@ class HelpSelect(discord.ui.Select):
         )
         embed.add_field(
             name="🔧 **How to Get Started**",
-            value="**Step 1:** `/security action:enable` - Activate security protections\n**Step 2:** `/setup main_moderator role:@moderator` - Configure permissions\n**Step 3:** Use `/help` to explore the Security section\n**Step 4:** `/givekarma` to start community recognition!\n**Advanced:** `/whitelist` to add trusted users/bots to security bypass",
+            value="**Step 1:** `/security action:enable` - Activate security protections\n**Step 2:** `/setup main_moderator role:@moderator` - Configure permissions\n**Step 3:** `/yt add channel:...` - Setup YouTube notifications\n**Step 4:** `/givekarma` to start community recognition!\n**Advanced:** `/whitelist` to add trusted users/bots to security bypass",
             inline=False
         )
         embed.set_footer(text=BOT_FOOTER, icon_url=bot.user.display_avatar.url)
@@ -2007,6 +2062,16 @@ except Exception as e:
     print(f"⚠️ AI Chat setup failed: {e}")
     print(f"Exception details: {type(e).__name__}: {e}")
     handle_ai_message = None
+
+# Import and setup YouTube Notifier system
+try:
+    import youtube_notifier
+    youtube_notifier.setup(bot, db, has_permission, log_action, create_error_embed, create_permission_denied_embed)
+    print("✅ YouTube Notifier system loaded")
+except ImportError as e:
+    print(f"⚠️ YouTube Notifier module not found: {e}")
+except Exception as e:
+    print(f"⚠️ YouTube Notifier setup failed: {e}")
 
 # Import and setup invite tracker system
 try:
