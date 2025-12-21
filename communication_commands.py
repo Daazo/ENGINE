@@ -727,15 +727,15 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
 
 @bot.tree.command(name="print-channel", description="📄 Export channel messages to file and send via DM")
 @app_commands.describe(
-    format="Export format (txt, html, or pdf)"
+    format="Export format (txt or pdf)"
 )
 async def print_channel(interaction: discord.Interaction, format: str = "txt"):
     if not await has_permission(interaction, "main_moderator"):
         await interaction.response.send_message(embed=create_permission_denied_embed("Server Owner or Main Moderator"), ephemeral=True)
         return
     
-    if format.lower() not in ["txt", "html", "pdf"]:
-        await interaction.response.send_message(embed=create_error_embed("Invalid format! Use: txt, html, or pdf"), ephemeral=True)
+    if format.lower() not in ["txt", "pdf"]:
+        await interaction.response.send_message(embed=create_error_embed("Invalid format! Use: txt or pdf"), ephemeral=True)
         return
     
     await interaction.response.defer()
@@ -763,6 +763,18 @@ async def print_channel(interaction: discord.Interaction, format: str = "txt"):
             if msg.author.bot:
                 author_name = f"🤖 {author_name}"
             content += f"[{time_str}] {author_name}: {msg.content}\n"
+            
+            if msg.embeds:
+                for embed in msg.embeds:
+                    content += "  📋 [EMBED]\n"
+                    if embed.title:
+                        content += f"    Title: {embed.title}\n"
+                    if embed.description:
+                        content += f"    Description: {embed.description}\n"
+                    if embed.fields:
+                        for field in embed.fields:
+                            content += f"    {field.name}: {field.value}\n"
+            
             if msg.attachments:
                 for att in msg.attachments:
                     content += f"  📎 Attachment: {att.url}\n"

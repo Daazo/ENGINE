@@ -1374,7 +1374,7 @@ class HelpSelect(discord.ui.Select):
         )
         embed.add_field(
             name="👑 `/print-channel [format]`",
-            value="**Usage:** `/print-channel format:txt` (txt, html, or pdf)\n**Description:** Export channel messages transcript to file and send via DM\n**Features:** Clean formatting, username/timestamp/content, attachment links, auto-logs activity\n\u200b",
+            value="**Usage:** `/print-channel format:txt` (txt or pdf)\n**Description:** Export channel messages transcript to file and send via DM\n**Features:** Clean formatting, username/timestamp/content, embedded messages, attachment links, auto-logs activity\n\u200b",
             inline=False
         )
         embed.set_footer(text="🟣 = Everyone • 🟡 = Junior Moderator • 🔴 = Main Moderator • 👑 = Server Owner")
