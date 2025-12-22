@@ -1,0 +1,132 @@
+================================================================================
+RXT ENGINE - COMPLETE COMMANDS LIST (74 TOTAL)
+================================================================================
+
+• PUBLIC COMMANDS (🟢 = Everyone)
+================================================================================
+
+1. help - Display comprehensive help menu with all commands
+2. userinfo - Show detailed user information including join date, roles, status
+3. serverinfo - Display comprehensive server information and statistics
+4. contact - Get bot contact information and support details
+5. profile - Generate beautiful profile cards with stats and avatar
+6. servercard - Create server overview cards with member info
+7. botprofile - View bot information card with system status
+8. givekarma - Give 1-2 karma points to someone for their contribution
+9. karma - Check karma points, server rank, and progress to next milestone
+10. mykarma - Check your own karma points and ranking
+11. karmaboard - Show top 10 karma earners with medals and rankings
+
+
+• JUNIOR MODERATOR (🟡 = Junior Moderator+)
+================================================================================
+
+1. ping - Check bot latency and connection status
+2. uptime - Display how long the bot has been running continuously
+3. say - Make bot send a message to specified channel
+4. embed - Send rich embedded message with custom styling and colors
+5. poll - Create interactive polls with automatic reactions (up to 4 options)
+6. reminder - Set personal reminders - bot will DM when time's up
+7. mute - Mute user in voice channel
+8. unmute - Unmute user in voice channel
+9. movevc - Move user to different voice channel
+10. vckick - Kick user from voice channel
+11. vclock - Lock current voice channel
+12. vcunlock - Unlock voice channel
+13. vclimit - Set voice channel user limit (0-99)
+14. timedroles - View all active timed roles in server
+15. yt add - Start tracking a YouTube channel for new video uploads
+16. yt list - View all currently tracked YouTube channels for server
+17. yt remove - Remove a YouTube channel from notifications
+18. voicetracker - Track voice channel activity and statistics
+19. voicetime - View voice time statistics for members
+20. listreactionroles - View all active reaction role setups
+
+
+• MAIN MODERATOR (🔴 = Main Moderator+)
+================================================================================
+
+1. kick - Remove user from server with optional reason and logging
+2. ban - Permanently ban user from server with logging
+3. nuke - Delete ALL messages in current channel
+4. announce - Send official server announcements with professional formatting
+5. dm - Send DM to user from server (staff use) with server-branded messages
+6. print-channel - Export channel messages transcript to TXT/PDF file via DM
+7. custom-vc - Create auto VC hub for custom voice channels (up to 5 per server)
+8. custom-vc-remove - Remove a custom VC hub
+9. giverole - Give role for specific time duration (e.g., 1h30m, 2d)
+10. removerole - Manually remove role (cancels timed roles)
+11. setup - Configure bot settings (moderator role, channels, welcome messages)
+12. setup main_moderator - Set main moderator role (Server Owner only)
+13. setup junior_moderator - Set junior moderator role
+14. setup welcome - Configure welcome messages and channel
+15. setup karma_channel - Set channel for karma level-up announcements
+16. setup ticket_support_role - Set support role to mention on ticket creation
+17. autorole - Set or remove auto role for new members
+18. verification-setup - Setup CAPTCHA verification system for new members
+19. reactionrole - Setup single reaction role
+20. quickreactionrole - Interactive multi-role setup (up to 10 pairs)
+21. ticketpanel - Create ticket selection panel with dropdown menu
+22. ticketcategory - Configure ticket category (1-7 options available)
+23. ticketfields - Set custom form fields for each ticket category
+24. tnamechange - Rename ticket channel
+25. log-channel - Configure logging channel for server actions
+26. log-category - Configure logging category for organized logs
+27. resetkarma - Reset specific user's karma or all server karma
+28. antiraid - Detect suspicious join patterns and account age checks
+29. antinuke - Prevent mass channel/role deletion and ban/kick attacks
+30. antilink - Block malicious links with domain whitelist support
+31. antispam - Message rate limiting with configurable thresholds
+32. massmention - Block unauthorized @everyone/@here mentions
+33. webhookguard - Detect and remove unauthorized webhooks
+34. antirole - Prevent high-permission role creation/escalation
+35. massdelete - Delete multiple messages at once
+36. security - Enable/disable/status/config all protection modules
+37. quarantine - Manage quarantine system for suspicious users
+38. whitelist - Add trusted users, roles, and bots to security bypass
+39. security-config - Fine-tune security settings and thresholds
+40. listrole - List all available roles in server
+41. dm-role - Send DM to all members with specific role
+42. send-image - Send image with embed message
+43. event-role - Create event with role assignment
+44. create-event - Create a server event with participants
+45. announce-custom-winner - Announce custom event winner
+
+
+• SERVER OWNER (👑 = Server Owner Only)
+================================================================================
+
+1. setup - Full configuration access (main_moderator, roles, channels, etc.)
+2. setup main_moderator - Set main moderator role (Server Owner only)
+3. print-channel - Export channel transcripts with all access levels
+4. timeout - Manual timeout management (Discord native)
+5. untimeout - Remove user timeout
+6. announce-random-winner - Announce random event winner
+7. update_server_list - Update server list monitoring
+8. invite-tracker - Setup invite tracking and analytics
+9. set-ai-channel - Set channel for AI chat responses
+
+================================================================================
+COMMAND BREAKDOWN SUMMARY
+================================================================================
+
+Total Commands: 74
+
+Public Commands:      11
+Junior Moderator:     20
+Main Moderator:       34
+Server Owner:         9
+
+================================================================================
+PERMISSION HIERARCHY
+================================================================================
+
+Public (🟢) → Lowest Permission
+↓
+Junior Moderator (🟡) → Includes all public + junior commands
+↓
+Main Moderator (🔴) → Includes all public, junior, + main moderator commands
+↓
+Server Owner (👑) → Highest Permission - All commands available
+
+================================================================================
